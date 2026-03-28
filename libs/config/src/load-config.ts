@@ -1,6 +1,7 @@
 import path from "node:path";
 import os from "node:os";
 import { NagiConfigSchema, type NagiConfig } from "./schema.js";
+import { readEnvFile } from "./env.js";
 
 export interface LoadConfigOverrides {
   projectRoot?: string;
@@ -30,12 +31,15 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
   const projectRoot = overrides?.projectRoot ?? process.cwd();
   const homeDir = os.homedir();
 
+  // Read from .env file (not loaded into process.env)
+  const envFile = readEnvFile(["ASSISTANT_NAME", "ASSISTANT_HAS_OWN_NUMBER"]);
+
   const raw = {
     assistantName:
-      overrides?.assistantName || process.env.ASSISTANT_NAME || undefined,
+      overrides?.assistantName || envFile.ASSISTANT_NAME || process.env.ASSISTANT_NAME || undefined,
     assistantHasOwnNumber:
       overrides?.assistantHasOwnNumber ??
-      parseEnvBoolean(process.env.ASSISTANT_HAS_OWN_NUMBER),
+      parseEnvBoolean(envFile.ASSISTANT_HAS_OWN_NUMBER || process.env.ASSISTANT_HAS_OWN_NUMBER),
     timezone:
       overrides?.timezone || process.env.TZ || undefined,
     container: {
