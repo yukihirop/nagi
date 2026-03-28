@@ -11,7 +11,7 @@ export function NavSidebar({ tab, onTabChange }: { tab: Tab; onTabChange: (t: Ta
   return (
     <nav className="w-56 shrink-0 border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col py-3 overflow-y-auto">
       <div className="flex items-center gap-2 px-4 mb-2">
-        <img className="w-6 h-6 rounded" src="./icon.png" alt="" />
+        <img className="w-12 h-12 rounded object-contain" src="./icon.png" alt="" />
         <span className="text-base font-semibold">Nagi</span>
       </div>
       {TAB_GROUPS.map((group) => (

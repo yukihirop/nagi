@@ -47,7 +47,7 @@ function UserBubble({ msg }: { msg: ChatMessage }) {
       <div className="flex flex-col gap-1 max-w-[75%] items-end">
         <span className="text-[10px] font-medium text-indigo-500">You</span>
         <div className="rounded-xl px-3 py-2 bg-indigo-500 text-white rounded-br-sm">
-          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-headings:my-2">
+          <div className="text-sm leading-relaxed prose prose-sm prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-headings:my-2 prose-p:text-white prose-headings:text-white prose-strong:text-white prose-code:text-white/90 prose-a:text-white/90">
             <Markdown>{msg.content}</Markdown>
           </div>
           <div className="mt-1 text-right text-[10px] text-white/70">{formatTime(msg.timestamp)}</div>
