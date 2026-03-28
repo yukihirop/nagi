@@ -35,7 +35,8 @@
     "unconfigured",
     "unrequested",
     "unstub",
-    "reimplementation"
+    "reimplementation",
+    "larr"
   ],
   "ignorePaths": [
     "node_modules",

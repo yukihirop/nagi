@@ -51,7 +51,7 @@ const db = createDatabase({ path: dbPath });
 // Static dir: tools/ui/dist relative to this package
 const staticDir = path.resolve(import.meta.dirname, "../../ui/dist");
 
-const app = createApp(db, staticDir);
+const app = createApp({ db, dataDir, staticDir });
 const { injectWebSocket, broadcast } = setupWebSocket(app, db);
 
 const server = serve({ fetch: app.fetch, port }, (info) => {

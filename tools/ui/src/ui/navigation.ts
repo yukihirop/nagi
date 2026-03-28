@@ -2,6 +2,7 @@ import type { IconName } from "./icons.ts";
 
 export const TAB_GROUPS = [
   { label: "monitor", tabs: ["overview", "groups", "channels"] },
+  { label: "agent", tabs: ["sessions"] },
   { label: "automation", tabs: ["tasks"] },
   { label: "system", tabs: ["logs", "settings"] },
 ] as const;
@@ -10,6 +11,7 @@ export type Tab =
   | "overview"
   | "groups"
   | "channels"
+  | "sessions"
   | "tasks"
   | "logs"
   | "settings";
@@ -18,6 +20,7 @@ const TAB_PATHS: Record<Tab, string> = {
   overview: "/overview",
   groups: "/groups",
   channels: "/channels",
+  sessions: "/sessions",
   tasks: "/tasks",
   logs: "/logs",
   settings: "/settings",
@@ -51,6 +54,8 @@ export function iconForTab(tab: Tab): IconName {
       return "folder";
     case "channels":
       return "link";
+    case "sessions":
+      return "monitor";
     case "tasks":
       return "loader";
     case "logs":
@@ -67,6 +72,7 @@ export function titleForTab(tab: Tab): string {
     overview: "Overview",
     groups: "Groups",
     channels: "Channels",
+    sessions: "Sessions",
     tasks: "Tasks",
     logs: "Logs",
     settings: "Settings",

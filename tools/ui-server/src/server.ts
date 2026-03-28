@@ -7,8 +7,16 @@ import { handleGroups } from "./routes/groups.js";
 import { handleChannels } from "./routes/channels.js";
 import { handleTasks, handleTaskLogs } from "./routes/tasks.js";
 import { handleMessages } from "./routes/messages.js";
+import { handleSessions, handleSessionMessages } from "./routes/sessions.js";
 
-export function createApp(db: NagiDatabase, staticDir?: string) {
+export interface AppOptions {
+  db: NagiDatabase;
+  dataDir: string;
+  staticDir?: string;
+}
+
+export function createApp(opts: AppOptions) {
+  const { db, dataDir, staticDir } = opts;
   const app = new Hono();
 
   app.use("/api/*", cors());
@@ -28,6 +36,12 @@ export function createApp(db: NagiDatabase, staticDir?: string) {
       return c.json(result, 400);
     }
     return c.json(result);
+  });
+
+  app.get("/api/sessions", (c) => c.json(handleSessions(dataDir)));
+  app.get("/api/sessions/:id/messages", async (c) => {
+    const messages = await handleSessionMessages(dataDir, c.req.param("id"));
+    return c.json(messages);
   });
 
   // Static file serving for SPA

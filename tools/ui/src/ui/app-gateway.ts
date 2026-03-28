@@ -45,4 +45,12 @@ async function loadAll(app: NagiApp): Promise<void> {
   if (groups) app.groups = groups;
   if (channels) app.channels = channels;
   if (tasks) app.tasks = tasks;
+
+  const sessions = await fetchJson<Array<{ groupFolder: string; sessionId: string; startedAt: number }>>("/api/sessions");
+  if (sessions) app.sessions = sessions;
+}
+
+export async function loadSessionMessages(app: NagiApp, sessionId: string): Promise<void> {
+  const messages = await fetchJson<Array<{ type: "user" | "assistant"; content: string; timestamp: string; uuid: string; toolUses?: Array<{ name: string }> }>>(`/api/sessions/${sessionId}/messages`);
+  if (messages) app.sessionMessages = messages;
 }

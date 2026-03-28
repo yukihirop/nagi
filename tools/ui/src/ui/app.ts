@@ -27,6 +27,11 @@ export class NagiApp extends LitElement {
   @state() channels: Array<{ jid: string; name: string; channel: string; last_message_time: string; is_group: number }> = [];
   @state() tasks: Array<{ id: string; group_folder: string; chat_jid: string; prompt: string; schedule_type: string; schedule_value: string; status: string; next_run: string | null; last_run: string | null }> = [];
 
+  // Session data
+  @state() sessions: Array<{ groupFolder: string; sessionId: string; startedAt: number }> = [];
+  @state() activeSessionId: string | null = null;
+  @state() sessionMessages: Array<{ type: "user" | "assistant"; content: string; timestamp: string; uuid: string; toolUses?: Array<{ name: string }> }> = [];
+
   // Disable Shadow DOM to use global styles
   createRenderRoot() {
     return this;
@@ -52,6 +57,17 @@ export class NagiApp extends LitElement {
 
   cycleTheme() {
     cycleThemeInternal(this);
+  }
+
+  async selectSession(sessionId: string) {
+    this.activeSessionId = sessionId;
+    const { loadSessionMessages } = await import("./app-gateway.ts");
+    await loadSessionMessages(this, sessionId);
+  }
+
+  clearSession() {
+    this.activeSessionId = null;
+    this.sessionMessages = [];
   }
 }
 

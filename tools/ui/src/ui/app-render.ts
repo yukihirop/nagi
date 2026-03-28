@@ -7,6 +7,7 @@ import { renderChannels } from "./views/channels.ts";
 import { renderTasks } from "./views/tasks.ts";
 import { renderLogs } from "./views/logs.ts";
 import { renderSettings } from "./views/settings.ts";
+import { renderSessions } from "./views/sessions.ts";
 import type { NagiApp } from "./app.ts";
 
 function renderNav(app: NagiApp): TemplateResult {
@@ -47,6 +48,8 @@ function renderActiveView(app: NagiApp): TemplateResult {
       return renderGroups(app);
     case "channels":
       return renderChannels(app);
+    case "sessions":
+      return renderSessions(app);
     case "tasks":
       return renderTasks(app);
     case "logs":
