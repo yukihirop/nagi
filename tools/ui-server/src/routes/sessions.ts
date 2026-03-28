@@ -13,7 +13,8 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   uuid: string;
-  toolUses?: Array<{ name: string }>;
+  toolUses?: Array<{ name: string; input: Record<string, unknown> }>;
+  thinking?: string;
 }
 
 function findSessionsDir(dataDir: string): string {
@@ -59,9 +60,11 @@ export function handleSessions(dataDir: string): SessionInfo[] {
   return sessions.sort((a, b) => b.startedAt - a.startedAt);
 }
 
-function extractUserText(content: unknown): string {
-  if (typeof content !== "string") return "";
-  // Extract text from <message ...>text</message> tags
+function extractUserText(content: unknown): string | null {
+  // tool_result messages have array content — skip them
+  if (Array.isArray(content)) return null;
+  if (typeof content !== "string") return null;
+
   const messages: string[] = [];
   const re = /<message[^>]*>([^<]*)<\/message>/g;
   let match;
@@ -70,19 +73,26 @@ function extractUserText(content: unknown): string {
       messages.push(match[1].trim());
     }
   }
-  return messages.join("\n") || content;
+  return messages.length > 0 ? messages.join("\n") : null;
 }
 
-function extractAssistantContent(content: unknown): { text: string; toolUses: Array<{ name: string }> } {
-  const toolUses: Array<{ name: string }> = [];
+interface AssistantExtract {
+  text: string;
+  toolUses: Array<{ name: string; input: Record<string, unknown> }>;
+  thinking: string;
+}
+
+function extractAssistantContent(content: unknown): AssistantExtract {
+  const toolUses: Array<{ name: string; input: Record<string, unknown> }> = [];
   const texts: string[] = [];
+  const thinkings: string[] = [];
 
   if (typeof content === "string") {
-    return { text: content, toolUses };
+    return { text: content, toolUses, thinking: "" };
   }
 
   if (!Array.isArray(content)) {
-    return { text: "", toolUses };
+    return { text: "", toolUses, thinking: "" };
   }
 
   for (const block of content) {
@@ -91,11 +101,16 @@ function extractAssistantContent(content: unknown): { text: string; toolUses: Ar
     if (b.type === "text" && typeof b.text === "string") {
       texts.push(b.text);
     } else if (b.type === "tool_use" && typeof b.name === "string") {
-      toolUses.push({ name: b.name });
+      toolUses.push({
+        name: b.name,
+        input: (typeof b.input === "object" && b.input !== null ? b.input : {}) as Record<string, unknown>,
+      });
+    } else if (b.type === "thinking" && typeof b.thinking === "string") {
+      thinkings.push(b.thinking);
     }
   }
 
-  return { text: texts.join("\n"), toolUses };
+  return { text: texts.join("\n"), toolUses, thinking: thinkings.join("\n") };
 }
 
 export async function handleSessionMessages(
@@ -105,7 +120,6 @@ export async function handleSessionMessages(
   const sessionsDir = findSessionsDir(dataDir);
   if (!fs.existsSync(sessionsDir)) return [];
 
-  // Find the JSONL file across all group folders
   let jsonlPath: string | null = null;
   const groupFolders = fs.readdirSync(sessionsDir).filter((f) => {
     try {
@@ -132,7 +146,16 @@ export async function handleSessionMessages(
 
   if (!jsonlPath) return [];
 
-  const messages: ChatMessage[] = [];
+  // Parse all raw entries first
+  type RawEntry = {
+    type: string;
+    uuid: string;
+    parentUuid: string | null;
+    timestamp: string;
+    message?: Record<string, unknown>;
+  };
+
+  const rawEntries: RawEntry[] = [];
   const stream = fs.createReadStream(jsonlPath, { encoding: "utf-8" });
   const rl = readline.createInterface({ input: stream });
 
@@ -141,36 +164,85 @@ export async function handleSessionMessages(
     try {
       const entry = JSON.parse(line) as Record<string, unknown>;
       const type = entry.type as string;
-
-      if (type === "user") {
-        const msg = entry.message as Record<string, unknown> | undefined;
-        const text = extractUserText(msg?.content);
-        if (text) {
-          messages.push({
-            type: "user",
-            content: text,
-            timestamp: (entry.timestamp as string) ?? "",
-            uuid: (entry.uuid as string) ?? "",
-          });
-        }
-      } else if (type === "assistant") {
-        const msg = entry.message as Record<string, unknown> | undefined;
-        const { text, toolUses } = extractAssistantContent(msg?.content);
-        if (text || toolUses.length > 0) {
-          messages.push({
-            type: "assistant",
-            content: text,
-            timestamp: (entry.timestamp as string) ?? "",
-            uuid: (entry.uuid as string) ?? "",
-            ...(toolUses.length > 0 ? { toolUses } : {}),
-          });
-        }
+      if (type === "user" || type === "assistant") {
+        rawEntries.push({
+          type,
+          uuid: (entry.uuid as string) ?? "",
+          parentUuid: (entry.parentUuid as string) ?? null,
+          timestamp: (entry.timestamp as string) ?? "",
+          message: entry.message as Record<string, unknown> | undefined,
+        });
       }
-      // skip queue-operation and other types
     } catch {
-      // skip invalid lines
+      // skip
     }
   }
+
+  // Merge consecutive assistant messages into turns
+  const messages: ChatMessage[] = [];
+  let pendingAssistant: {
+    texts: string[];
+    toolUses: Array<{ name: string; input: Record<string, unknown> }>;
+    thinkings: string[];
+    timestamp: string;
+    uuid: string;
+  } | null = null;
+
+  function flushAssistant() {
+    if (!pendingAssistant) return;
+    const { texts, toolUses, thinkings, timestamp, uuid } = pendingAssistant;
+    const text = texts.join("\n");
+    const thinking = thinkings.join("\n");
+
+    // Skip if nothing meaningful
+    if (!text && toolUses.length === 0) {
+      pendingAssistant = null;
+      return;
+    }
+
+    messages.push({
+      type: "assistant",
+      content: text,
+      timestamp,
+      uuid,
+      ...(toolUses.length > 0 ? { toolUses } : {}),
+      ...(thinking ? { thinking } : {}),
+    });
+    pendingAssistant = null;
+  }
+
+  for (const entry of rawEntries) {
+    if (entry.type === "user") {
+      flushAssistant();
+      const text = extractUserText(entry.message?.content);
+      if (text) {
+        messages.push({
+          type: "user",
+          content: text,
+          timestamp: entry.timestamp,
+          uuid: entry.uuid,
+        });
+      }
+    } else if (entry.type === "assistant") {
+      const { text, toolUses, thinking } = extractAssistantContent(entry.message?.content);
+
+      if (!pendingAssistant) {
+        pendingAssistant = {
+          texts: text ? [text] : [],
+          toolUses: [...toolUses],
+          thinkings: thinking ? [thinking] : [],
+          timestamp: entry.timestamp,
+          uuid: entry.uuid,
+        };
+      } else {
+        // Merge into pending
+        if (text) pendingAssistant.texts.push(text);
+        pendingAssistant.toolUses.push(...toolUses);
+        if (thinking) pendingAssistant.thinkings.push(thinking);
+      }
+    }
+  }
+  flushAssistant();
 
   return messages;
 }

@@ -46,7 +46,8 @@ export type ChatMessage = {
   content: string;
   timestamp: string;
   uuid: string;
-  toolUses?: Array<{ name: string }>;
+  toolUses?: Array<{ name: string; input: Record<string, unknown> }>;
+  thinking?: string;
 };
 
 export type ThemeMode = "light" | "dark" | "system";
