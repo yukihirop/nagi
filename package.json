@@ -1,14 +1,26 @@
 {
   "name": "nagi",
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev",
+    "dev": "tsx entry.ts",
     "lint": "turbo lint",
     "test": "turbo test"
   },
+  "dependencies": {
+    "@nagi/config": "workspace:*",
+    "@nagi/logger": "workspace:*",
+    "@nagi/channel-core": "workspace:*",
+    "@nagi/orchestrator": "workspace:*",
+    "@nagi/channel-slack": "workspace:*",
+    "@nagi/channel-discord": "workspace:*"
+  },
   "devDependencies": {
-    "turbo": "^2.3.3"
+    "tsx": "^4.19.0",
+    "@types/node": "^22.10.0",
+    "turbo": "^2.3.3",
+    "typescript": "^5.7.0"
   }
 }

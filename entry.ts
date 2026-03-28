@@ -1,0 +1,55 @@
+import { loadConfig, readEnvFile } from "@nagi/config";
+import { createLogger, setupGlobalErrorHandlers } from "@nagi/logger";
+import { ChannelRegistry } from "@nagi/channel-core";
+import { Orchestrator } from "@nagi/orchestrator";
+
+const logger = createLogger({ name: "nagi" });
+setupGlobalErrorHandlers(logger);
+
+const config = loadConfig();
+const registry = new ChannelRegistry();
+
+// Register Slack if configured
+const slackEnv = readEnvFile(["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"]);
+if (slackEnv.SLACK_BOT_TOKEN && slackEnv.SLACK_APP_TOKEN) {
+  const { createSlackFactory } = await import("@nagi/channel-slack");
+  registry.register(
+    "slack",
+    createSlackFactory({
+      botToken: slackEnv.SLACK_BOT_TOKEN,
+      appToken: slackEnv.SLACK_APP_TOKEN,
+      assistantName: config.assistantName,
+      triggerPattern: config.triggerPattern,
+    }),
+  );
+  logger.info("Slack channel registered");
+}
+
+// Register Discord if configured
+const discordEnv = readEnvFile(["DISCORD_BOT_TOKEN"]);
+if (discordEnv.DISCORD_BOT_TOKEN) {
+  const { createDiscordFactory } = await import("@nagi/channel-discord");
+  registry.register(
+    "discord",
+    createDiscordFactory({
+      botToken: discordEnv.DISCORD_BOT_TOKEN,
+      assistantName: config.assistantName,
+      triggerPattern: config.triggerPattern,
+    }),
+  );
+  logger.info("Discord channel registered");
+}
+
+const orchestrator = new Orchestrator(config, registry);
+
+process.on("SIGTERM", async () => {
+  await orchestrator.shutdown();
+  process.exit(0);
+});
+
+process.on("SIGINT", async () => {
+  await orchestrator.shutdown();
+  process.exit(0);
+});
+
+await orchestrator.start();

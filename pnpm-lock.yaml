@@ -7,10 +7,38 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:libs/channel-core
+      '@nagi/channel-discord':
+        specifier: workspace:*
+        version: link:plugins/channel-discord
+      '@nagi/channel-slack':
+        specifier: workspace:*
+        version: link:plugins/channel-slack
+      '@nagi/config':
+        specifier: workspace:*
+        version: link:libs/config
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:libs/logger
+      '@nagi/orchestrator':
+        specifier: workspace:*
+        version: link:apps/orchestrator
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
       turbo:
         specifier: ^2.3.3
         version: 2.8.20
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
   apps/agent-runner:
     dependencies:
