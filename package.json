@@ -6,6 +6,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "tsx entry.ts",
+    "nagi": "tsx tools/cli/src/index.ts",
     "lint": "turbo lint",
     "test": "turbo test"
   },
