@@ -32,7 +32,6 @@ function toolSummary(name: string, input: Record<string, unknown>): string {
     case "WebFetch":
       return typeof input.url === "string" ? input.url : "";
     default: {
-      // Try common field names
       for (const key of ["file_path", "path", "command", "query", "name", "url"]) {
         if (typeof input[key] === "string") return input[key] as string;
       }
@@ -41,60 +40,113 @@ function toolSummary(name: string, input: Record<string, unknown>): string {
   }
 }
 
-export function ChatBubble({ msg }: { msg: ChatMessage }) {
-  const isUser = msg.type === "user";
-
+function UserBubble({ msg }: { msg: ChatMessage }) {
   return (
-    <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div className={`flex flex-col gap-1 max-w-[75%] ${isUser ? "items-end" : "items-start"}`}>
-        <span className={`text-[10px] font-medium ${isUser ? "text-indigo-500" : "text-zinc-500"}`}>
-          {isUser ? "You" : "Nagi"}
-        </span>
-        <div
-          className={`rounded-xl px-3 py-2 ${
-            isUser
-              ? "bg-indigo-500 text-white rounded-br-sm"
-              : "border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 rounded-bl-sm"
-          }`}
-        >
-          {msg.thinking && (
-            <details className="mb-2">
-              <summary className="cursor-pointer text-[11px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
-                Thinking...
-              </summary>
-              <div className="mt-1 rounded bg-zinc-100 p-2 text-xs text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-48 overflow-y-auto">
-                {msg.thinking}
-              </div>
-            </details>
-          )}
-
-          {msg.toolUses && msg.toolUses.length > 0 && (
-            <div className="flex flex-col gap-1 mb-2">
-              {msg.toolUses.map((t, i) => (
-                <details key={i} className="rounded bg-zinc-100 dark:bg-zinc-900">
-                  <summary className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-blue-700 dark:text-blue-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded">
-                    <span className="inline-block shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] dark:bg-blue-900">
-                      {t.name}
-                    </span>
-                    <span className="text-zinc-500 dark:text-zinc-400 truncate">
-                      {toolSummary(t.name, t.input) || "params"}
-                    </span>
-                  </summary>
-                  <pre className="px-2 py-1 text-[10px] text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap max-h-48 overflow-y-auto">
-                    {truncateInput(t.input)}
-                  </pre>
-                </details>
-              ))}
-            </div>
-          )}
-
-          {msg.content && <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>}
-
-          <div className={`mt-1 text-right text-[10px] ${isUser ? "text-white/70" : "text-zinc-400"}`}>
-            {formatTime(msg.timestamp)}
-          </div>
+    <div className="flex justify-end">
+      <div className="flex flex-col gap-1 max-w-[75%] items-end">
+        <span className="text-[10px] font-medium text-indigo-500">You</span>
+        <div className="rounded-xl px-3 py-2 bg-indigo-500 text-white rounded-br-sm">
+          <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+          <div className="mt-1 text-right text-[10px] text-white/70">{formatTime(msg.timestamp)}</div>
         </div>
       </div>
     </div>
   );
+}
+
+function TimelineStep({ icon, children, isLast }: { icon: string; children: React.ReactNode; isLast?: boolean }) {
+  return (
+    <div className="relative flex gap-3">
+      {/* Vertical line */}
+      {!isLast && (
+        <div className="absolute left-[11px] top-6 bottom-0 w-px bg-zinc-200 dark:bg-zinc-700" />
+      )}
+      {/* Dot */}
+      <div className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs dark:bg-zinc-800">
+        {icon}
+      </div>
+      {/* Content */}
+      <div className="flex-1 min-w-0 pb-4">{children}</div>
+    </div>
+  );
+}
+
+function AssistantTimeline({ msg }: { msg: ChatMessage }) {
+  const steps: Array<{ type: "thinking" | "tool" | "text"; key: string }> = [];
+
+  if (msg.thinking) {
+    steps.push({ type: "thinking", key: "thinking" });
+  }
+  if (msg.toolUses) {
+    for (let i = 0; i < msg.toolUses.length; i++) {
+      steps.push({ type: "tool", key: `tool-${i}` });
+    }
+  }
+  if (msg.content) {
+    steps.push({ type: "text", key: "text" });
+  }
+
+  return (
+    <div>
+      <span className="text-[10px] font-medium text-zinc-500 mb-1 block">Nagi</span>
+      <div className="ml-1">
+        {steps.map((step, idx) => {
+          const isLast = idx === steps.length - 1;
+
+          if (step.type === "thinking") {
+            return (
+              <TimelineStep key={step.key} icon="&#x1f4ad;" isLast={isLast}>
+                <details>
+                  <summary className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+                    Thinking...
+                  </summary>
+                  <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-64 overflow-y-auto">
+                    {msg.thinking}
+                  </div>
+                </details>
+              </TimelineStep>
+            );
+          }
+
+          if (step.type === "tool") {
+            const toolIdx = parseInt(step.key.split("-")[1]);
+            const t = msg.toolUses![toolIdx];
+            const summary = toolSummary(t.name, t.input);
+            return (
+              <TimelineStep key={step.key} icon="&#x1f527;" isLast={isLast}>
+                <details>
+                  <summary className="cursor-pointer flex items-center gap-2 text-sm">
+                    <span className="inline-block shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[11px] font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                      {t.name}
+                    </span>
+                    <span className="text-zinc-500 dark:text-zinc-400 truncate text-xs">
+                      {summary}
+                    </span>
+                  </summary>
+                  <pre className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-64 overflow-y-auto">
+                    {truncateInput(t.input)}
+                  </pre>
+                </details>
+              </TimelineStep>
+            );
+          }
+
+          // text
+          return (
+            <TimelineStep key={step.key} icon="&#x2705;" isLast={isLast}>
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+            </TimelineStep>
+          );
+        })}
+        <div className="text-[10px] text-zinc-400 ml-9 -mt-2">{formatTime(msg.timestamp)}</div>
+      </div>
+    </div>
+  );
+}
+
+export function ChatBubble({ msg }: { msg: ChatMessage }) {
+  if (msg.type === "user") {
+    return <UserBubble msg={msg} />;
+  }
+  return <AssistantTimeline msg={msg} />;
 }
