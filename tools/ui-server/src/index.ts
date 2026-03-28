@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import { serve } from "@hono/node-server";
 import { createDatabase } from "@nagi/db";
@@ -8,9 +9,21 @@ import { IpcFileWatcher } from "./watcher.js";
 
 const logger = createLogger({ name: "ui-server" });
 
+// Resolve project root by walking up from this file to find pnpm-workspace.yaml
+function findProjectRoot(): string {
+  let dir = import.meta.dirname;
+  while (dir !== path.dirname(dir)) {
+    if (fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
+      return dir;
+    }
+    dir = path.dirname(dir);
+  }
+  return process.cwd();
+}
+
 function parseArgs(args: string[]) {
   let port = 3001;
-  let dataDir = path.resolve("__data");
+  let dataDir = path.join(findProjectRoot(), "__data");
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--port" && args[i + 1]) {
@@ -27,6 +40,9 @@ function parseArgs(args: string[]) {
 
 const { port, dataDir } = parseArgs(process.argv.slice(2));
 const dbPath = path.join(dataDir, "store", "messages.db");
+
+// Ensure DB directory exists
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 logger.info({ dbPath, dataDir, port }, "Starting UI server");
 
