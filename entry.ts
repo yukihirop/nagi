@@ -56,8 +56,10 @@ if (vercelEnv.VERCEL_API_TOKEN) {
 }
 
 // Register agent hooks (PostToolUse / SessionStart notifications to chat)
-import { defaultHooksConfig } from "@nagi/agent-hooks-claude-code";
-orchestrator.registerHooksPlugin(defaultHooksConfig());
+orchestrator.registerHooksPlugin({
+  postToolUse: true,
+  sessionStart: true,
+});
 
 // Mount security — configure which host directories containers can access
 // Uncomment and customize to enable additional mounts:

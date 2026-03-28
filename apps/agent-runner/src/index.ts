@@ -155,88 +155,17 @@ function getSessionSummary(
   return null;
 }
 
-const MESSAGES_DIR = "/workspace/ipc/messages";
+// Agent hooks are loaded dynamically from /app/plugins/agent-hooks-claude-code/index.mjs
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let agentHooks: any = null;
 
-function writeIpcMessage(chatJid: string, groupFolder: string, text: string): void {
-  fs.mkdirSync(MESSAGES_DIR, { recursive: true });
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`;
-  const filepath = path.join(MESSAGES_DIR, filename);
-  const tempPath = `${filepath}.tmp`;
-  fs.writeFileSync(tempPath, JSON.stringify({
-    type: "message",
-    chatJid,
-    text,
-    groupFolder,
-    timestamp: new Date().toISOString(),
-  }));
-  fs.renameSync(tempPath, filepath);
-}
-
-const TOOL_ICONS: Record<string, string> = {
-  Bash: "\u{1F527}", Read: "\u{1F4D6}", Write: "\u{1F4DD}", Edit: "\u{270F}\uFE0F",
-  Glob: "\u{1F4C2}", Grep: "\u{1F50D}", Skill: "\u{26A1}", Agent: "\u{1F916}",
-  WebSearch: "\u{1F310}", WebFetch: "\u{1F310}", Task: "\u{23F0}",
-  TaskOutput: "\u{1F4E4}", TaskStop: "\u{23F9}\uFE0F", TodoWrite: "\u{1F4CB}",
-};
-
-const DEFAULT_SKIP_TOOLS = ["mcp__nagi__send_message", "mcp__nagi__list_tasks"];
-
-function toolSummary(name: string, input: Record<string, unknown>): string {
-  switch (name) {
-    case "Read": case "Write": case "Glob":
-      return (input.file_path ?? input.pattern ?? "") as string;
-    case "Edit":
-      return (input.file_path ?? "") as string;
-    case "Grep":
-      return (input.pattern ?? "") as string;
-    case "Bash": {
-      const cmd = (input.command ?? "") as string;
-      return cmd.length > 80 ? cmd.slice(0, 80) + "..." : cmd;
-    }
-    case "Skill": return (input.skill ?? "") as string;
-    case "Agent": return (input.description ?? "") as string;
-    case "WebSearch": return (input.query ?? "") as string;
-    case "WebFetch": return (input.url ?? "") as string;
-    default:
-      for (const key of ["file_path", "path", "command", "query", "name", "url"]) {
-        if (typeof input[key] === "string") return input[key] as string;
-      }
-      return "";
+async function loadAgentHooks() {
+  try {
+    const pluginPath = "/app/plugins/agent-hooks-claude-code/index.mjs";
+    agentHooks = await import(/* webpackIgnore: true */ pluginPath);
+  } catch {
+    log("Agent hooks plugin not found, skipping");
   }
-}
-
-function createPostToolUseHook(chatJid: string, groupFolder: string, extraSkipTools?: string[]): HookCallback {
-  const skipTools = new Set([...DEFAULT_SKIP_TOOLS, ...(extraSkipTools ?? [])]);
-  return async (input) => {
-    try {
-      const toolInput = input as { tool_name?: string; tool_input?: Record<string, unknown> };
-      const name = toolInput.tool_name;
-      log(`[hook:PostToolUse] tool=${name} chatJid=${chatJid}`);
-      if (!name || !chatJid || skipTools.has(name)) return {};
-      const icon = name.startsWith("mcp__") ? "\u{1F50C}" : (TOOL_ICONS[name] ?? "\u{2699}\uFE0F");
-      const summary = toolSummary(name, toolInput.tool_input ?? {});
-      const text = summary ? `${icon} \`${name}: ${summary}\`` : `${icon} \`${name}\``;
-      writeIpcMessage(chatJid, groupFolder, text);
-      log(`[hook:PostToolUse] sent: ${text}`);
-    } catch (err) {
-      log(`[hook:PostToolUse] error: ${err}`);
-    }
-    return {};
-  };
-}
-
-function createSessionStartHook(chatJid: string, groupFolder: string): HookCallback {
-  return async (input) => {
-    try {
-      log(`[hook:SessionStart] chatJid=${chatJid} input=${JSON.stringify(input)}`);
-      if (!chatJid) return {};
-      writeIpcMessage(chatJid, groupFolder, "\u{1F4AD} Thinking...");
-      log("[hook:SessionStart] sent thinking message");
-    } catch (err) {
-      log(`[hook:SessionStart] error: ${err}`);
-    }
-    return {};
-  };
 }
 
 function createPreCompactHook(assistantName?: string): HookCallback {
@@ -502,6 +431,8 @@ async function runQuery(
     log(`Additional directories: ${extraDirs.join(", ")}`);
   }
 
+  await loadAgentHooks();
+
   for await (const message of query({
     prompt: stream,
     options: {
@@ -569,14 +500,14 @@ async function runQuery(
         PreCompact: [
           { hooks: [createPreCompactHook(containerInput.assistantName)] },
         ],
-        ...(containerInput.hooksConfig?.postToolUse !== false && containerInput.hooksConfig ? {
+        ...(containerInput.hooksConfig?.postToolUse !== false && containerInput.hooksConfig && agentHooks ? {
           PostToolUse: [
-            { hooks: [createPostToolUseHook(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig?.skipTools)] },
+            { hooks: [agentHooks.createPostToolUseHook(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig?.skipTools, log)] },
           ],
         } : {}),
-        ...(containerInput.hooksConfig?.sessionStart !== false && containerInput.hooksConfig ? {
+        ...(containerInput.hooksConfig?.sessionStart !== false && containerInput.hooksConfig && agentHooks ? {
           SessionStart: [
-            { hooks: [createSessionStartHook(containerInput.chatJid, containerInput.groupFolder)] },
+            { hooks: [agentHooks.createSessionStartHook(containerInput.chatJid, containerInput.groupFolder, log)] },
           ],
         } : {}),
       },

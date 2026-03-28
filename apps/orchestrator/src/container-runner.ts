@@ -156,12 +156,12 @@ export function buildVolumeMounts(
     readonly: false,
   });
 
-  // Container hooks directory
-  const hooksSrc = path.join(process.cwd(), "container", "hooks");
-  if (fs.existsSync(hooksSrc)) {
+  // Container plugins (agent hooks, etc.)
+  const containerPluginsDir = path.join(process.cwd(), "container", "plugins");
+  if (fs.existsSync(containerPluginsDir)) {
     mounts.push({
-      hostPath: hooksSrc,
-      containerPath: "/app/hooks",
+      hostPath: containerPluginsDir,
+      containerPath: "/app/plugins",
       readonly: true,
     });
   }

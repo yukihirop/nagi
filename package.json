@@ -22,8 +22,7 @@
     "@nagi/channel-slack": "workspace:*",
     "@nagi/config": "workspace:*",
     "@nagi/logger": "workspace:*",
-    "@nagi/orchestrator": "workspace:*",
-    "@nagi/agent-hooks-claude-code": "workspace:*"
+    "@nagi/orchestrator": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
