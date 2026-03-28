@@ -129,11 +129,15 @@ Add to `.env`:
 DISCORD_BOT_TOKEN=...
 ```
 
-## 6. Verify Entry Point
+## 6. Create Entry Point
 
-The project root already has `entry.ts` — the entry point that registers channel plugins and starts the orchestrator. Verify it exists and contains the correct channel registrations for the channels configured in step 5.
+Copy the template to create your entry point:
 
-The entry point is at the project root (`entry.ts`), not inside any package. It imports from `@nagi/orchestrator`, `@nagi/config`, `@nagi/channel-slack`, `@nagi/channel-discord` etc.
+```bash
+cp entry.template.ts entry.ts
+```
+
+`entry.ts` is gitignored — it's your local configuration. `entry.template.ts` is tracked in git as the reference. Edit `entry.ts` to add/remove channel registrations as needed.
 
 To start nagi in development mode:
 ```bash
