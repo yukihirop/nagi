@@ -18,4 +18,4 @@ See [docs/architecture.md](docs/architecture.md)
 
 ## Troubleshooting
 
-Claude Code に聞いてください。コードベースとスキルを理解しているので、大抵のことは解決できます。
+Just ask Claude Code. It understands the codebase and skills, and can fix most issues for you.
