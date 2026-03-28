@@ -4,72 +4,7 @@ AI assistant that runs Claude Agent SDK in Docker containers and communicates th
 
 ## Architecture
 
-```mermaid
-graph TB
-    subgraph Host["Host (macOS / Linux)"]
-        Entry["entry.ts"]
-        Orch["Orchestrator"]
-        Proxy["Credential Proxy<br/>:3002"]
-        DB["SQLite DB"]
-        Queue["GroupQueue"]
-
-        subgraph Channels["Channel Plugins"]
-            Slack["Slack<br/>(Socket Mode)"]
-            Discord["Discord<br/>(Gateway)"]
-        end
-    end
-
-    subgraph Docker["Docker Container"]
-        Agent["Agent Runner<br/>Claude Agent SDK"]
-        IPC_MCP["Nagi MCP<br/>(tasks, messaging)"]
-
-        subgraph MCP["MCP Plugins"]
-            Ollama["Ollama<br/>(Local LLM)"]
-            Vercel["Vercel<br/>(Deploy)"]
-        end
-    end
-
-    User["User"] -->|message| Slack & Discord
-    Slack & Discord -->|onMessage| Orch
-    Orch -->|store| DB
-    Orch -->|enqueue| Queue
-    Queue -->|docker run| Agent
-    Agent -->|stdin JSON| IPC_MCP
-    Agent <-->|stdout markers| Orch
-    Agent --> Ollama & Vercel
-    Agent -->|API calls| Proxy
-    Proxy -->|inject credentials| API["Anthropic API"]
-    Orch -->|sendMessage| Slack & Discord
-    Entry -->|configure| Orch
-
-    style Host fill:#1a1a2e,color:#fff
-    style Docker fill:#0d1117,color:#fff
-    style Channels fill:#2d3748,color:#fff
-    style MCP fill:#2d3748,color:#fff
-```
-
-### Message Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User (Slack)
-    participant O as Orchestrator
-    participant Q as GroupQueue
-    participant C as Container
-    participant A as Anthropic API
-    participant P as Credential Proxy
-
-    U->>O: @Andy hello
-    O->>O: Store message in DB
-    O->>Q: enqueueMessageCheck
-    Q->>C: docker run nagi-agent
-    C->>P: API request (placeholder token)
-    P->>A: API request (real token)
-    A->>P: Response
-    P->>C: Response
-    C->>O: ---NAGI_OUTPUT_START---
-    O->>U: Reply via Slack
-```
+See [docs/architecture.md](docs/architecture.md) for detailed diagrams (system overview, message flow, package dependencies, plugin system).
 
 ## Quick Start
 
