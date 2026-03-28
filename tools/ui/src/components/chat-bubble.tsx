@@ -72,43 +72,44 @@ function TimelineStep({ icon, children, isLast }: { icon: string; children: Reac
 }
 
 function AssistantTimeline({ msg }: { msg: ChatMessage }) {
-  const steps: Array<{ type: "thinking" | "tool" | "text"; key: string }> = [];
+  const timelineSteps: Array<{ type: "thinking" | "tool"; key: string }> = [];
 
   if (msg.thinking) {
-    steps.push({ type: "thinking", key: "thinking" });
+    timelineSteps.push({ type: "thinking", key: "thinking" });
   }
   if (msg.toolUses) {
     for (let i = 0; i < msg.toolUses.length; i++) {
-      steps.push({ type: "tool", key: `tool-${i}` });
+      timelineSteps.push({ type: "tool", key: `tool-${i}` });
     }
   }
-  if (msg.content) {
-    steps.push({ type: "text", key: "text" });
-  }
+
+  const hasTimeline = timelineSteps.length > 0;
 
   return (
     <div>
       <span className="text-[10px] font-medium text-zinc-500 mb-1 block">Nagi</span>
-      <div className="ml-1">
-        {steps.map((step, idx) => {
-          const isLast = idx === steps.length - 1;
 
-          if (step.type === "thinking") {
-            return (
-              <TimelineStep key={step.key} icon="&#x1f4ad;" isLast={isLast}>
-                <details>
-                  <summary className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
-                    Thinking...
-                  </summary>
-                  <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-64 overflow-y-auto">
-                    {msg.thinking}
-                  </div>
-                </details>
-              </TimelineStep>
-            );
-          }
+      {/* Timeline for thinking + tools */}
+      {hasTimeline && (
+        <div className="ml-1 mb-3">
+          {timelineSteps.map((step, idx) => {
+            const isLast = idx === timelineSteps.length - 1;
 
-          if (step.type === "tool") {
+            if (step.type === "thinking") {
+              return (
+                <TimelineStep key={step.key} icon="&#x1f4ad;" isLast={isLast}>
+                  <details>
+                    <summary className="cursor-pointer text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300">
+                      Thinking...
+                    </summary>
+                    <div className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-64 overflow-y-auto">
+                      {msg.thinking}
+                    </div>
+                  </details>
+                </TimelineStep>
+              );
+            }
+
             const toolIdx = parseInt(step.key.split("-")[1]);
             const t = msg.toolUses![toolIdx];
             const summary = toolSummary(t.name, t.input);
@@ -129,17 +130,21 @@ function AssistantTimeline({ msg }: { msg: ChatMessage }) {
                 </details>
               </TimelineStep>
             );
-          }
+          })}
+        </div>
+      )}
 
-          // text
-          return (
-            <TimelineStep key={step.key} icon="&#x2705;" isLast={isLast}>
-              <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-            </TimelineStep>
-          );
-        })}
-        <div className="text-[10px] text-zinc-400 ml-9 -mt-2">{formatTime(msg.timestamp)}</div>
-      </div>
+      {/* Text response as bubble */}
+      {msg.content && (
+        <div className="rounded-xl px-3 py-2 border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 rounded-bl-sm max-w-[75%]">
+          <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+          <div className="mt-1 text-right text-[10px] text-zinc-400">{formatTime(msg.timestamp)}</div>
+        </div>
+      )}
+
+      {!msg.content && (
+        <div className="text-[10px] text-zinc-400 mt-1">{formatTime(msg.timestamp)}</div>
+      )}
     </div>
   );
 }
