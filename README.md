@@ -1,6 +1,12 @@
-# Nagi (凪)
+<p align="center">
+  <img src="assets/icon.png" alt="Nagi" width="240" />
+</p>
 
-> 面倒な作業やノイズを静かに消し去り、日常に波風の立たない「凪」のような平穏をもたらす。表立って主張するのではなく、裏で動いて平和を保ってくれる相棒。
+<h1 align="center">Nagi (凪)</h1>
+
+<p align="center">
+  <em>面倒な作業やノイズを静かに消し去り、日常に波風の立たない「凪」のような平穏をもたらす。<br/>表立って主張するのではなく、裏で動いて平和を保ってくれる相棒。</em>
+</p>
 
 AI assistant that runs Claude Agent SDK in Docker containers and communicates through messaging channels (Slack, Discord, etc.).
 
