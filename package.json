@@ -8,6 +8,7 @@
     "dev": "tsx entry.ts",
     "nagi": "tsx tools/cli/src/index.ts",
     "lint": "turbo lint",
+    "spell": "cspell \"**/*.{ts,md}\" --no-progress",
     "test": "turbo test"
   },
   "dependencies": {
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "cspell": "^9.7.0",
     "lefthook": "^2.1.4",
     "tsx": "^4.19.0",
     "turbo": "^2.3.3",

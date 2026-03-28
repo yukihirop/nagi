@@ -9,3 +9,7 @@ pre-commit:
 
     - name: test
       run: pnpm test
+
+    - name: spell
+      glob: "*.{ts,md}"
+      run: pnpm exec cspell --no-progress {staged_files}
