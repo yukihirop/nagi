@@ -48,11 +48,19 @@ docker info
   - macOS: `brew install --cask docker` then `open -a Docker`
   - Linux: `curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER`
 
-## 4. Claude Authentication
+## 4. Environment File
+
+Create `.env` from the template if it doesn't exist:
+
+```bash
+cp -n .env.example .env
+```
+
+(`-n` = no clobber — won't overwrite an existing `.env`)
+
+## 5. Claude Authentication
 
 AskUserQuestion: Claude subscription (Pro/Max) vs Anthropic API key?
-
-Create `.env` in project root if it doesn't exist.
 
 **Subscription:** Tell user to run `! claude setup-token` (the `!` prefix runs it in the current terminal session), copy the token, then add to `.env`:
 ```
@@ -64,7 +72,7 @@ CLAUDE_CODE_OAUTH_TOKEN=<token>
 ANTHROPIC_API_KEY=<key>
 ```
 
-## 5. Channel Setup
+## 6. Channel Setup
 
 AskUserQuestion (multiSelect): Which messaging channels do you want to enable?
 - Slack (Socket Mode — no public URL needed)
@@ -129,7 +137,7 @@ Add to `.env`:
 DISCORD_BOT_TOKEN=...
 ```
 
-## 6. Create Entry Point
+## 7. Create Entry Point
 
 Copy the template to create your entry point:
 
@@ -146,7 +154,7 @@ pnpm dev
 
 This runs `tsx entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
 
-## 7. Register Main Group
+## 8. Register Main Group
 
 The first group to register is "main" — it has elevated privileges (no trigger required, can register other groups).
 
@@ -184,7 +192,7 @@ Create the group directory:
 mkdir -p groups/main
 ```
 
-## 8. Verify
+## 9. Verify
 
 Restart the orchestrator and send a message in your main channel. Check logs:
 
