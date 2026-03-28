@@ -188,7 +188,7 @@ Then register the main group in the database. Create a quick script or use the D
 # Example: register a Slack channel as main
 node -e "
 const { createDatabase } = require('@nagi/db');
-const db = createDatabase({ path: 'store/messages.db' });
+const db = createDatabase({ path: '__data/store/messages.db' });
 db.groups.set('slack:C_YOUR_CHANNEL_ID', {
   name: 'Main',
   folder: 'main',

@@ -48,9 +48,10 @@ export class Orchestrator {
     this.channelRegistry = channelRegistry;
 
     // Initialize database
-    fs.mkdirSync(this.config.paths.storeDir, { recursive: true });
+    const storeDir = `${this.config.paths.dataDir}/store`;
+    fs.mkdirSync(storeDir, { recursive: true });
     this.db = createDatabase({
-      path: `${this.config.paths.storeDir}/messages.db`,
+      path: `${storeDir}/messages.db`,
     });
 
     // Initialize state

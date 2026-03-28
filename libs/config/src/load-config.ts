@@ -63,9 +63,8 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
       ipcPoll: overrides?.intervals?.ipcPoll,
     },
     paths: {
-      storeDir: path.join(projectRoot, "store"),
       groupsDir: path.join(projectRoot, "groups"),
-      dataDir: path.join(projectRoot, "data"),
+      dataDir: path.join(projectRoot, "__data"),
       mountAllowlistPath: path.join(
         homeDir,
         ".config",
