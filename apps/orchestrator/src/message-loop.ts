@@ -19,6 +19,7 @@ export interface MessageLoopDeps {
   channels: Channel[];
   allowlist: SenderAllowlistConfig;
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  mountAllowlist?: import("@nagi/types").MountAllowlist | null;
 }
 
 export function startMessageLoop(deps: MessageLoopDeps): { stop: () => void } {
@@ -33,6 +34,7 @@ export function startMessageLoop(deps: MessageLoopDeps): { stop: () => void } {
     queue,
     channels,
     mcpPlugins: deps.mcpPlugins,
+    mountAllowlist: deps.mountAllowlist,
   };
 
   // Set up queue's message processor

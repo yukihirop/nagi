@@ -55,6 +55,18 @@ if (vercelEnv.VERCEL_API_TOKEN) {
   });
 }
 
+// Mount security — configure which host directories containers can access
+// Uncomment and customize to enable additional mounts:
+//
+// orchestrator.setMountAllowlist({
+//   allowedRoots: [
+//     { path: "~/projects", allowReadWrite: true, description: "Dev projects" },
+//     { path: "~/Documents", allowReadWrite: false, description: "Read-only docs" },
+//   ],
+//   blockedPatterns: ["password", "secret"],
+//   nonMainReadOnly: true,
+// });
+
 process.on("SIGTERM", async () => {
   await orchestrator.shutdown();
   process.exit(0);

@@ -26,3 +26,19 @@ export const RegisteredGroupSchema = z.object({
 });
 
 export type RegisteredGroup = z.infer<typeof RegisteredGroupSchema>;
+
+export const AllowedRootSchema = z.object({
+  path: z.string(),
+  allowReadWrite: z.boolean(),
+  description: z.string().optional(),
+});
+
+export type AllowedRoot = z.infer<typeof AllowedRootSchema>;
+
+export const MountAllowlistSchema = z.object({
+  allowedRoots: z.array(AllowedRootSchema),
+  blockedPatterns: z.array(z.string()),
+  nonMainReadOnly: z.boolean(),
+});
+
+export type MountAllowlist = z.infer<typeof MountAllowlistSchema>;

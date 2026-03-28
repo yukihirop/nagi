@@ -9,7 +9,8 @@ import path from "node:path";
 import { createLogger } from "@nagi/logger";
 import { readEnvFile, type ResolvedConfig } from "@nagi/config";
 import { detectAuthMode } from "@nagi/credential-proxy";
-import type { RegisteredGroup } from "@nagi/types";
+import type { RegisteredGroup, MountAllowlist } from "@nagi/types";
+import { validateAdditionalMounts } from "@nagi/auth";
 
 import {
   CONTAINER_HOST_GATEWAY,
@@ -56,6 +57,7 @@ export function buildVolumeMounts(
   group: RegisteredGroup,
   isMain: boolean,
   config: ResolvedConfig,
+  mountAllowlist?: MountAllowlist | null,
 ): VolumeMount[] {
   const mounts: VolumeMount[] = [];
   const projectRoot = process.cwd();
@@ -175,6 +177,22 @@ export function buildVolumeMounts(
     readonly: false,
   });
 
+  // Validate and add additional mounts from group config
+  if (group.containerConfig?.additionalMounts && mountAllowlist) {
+    const validatedMounts = validateAdditionalMounts(
+      group.containerConfig.additionalMounts,
+      mountAllowlist,
+      group.name,
+      isMain,
+    );
+    mounts.push(...validatedMounts);
+  } else if (group.containerConfig?.additionalMounts && !mountAllowlist) {
+    logger.warn(
+      { group: group.name, mountCount: group.containerConfig.additionalMounts.length },
+      "Additional mounts BLOCKED — no mount allowlist configured. Use orchestrator.setMountAllowlist() in entry.ts",
+    );
+  }
+
   return mounts;
 }
 
@@ -240,13 +258,14 @@ export async function runContainerAgent(
   config: ResolvedConfig,
   onProcess: (proc: ChildProcess, containerName: string) => void,
   onOutput?: (output: ContainerOutput) => Promise<void>,
+  mountAllowlist?: MountAllowlist | null,
 ): Promise<ContainerOutput> {
   const startTime = Date.now();
 
   const groupDir = resolveGroupFolderPath(config.paths.groupsDir, group.folder);
   fs.mkdirSync(groupDir, { recursive: true });
 
-  const mounts = buildVolumeMounts(group, input.isMain, config);
+  const mounts = buildVolumeMounts(group, input.isMain, config, mountAllowlist);
   const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, "-");
   const containerName = `nagi-${safeName}-${Date.now()}`;
   const containerArgs = buildContainerArgs(mounts, containerName, config);

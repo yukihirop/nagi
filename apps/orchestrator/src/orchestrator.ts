@@ -10,6 +10,7 @@ import { GroupQueue } from "@nagi/queue";
 import { TaskScheduler } from "@nagi/scheduler";
 import { IpcWatcher } from "@nagi/ipc";
 import { loadSenderAllowlist, type SenderAllowlistConfig } from "@nagi/auth";
+import type { MountAllowlist } from "@nagi/types";
 import { startCredentialProxy } from "@nagi/credential-proxy";
 import type { NewMessage } from "@nagi/types";
 
@@ -43,6 +44,7 @@ export class Orchestrator {
   private queue: GroupQueue;
   private channels: Channel[] = [];
   private mcpPlugins = new Map<string, McpPluginConfig>();
+  private mountAllowlist: MountAllowlist | null = null;
   private allowlist: SenderAllowlistConfig;
   private scheduler: TaskScheduler | null = null;
   private ipcWatcher: IpcWatcher | null = null;
@@ -88,6 +90,18 @@ export class Orchestrator {
       entryPoint: config.entryPoint,
       env: config.env,
     }));
+  }
+
+  setMountAllowlist(allowlist: MountAllowlist): void {
+    this.mountAllowlist = allowlist;
+    logger.info(
+      { allowedRoots: allowlist.allowedRoots.length, blockedPatterns: allowlist.blockedPatterns.length },
+      "Mount allowlist configured",
+    );
+  }
+
+  getMountAllowlist(): MountAllowlist | null {
+    return this.mountAllowlist;
   }
 
   /**
@@ -262,6 +276,7 @@ export class Orchestrator {
       channels: this.channels,
       allowlist: this.allowlist,
       mcpPlugins: this.getMcpPlugins(),
+      mountAllowlist: this.mountAllowlist,
     };
     this.messageLoop = startMessageLoop(loopDeps);
 

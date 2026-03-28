@@ -28,6 +28,7 @@ export interface AgentExecutorDeps {
   queue: GroupQueue;
   channels: Channel[];
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  mountAllowlist?: import("@nagi/types").MountAllowlist | null;
 }
 
 export async function runAgent(
@@ -114,6 +115,7 @@ export async function runAgent(
           queue.notifyIdle(groupJid);
         }
       },
+      deps.mountAllowlist,
     );
 
     if (output.newSessionId) {

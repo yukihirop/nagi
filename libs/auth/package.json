@@ -17,7 +17,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@nagi/logger": "workspace:*"
+    "@nagi/logger": "workspace:*",
+    "@nagi/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

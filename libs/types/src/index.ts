@@ -7,11 +7,15 @@ export {
   AdditionalMountSchema,
   ContainerConfigSchema,
   RegisteredGroupSchema,
+  AllowedRootSchema,
+  MountAllowlistSchema,
 } from "./group.js";
 export type {
   AdditionalMount,
   ContainerConfig,
   RegisteredGroup,
+  AllowedRoot,
+  MountAllowlist,
 } from "./group.js";
 
 // Task types
