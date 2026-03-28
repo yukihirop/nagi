@@ -9,7 +9,10 @@
     "nagi": "tsx tools/cli/src/index.ts",
     "lint": "turbo lint",
     "spell": "cspell \"**/*.{ts,md}\" --no-progress",
-    "test": "turbo test"
+    "test": "turbo test",
+    "ui": "pnpm --filter @nagi/ui dev",
+    "ui:build": "pnpm --filter @nagi/ui build",
+    "ui:preview": "pnpm --filter @nagi/ui preview"
   },
   "dependencies": {
     "@nagi/channel-core": "workspace:*",
