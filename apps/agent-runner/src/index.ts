@@ -573,7 +573,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const sdkEnv: Record<string, string | undefined> = { ...process.env };
+  const sdkEnv: Record<string, string | undefined> = {
+    ...process.env,
+    NAGI_CHAT_JID: containerInput.chatJid,
+    NAGI_GROUP_FOLDER: containerInput.groupFolder,
+  };
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const mcpServerPath = path.join(__dirname, "ipc-mcp-stdio.js");

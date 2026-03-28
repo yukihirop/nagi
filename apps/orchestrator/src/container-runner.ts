@@ -109,23 +109,29 @@ export function buildVolumeMounts(
     ".claude",
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
+  // Write settings.json with env + hooks (overwrite each time to keep hooks in sync)
   const settingsFile = path.join(groupSessionsDir, "settings.json");
-  if (!fs.existsSync(settingsFile)) {
-    fs.writeFileSync(
-      settingsFile,
-      JSON.stringify(
+  const settingsData = {
+    env: {
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
+      CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
+    },
+    hooks: {
+      PostToolUse: [
         {
-          env: {
-            CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-            CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
-            CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
-          },
+          matcher: "",
+          hooks: [
+            {
+              type: "command",
+              command: "node /app/hooks/post-tool-use.mjs",
+            },
+          ],
         },
-        null,
-        2,
-      ) + "\n",
-    );
-  }
+      ],
+    },
+  };
+  fs.writeFileSync(settingsFile, JSON.stringify(settingsData, null, 2) + "\n");
 
   // Sync skills
   const skillsSrc = path.join(process.cwd(), "container", "skills");
@@ -143,6 +149,16 @@ export function buildVolumeMounts(
     containerPath: "/home/node/.claude",
     readonly: false,
   });
+
+  // Container hooks directory
+  const hooksSrc = path.join(process.cwd(), "container", "hooks");
+  if (fs.existsSync(hooksSrc)) {
+    mounts.push({
+      hostPath: hooksSrc,
+      containerPath: "/app/hooks",
+      readonly: true,
+    });
+  }
 
   // Per-group IPC namespace
   const groupIpcDir = resolveGroupIpcPath(config.paths.dataDir, group.folder);
