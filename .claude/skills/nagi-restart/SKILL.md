@@ -16,7 +16,7 @@ Then verify it's running:
 ```bash
 sleep 2
 launchctl list | grep com.nagi
-tail -5 logs/nagi.log
+tail -5 __data/logs/nagi.log
 ```
 
 Expected: PID is a number (not `-`), exit code is `0`, and logs show `Orchestrator started`.

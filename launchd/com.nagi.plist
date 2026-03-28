@@ -24,8 +24,8 @@
         <string>/Users/yukihirop</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>/Users/yukihirop/JavaScriptProjects/nagi/logs/nagi.log</string>
+    <string>/Users/yukihirop/JavaScriptProjects/nagi/__data/logs/nagi.log</string>
     <key>StandardErrorPath</key>
-    <string>/Users/yukihirop/JavaScriptProjects/nagi/logs/nagi.error.log</string>
+    <string>/Users/yukihirop/JavaScriptProjects/nagi/__data/logs/nagi.error.log</string>
 </dict>
 </plist>

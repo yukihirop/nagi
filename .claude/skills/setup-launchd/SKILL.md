@@ -77,9 +77,9 @@ Update `launchd/com.nagi.plist` with the detected paths:
         <string>HOME</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>PROJECT_ROOT/logs/nagi.log</string>
+    <string>PROJECT_ROOT/__data/logs/nagi.log</string>
     <key>StandardErrorPath</key>
-    <string>PROJECT_ROOT/logs/nagi.error.log</string>
+    <string>PROJECT_ROOT/__data/logs/nagi.error.log</string>
 </dict>
 </plist>
 ```
@@ -119,7 +119,7 @@ launchctl list | grep com.nagi
 Expected output: `PID  0  com.nagi` (PID is a number, exit code is 0).
 
 If PID is `-` (not running):
-1. Check error log: `cat logs/nagi.error.log`
+1. Check error log: `cat __data/logs/nagi.error.log`
 2. Common issues:
    - Node path wrong → re-run step 1
    - `entry.ts` missing → run `/update-entry`
@@ -129,7 +129,7 @@ If PID is `-` (not running):
 ### Confirm Slack connection
 
 ```bash
-tail -5 logs/nagi.log
+tail -5 __data/logs/nagi.log
 ```
 
 Look for: `Connected to Slack` and `Orchestrator started`.
@@ -140,7 +140,7 @@ Tell the user these commands:
 
 ```bash
 # View logs
-tail -f logs/nagi.log
+tail -f __data/logs/nagi.log
 
 # Restart
 launchctl kickstart -k gui/$(id -u)/com.nagi
@@ -159,7 +159,7 @@ launchctl list | grep com.nagi
 
 ### Service keeps restarting (KeepAlive loop)
 
-Check `logs/nagi.error.log` for the crash reason. Common:
+Check `__data/logs/nagi.error.log` for the crash reason. Common:
 - Port already in use → another instance running. Kill it: `pkill -f "tsx entry.ts"`
 - Missing `.env` → create `.env` with required tokens
 - Docker not running → service starts but containers fail
