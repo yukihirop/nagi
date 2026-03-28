@@ -1,3 +1,4 @@
+import Markdown from "react-markdown";
 import type { ChatMessage } from "../types.ts";
 
 function formatTime(ts: string): string {
@@ -46,7 +47,9 @@ function UserBubble({ msg }: { msg: ChatMessage }) {
       <div className="flex flex-col gap-1 max-w-[75%] items-end">
         <span className="text-[10px] font-medium text-indigo-500">You</span>
         <div className="rounded-xl px-3 py-2 bg-indigo-500 text-white rounded-br-sm">
-          <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-headings:my-2">
+            <Markdown>{msg.content}</Markdown>
+          </div>
           <div className="mt-1 text-right text-[10px] text-white/70">{formatTime(msg.timestamp)}</div>
         </div>
       </div>
@@ -146,7 +149,9 @@ function AssistantTimeline({ msg }: { msg: ChatMessage }) {
       {/* Text response as bubble */}
       {msg.content && (
         <div className="rounded-xl px-3 py-2 border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 rounded-bl-sm max-w-[75%]">
-          <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+          <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-headings:my-2">
+            <Markdown>{msg.content}</Markdown>
+          </div>
           <div className="mt-1 text-right text-[10px] text-zinc-400">{formatTime(msg.timestamp)}</div>
         </div>
       )}
