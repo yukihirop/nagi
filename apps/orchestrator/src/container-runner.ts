@@ -38,6 +38,7 @@ export interface ContainerInput {
   isScheduledTask?: boolean;
   assistantName?: string;
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  hooksConfig?: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] };
 }
 
 export interface ContainerOutput {
@@ -109,23 +110,34 @@ export function buildVolumeMounts(
     ".claude",
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
+  // Merge base settings with group-specific settings.json
   const settingsFile = path.join(groupSessionsDir, "settings.json");
-  if (!fs.existsSync(settingsFile)) {
-    fs.writeFileSync(
-      settingsFile,
-      JSON.stringify(
-        {
-          env: {
-            CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-            CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
-            CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
-          },
-        },
-        null,
-        2,
-      ) + "\n",
-    );
+  const baseSettings: Record<string, unknown> = {
+    env: {
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
+      CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
+    },
+  };
+  // Load group settings.json if it exists (e.g. groups/main/settings.json)
+  const rootDir = path.resolve(config.paths.dataDir, "..");
+  const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
+  if (fs.existsSync(groupSettingsFile)) {
+    try {
+      const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
+      // Merge env
+      if (typeof groupSettings.env === "object" && groupSettings.env !== null) {
+        baseSettings.env = { ...(baseSettings.env as Record<string, string>), ...(groupSettings.env as Record<string, string>) };
+      }
+      // Use group hooks if defined
+      if (groupSettings.hooks) {
+        baseSettings.hooks = groupSettings.hooks;
+      }
+    } catch {
+      logger.warn({ path: groupSettingsFile }, "Failed to parse group settings.json");
+    }
   }
+  fs.writeFileSync(settingsFile, JSON.stringify(baseSettings, null, 2) + "\n");
 
   // Sync skills
   const skillsSrc = path.join(process.cwd(), "container", "skills");
@@ -143,6 +155,16 @@ export function buildVolumeMounts(
     containerPath: "/home/node/.claude",
     readonly: false,
   });
+
+  // Container plugins (agent hooks, etc.)
+  const containerPluginsDir = path.join(process.cwd(), "container", "plugins");
+  if (fs.existsSync(containerPluginsDir)) {
+    mounts.push({
+      hostPath: containerPluginsDir,
+      containerPath: "/app/plugins",
+      readonly: true,
+    });
+  }
 
   // Per-group IPC namespace
   const groupIpcDir = resolveGroupIpcPath(config.paths.dataDir, group.folder);
@@ -168,8 +190,13 @@ export function buildVolumeMounts(
     group.folder,
     "agent-runner-src",
   );
-  if (!fs.existsSync(groupAgentRunnerDir) && fs.existsSync(agentRunnerSrc)) {
+  if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
+  }
+  // Copy container/entry.ts into agent-runner source
+  const containerEntryPath = path.join(process.cwd(), "container", "entry.ts");
+  if (fs.existsSync(containerEntryPath)) {
+    fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
   }
   mounts.push({
     hostPath: groupAgentRunnerDir,

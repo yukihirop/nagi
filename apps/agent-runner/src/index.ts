@@ -31,6 +31,7 @@ interface ContainerInput {
   isScheduledTask?: boolean;
   assistantName?: string;
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  hooksConfig?: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] };
 }
 
 interface ContainerOutput {
@@ -152,6 +153,20 @@ function getSessionSummary(
   }
 
   return null;
+}
+
+export interface ContainerPlugin {
+  name: string;
+  createHooks: (
+    chatJid: string,
+    groupFolder: string,
+    hooksConfig: ContainerInput["hooksConfig"],
+    log: (msg: string) => void,
+  ) => Record<string, Array<{ hooks: HookCallback[] }>>;
+}
+
+export interface RunConfig {
+  containerPlugins?: ContainerPlugin[];
 }
 
 function createPreCompactHook(assistantName?: string): HookCallback {
@@ -363,6 +378,7 @@ async function runQuery(
   containerInput: ContainerInput,
   sdkEnv: Record<string, string | undefined>,
   resumeAt?: string,
+  containerPlugins?: ContainerPlugin[],
 ): Promise<{
   newSessionId?: string;
   lastAssistantUuid?: string;
@@ -415,6 +431,13 @@ async function runQuery(
   }
   if (extraDirs.length > 0) {
     log(`Additional directories: ${extraDirs.join(", ")}`);
+  }
+
+  // Build plugin hooks
+  const pluginHooks: Record<string, Array<{ hooks: HookCallback[] }>> = {};
+  for (const plugin of containerPlugins ?? []) {
+    const hooks = plugin.createHooks(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig, log);
+    Object.assign(pluginHooks, hooks);
   }
 
   for await (const message of query({
@@ -484,6 +507,7 @@ async function runQuery(
         PreCompact: [
           { hooks: [createPreCompactHook(containerInput.assistantName)] },
         ],
+        ...pluginHooks,
       },
     },
   })) {
@@ -552,7 +576,7 @@ async function runQuery(
   return { newSessionId, lastAssistantUuid, closedDuringQuery };
 }
 
-async function main(): Promise<void> {
+export async function run(config?: RunConfig): Promise<void> {
   let containerInput: ContainerInput;
 
   try {
@@ -573,7 +597,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const sdkEnv: Record<string, string | undefined> = { ...process.env };
+  const sdkEnv: Record<string, string | undefined> = {
+    ...process.env,
+    NAGI_CHAT_JID: containerInput.chatJid,
+    NAGI_GROUP_FOLDER: containerInput.groupFolder,
+  };
 
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const mcpServerPath = path.join(__dirname, "ipc-mcp-stdio.js");
@@ -613,6 +641,7 @@ async function main(): Promise<void> {
         containerInput,
         sdkEnv,
         resumeAt,
+        config?.containerPlugins,
       );
       if (queryResult.newSessionId) {
         sessionId = queryResult.newSessionId;
@@ -656,4 +685,4 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+run();

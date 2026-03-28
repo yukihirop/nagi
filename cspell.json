@@ -47,7 +47,8 @@
     "urlopen",
     "oneline",
     "Hikakin",
-    "Noto"
+    "Noto",
+    "usermod"
   ],
   "ignorePaths": [
     "node_modules",

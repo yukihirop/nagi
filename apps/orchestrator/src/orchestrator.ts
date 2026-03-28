@@ -29,6 +29,12 @@ import {
 
 const logger = createLogger({ name: "orchestrator" });
 
+export interface HooksConfig {
+  postToolUse?: boolean;
+  sessionStart?: boolean;
+  skipTools?: string[];
+}
+
 export interface McpPluginConfig {
   /** Path to the MCP server entry point inside the container */
   entryPoint: string;
@@ -44,6 +50,7 @@ export class Orchestrator {
   private queue: GroupQueue;
   private channels: Channel[] = [];
   private mcpPlugins = new Map<string, McpPluginConfig>();
+  private hooksConfig: HooksConfig | null = null;
   private mountAllowlist: MountAllowlist | null = null;
   private allowlist: SenderAllowlistConfig;
   private scheduler: TaskScheduler | null = null;
@@ -82,6 +89,15 @@ export class Orchestrator {
   registerMcpPlugin(name: string, config: McpPluginConfig): void {
     this.mcpPlugins.set(name, config);
     logger.info({ name, entryPoint: config.entryPoint }, "MCP plugin registered");
+  }
+
+  registerHooksPlugin(config: HooksConfig): void {
+    this.hooksConfig = config;
+    logger.info(config, "Hooks plugin registered");
+  }
+
+  getHooksConfig(): HooksConfig | null {
+    return this.hooksConfig;
   }
 
   getMcpPlugins(): Array<{ name: string; entryPoint: string; env?: Record<string, string> }> {
@@ -276,6 +292,7 @@ export class Orchestrator {
       channels: this.channels,
       allowlist: this.allowlist,
       mcpPlugins: this.getMcpPlugins(),
+      hooksConfig: this.hooksConfig,
       mountAllowlist: this.mountAllowlist,
     };
     this.messageLoop = startMessageLoop(loopDeps);

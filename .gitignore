@@ -3,6 +3,7 @@ dist
 .turbo
 nanoclaw
 entry.ts
+container/entry.ts
 .env
 __data
 openclaw
