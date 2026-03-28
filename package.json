@@ -12,7 +12,8 @@
     "test": "turbo test",
     "ui": "pnpm --filter @nagi/ui dev",
     "ui:build": "pnpm --filter @nagi/ui build",
-    "ui:preview": "pnpm --filter @nagi/ui preview"
+    "ui:preview": "pnpm --filter @nagi/ui preview",
+    "ui:server": "pnpm --filter @nagi/ui-server dev"
   },
   "dependencies": {
     "@nagi/channel-core": "workspace:*",

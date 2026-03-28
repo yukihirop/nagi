@@ -38,12 +38,12 @@ async function loadInitialState(app: NagiApp): Promise<void> {
     const state = await client.request<{
       groups: number;
       channels: number;
-      queueDepth: number;
       tasks: number;
+      activeTasks: number;
     }>("state.overview");
     app.groupCount = state.groups;
     app.channelCount = state.channels;
-    app.queueDepth = state.queueDepth;
+    app.queueDepth = 0;
     app.taskCount = state.tasks;
   } catch {
     // orchestrator not yet available — will retry on reconnect
@@ -57,6 +57,8 @@ function handleEvent(
 ): void {
   switch (event) {
     case "state.updated":
+    case "groups.changed":
+    case "tasks.changed":
       loadInitialState(app);
       break;
   }
