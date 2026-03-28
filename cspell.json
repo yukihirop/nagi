@@ -35,7 +35,19 @@
     "unconfigured",
     "unrequested",
     "unstub",
-    "reimplementation"
+    "reimplementation",
+    "larr",
+    "dblclick",
+    "networkidle",
+    "matplotlib",
+    "numpy",
+    "nbconvert",
+    "inplace",
+    "strikethrough",
+    "urlopen",
+    "oneline",
+    "Hikakin",
+    "Noto"
   ],
   "ignorePaths": [
     "node_modules",
@@ -43,6 +55,7 @@
     ".turbo",
     "__data",
     "nanoclaw",
+    "openclaw",
     "pnpm-lock.yaml",
     "container/skills/ui-ux-pro-max/**",
     "*.csv"

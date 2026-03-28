@@ -29,6 +29,23 @@ pnpm nagi "今日の天気を教えて"
 pnpm nagi --list
 ```
 
+## Dashboard UI
+
+Web-based dashboard for monitoring and reviewing agent activity:
+
+```bash
+pnpm ui:dev    # Start SPA (port 5174) + API server (port 3001)
+```
+
+- **Overview** — Stat cards for Groups, Channels, Tasks, Sessions, and Logs
+- **Groups / Channels** — Registered groups and channel connection status
+- **Sessions** — Browse agent conversation logs in a chat UI with expandable thinking and tool use timelines
+- **Tasks** — Scheduled task list
+- **Logs** — Container and task execution logs with type filter
+- **Settings** — Dark / light theme toggle
+
+Tech: React 19 + Tailwind CSS 4 + Vite + Hono
+
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md)
