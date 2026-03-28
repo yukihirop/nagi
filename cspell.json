@@ -36,7 +36,18 @@
     "unrequested",
     "unstub",
     "reimplementation",
-    "larr"
+    "larr",
+    "dblclick",
+    "networkidle",
+    "matplotlib",
+    "numpy",
+    "nbconvert",
+    "inplace",
+    "strikethrough",
+    "urlopen",
+    "oneline",
+    "Hikakin",
+    "Noto"
   ],
   "ignorePaths": [
     "node_modules",
