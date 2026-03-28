@@ -15,3 +15,7 @@ Open [Claude Code](https://claude.ai/code) in this directory and run:
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md)
+
+## Troubleshooting
+
+Claude Code に聞いてください。コードベースとスキルを理解しているので、大抵のことは解決できます。
