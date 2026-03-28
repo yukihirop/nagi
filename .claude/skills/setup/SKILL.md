@@ -152,15 +152,19 @@ Add to `.env`:
 DISCORD_BOT_TOKEN=...
 ```
 
-## 7. Create Entry Point
+## 7. Create Entry Points
 
-Copy the template to create your entry point:
+Copy the templates to create your local entry points:
 
 ```bash
-cp entry.template.ts entry.ts
+cp -n entry.template.ts entry.ts
+cp -n container/entry.template.ts container/entry.ts
 ```
 
-`entry.ts` is gitignored — it's your local configuration. `entry.template.ts` is tracked in git as the reference. Edit `entry.ts` to add/remove channel registrations as needed.
+Both are gitignored — they're your local configuration. The `.template.ts` files are tracked in git as references.
+
+- `entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
+- `container/entry.ts` — container-side agent config (container plugins like agent-hooks)
 
 To start nagi in development mode:
 ```bash
@@ -207,12 +211,22 @@ Create the group directory:
 mkdir -p __data/groups/main
 ```
 
-## 9. Verify
+## 9. Dashboard UI (Optional)
+
+Start the web dashboard to monitor agent activity:
+
+```bash
+pnpm ui:dev    # SPA (port 5174) + API server (port 3001)
+```
+
+Features: Overview stats, Groups, Channels, Sessions (chat viewer), Tasks, Logs, Settings.
+
+## 10. Verify
 
 Restart the orchestrator and send a message in your main channel. Check logs:
 
 ```bash
-pnpm --filter @nagi/orchestrator dev
+pnpm dev
 ```
 
 Expected behavior:
