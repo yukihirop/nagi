@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nagi Dashboard</title>
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>
+      (function () {
+        var MODES = { system: 1, light: 1, dark: 1 };
+        try {
+          var raw = localStorage.getItem("nagi.ui.settings.v1");
+          if (!raw) return;
+          var s = JSON.parse(raw);
+          var m = s && s.themeMode;
+          if (typeof m !== "string") m = "";
+          var mode = MODES[m] ? m : "system";
+          if (mode === "system") {
+            mode = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          }
+          document.documentElement.setAttribute("data-theme", mode);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <nagi-app></nagi-app>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

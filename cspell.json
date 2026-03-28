@@ -43,6 +43,7 @@
     ".turbo",
     "__data",
     "nanoclaw",
+    "openclaw",
     "pnpm-lock.yaml",
     "container/skills/ui-ux-pro-max/**",
     "*.csv"

@@ -1,0 +1,24 @@
+@media (max-width: 768px) {
+  nagi-app {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-sidebar {
+    display: none;
+  }
+
+  .nav-sidebar.open {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--nav-width);
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+  }
+
+  .main-body {
+    padding: var(--spacing-lg);
+  }
+}
