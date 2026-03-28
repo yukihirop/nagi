@@ -34,6 +34,7 @@ export function App() {
     return saved === "light" || saved === "dark" ? saved : "system";
   });
   const [connected, setConnected] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const [overview, setOverview] = useState<OverviewData | null>(null);
   const [groups, setGroups] = useState<Record<string, GroupInfo>>({});
@@ -122,7 +123,7 @@ export function App() {
 
   return (
     <div className="flex h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
-      <NavSidebar tab={tab} onTabChange={setTab} />
+      <NavSidebar tab={tab} collapsed={sidebarCollapsed} onTabChange={setTab} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
       <main className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-12 shrink-0 items-center justify-between border-b border-zinc-200 bg-zinc-50 px-6 dark:border-zinc-800 dark:bg-zinc-900">
           <h1 className="text-base font-semibold">{TITLES[tab]}</h1>
