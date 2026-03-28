@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import path from "node:path";
 import type { Server } from "node:http";
 
 import { createLogger } from "@nagi/logger";
@@ -89,7 +90,39 @@ export class Orchestrator {
     }));
   }
 
+  /**
+   * Copy group template files (e.g. CLAUDE.md) from groups/ to __data/groups/.
+   * Only copies files that don't already exist in the runtime directory
+   * to preserve user customizations.
+   */
+  private syncGroupTemplates(): void {
+    const templateDir = path.join(process.cwd(), "groups");
+    const runtimeDir = this.config.paths.groupsDir;
+
+    if (!fs.existsSync(templateDir)) return;
+
+    for (const groupFolder of fs.readdirSync(templateDir)) {
+      const srcDir = path.join(templateDir, groupFolder);
+      if (!fs.statSync(srcDir).isDirectory()) continue;
+
+      const dstDir = path.join(runtimeDir, groupFolder);
+      fs.mkdirSync(dstDir, { recursive: true });
+
+      for (const file of fs.readdirSync(srcDir)) {
+        const srcFile = path.join(srcDir, file);
+        const dstFile = path.join(dstDir, file);
+        if (fs.statSync(srcFile).isFile() && !fs.existsSync(dstFile)) {
+          fs.copyFileSync(srcFile, dstFile);
+          logger.info({ file: `${groupFolder}/${file}` }, "Group template synced");
+        }
+      }
+    }
+  }
+
   async start(): Promise<void> {
+    // Sync group templates to runtime data directory
+    this.syncGroupTemplates();
+
     // Validate container runtime
     ensureContainerRuntimeRunning();
     cleanupOrphans();
