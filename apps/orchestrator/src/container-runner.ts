@@ -193,6 +193,11 @@ export function buildVolumeMounts(
   if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
+  // Copy container/entry.ts into agent-runner source
+  const containerEntryPath = path.join(process.cwd(), "container", "entry.ts");
+  if (fs.existsSync(containerEntryPath)) {
+    fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
+  }
   mounts.push({
     hostPath: groupAgentRunnerDir,
     containerPath: "/app/src",

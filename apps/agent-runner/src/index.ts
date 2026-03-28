@@ -155,17 +155,18 @@ function getSessionSummary(
   return null;
 }
 
-// Agent hooks are loaded dynamically from /app/plugins/agent-hooks-claude-code/index.mjs
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let agentHooks: any = null;
+export interface ContainerPlugin {
+  name: string;
+  createHooks: (
+    chatJid: string,
+    groupFolder: string,
+    hooksConfig: ContainerInput["hooksConfig"],
+    log: (msg: string) => void,
+  ) => Record<string, Array<{ hooks: HookCallback[] }>>;
+}
 
-async function loadAgentHooks() {
-  try {
-    const pluginPath = "/app/plugins/agent-hooks-claude-code/index.mjs";
-    agentHooks = await import(/* webpackIgnore: true */ pluginPath);
-  } catch {
-    log("Agent hooks plugin not found, skipping");
-  }
+export interface RunConfig {
+  containerPlugins?: ContainerPlugin[];
 }
 
 function createPreCompactHook(assistantName?: string): HookCallback {
@@ -377,6 +378,7 @@ async function runQuery(
   containerInput: ContainerInput,
   sdkEnv: Record<string, string | undefined>,
   resumeAt?: string,
+  containerPlugins?: ContainerPlugin[],
 ): Promise<{
   newSessionId?: string;
   lastAssistantUuid?: string;
@@ -431,7 +433,12 @@ async function runQuery(
     log(`Additional directories: ${extraDirs.join(", ")}`);
   }
 
-  await loadAgentHooks();
+  // Build plugin hooks
+  const pluginHooks: Record<string, Array<{ hooks: HookCallback[] }>> = {};
+  for (const plugin of containerPlugins ?? []) {
+    const hooks = plugin.createHooks(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig, log);
+    Object.assign(pluginHooks, hooks);
+  }
 
   for await (const message of query({
     prompt: stream,
@@ -500,16 +507,7 @@ async function runQuery(
         PreCompact: [
           { hooks: [createPreCompactHook(containerInput.assistantName)] },
         ],
-        ...(containerInput.hooksConfig?.postToolUse !== false && containerInput.hooksConfig && agentHooks ? {
-          PostToolUse: [
-            { hooks: [agentHooks.createPostToolUseHook(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig?.skipTools, log)] },
-          ],
-        } : {}),
-        ...(containerInput.hooksConfig?.sessionStart !== false && containerInput.hooksConfig && agentHooks ? {
-          SessionStart: [
-            { hooks: [agentHooks.createSessionStartHook(containerInput.chatJid, containerInput.groupFolder, log)] },
-          ],
-        } : {}),
+        ...pluginHooks,
       },
     },
   })) {
@@ -578,7 +576,7 @@ async function runQuery(
   return { newSessionId, lastAssistantUuid, closedDuringQuery };
 }
 
-async function main(): Promise<void> {
+export async function run(config?: RunConfig): Promise<void> {
   let containerInput: ContainerInput;
 
   try {
@@ -643,6 +641,7 @@ async function main(): Promise<void> {
         containerInput,
         sdkEnv,
         resumeAt,
+        config?.containerPlugins,
       );
       if (queryResult.newSessionId) {
         sessionId = queryResult.newSessionId;
@@ -686,4 +685,4 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+run();
