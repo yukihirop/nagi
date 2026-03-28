@@ -92,8 +92,8 @@ function AssistantTimeline({ msg }: { msg: ChatMessage }) {
       {/* Timeline for thinking + tools — collapsible */}
       {hasTimeline && (
         <details className="mb-3 group">
-          <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1.5 mb-2">
-            <span className="text-zinc-400">&#x25B6;</span>
+          <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1.5 mb-2 list-none [&::-webkit-details-marker]:hidden">
+            <span className="text-zinc-400 transition-transform group-open:rotate-90 text-[10px]">&#x25B6;</span>
             {msg.toolUses && msg.toolUses.length > 0
               ? `${msg.toolUses.length} tool${msg.toolUses.length > 1 ? "s" : ""} used`
               : "Thinking..."}
