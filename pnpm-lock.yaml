@@ -59,6 +59,55 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/node@22.19.15)(tsx@4.21.0)
 
+  apps/orchestrator:
+    dependencies:
+      '@nagi/auth':
+        specifier: workspace:*
+        version: link:../../libs/auth
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:../../libs/channel-core
+      '@nagi/config':
+        specifier: workspace:*
+        version: link:../../libs/config
+      '@nagi/credential-proxy':
+        specifier: workspace:*
+        version: link:../credential-proxy
+      '@nagi/db':
+        specifier: workspace:*
+        version: link:../../libs/db
+      '@nagi/ipc':
+        specifier: workspace:*
+        version: link:../../libs/ipc
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../libs/logger
+      '@nagi/queue':
+        specifier: workspace:*
+        version: link:../../libs/queue
+      '@nagi/router':
+        specifier: workspace:*
+        version: link:../../libs/router
+      '@nagi/scheduler':
+        specifier: workspace:*
+        version: link:../../libs/scheduler
+      '@nagi/types':
+        specifier: workspace:*
+        version: link:../../libs/types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/node@22.19.15)(tsx@4.21.0)
+
   libs/auth:
     dependencies:
       '@nagi/logger':

@@ -1,0 +1,32 @@
+{
+  "name": "@nagi/orchestrator",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nagi/types": "workspace:*",
+    "@nagi/logger": "workspace:*",
+    "@nagi/config": "workspace:*",
+    "@nagi/channel-core": "workspace:*",
+    "@nagi/db": "workspace:*",
+    "@nagi/router": "workspace:*",
+    "@nagi/auth": "workspace:*",
+    "@nagi/queue": "workspace:*",
+    "@nagi/scheduler": "workspace:*",
+    "@nagi/ipc": "workspace:*",
+    "@nagi/credential-proxy": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.4"
+  }
+}
