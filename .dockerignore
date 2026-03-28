@@ -1,0 +1,7 @@
+node_modules
+dist
+.turbo
+nanoclaw
+.git
+.env
+*.log

@@ -48,6 +48,21 @@ docker info
   - macOS: `brew install --cask docker` then `open -a Docker`
   - Linux: `curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER`
 
+### 3b. Build Container Image
+
+Build the `nagi-agent:latest` Docker image:
+
+```bash
+./container/build.sh
+```
+
+This builds the agent container with Chromium, Python/Jupyter, Claude Agent SDK, and MCP servers. Takes a few minutes on first build (cached afterwards).
+
+Verify:
+```bash
+docker images nagi-agent
+```
+
 ## 4. Environment File
 
 Create `.env` from the template if it doesn't exist:
