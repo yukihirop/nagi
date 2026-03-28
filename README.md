@@ -6,6 +6,8 @@ AI assistant that runs Claude Agent SDK in Docker containers and communicates th
 
 ## Quick Start
 
+Open [Claude Code](https://claude.ai/code) in this directory and run:
+
 ```
 /setup
 ```
