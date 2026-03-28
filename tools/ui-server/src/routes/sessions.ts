@@ -237,9 +237,10 @@ export async function handleSessionMessages(
 
   for (const entry of rawEntries) {
     if (entry.type === "user") {
-      flushAssistant();
       const text = extractUserText(entry.message?.content);
       if (text) {
+        // Real user message — flush pending assistant and emit
+        flushAssistant();
         messages.push({
           type: "user",
           content: text,
@@ -247,6 +248,7 @@ export async function handleSessionMessages(
           uuid: entry.uuid,
         });
       }
+      // tool_result user entries (text is null) are skipped without flushing
     } else if (entry.type === "assistant") {
       const { text, toolUses, thinking } = extractAssistantContent(entry.message?.content);
 

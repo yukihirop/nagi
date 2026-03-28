@@ -89,9 +89,17 @@ function AssistantTimeline({ msg }: { msg: ChatMessage }) {
     <div>
       <span className="text-[10px] font-medium text-zinc-500 mb-1 block">Nagi</span>
 
-      {/* Timeline for thinking + tools */}
+      {/* Timeline for thinking + tools — collapsible */}
       {hasTimeline && (
-        <div className="ml-1 mb-3">
+        <details className="mb-3 group">
+          <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 flex items-center gap-1.5 mb-2">
+            <span className="text-zinc-400">&#x25B6;</span>
+            {msg.toolUses && msg.toolUses.length > 0
+              ? `${msg.toolUses.length} tool${msg.toolUses.length > 1 ? "s" : ""} used`
+              : "Thinking..."}
+            {msg.thinking && msg.toolUses && msg.toolUses.length > 0 && " + thinking"}
+          </summary>
+          <div className="ml-1">
           {timelineSteps.map((step, idx) => {
             const isLast = idx === timelineSteps.length - 1;
 
@@ -131,7 +139,8 @@ function AssistantTimeline({ msg }: { msg: ChatMessage }) {
               </TimelineStep>
             );
           })}
-        </div>
+          </div>
+        </details>
       )}
 
       {/* Text response as bubble */}
