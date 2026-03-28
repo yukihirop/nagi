@@ -1,16 +1,20 @@
+import { useNavigate } from "react-router";
 import { StatCard } from "../components/stat-card.tsx";
-import type { Tab, OverviewData, SessionInfo, LogEntry } from "../types.ts";
+import { useData } from "../contexts/data-context.tsx";
 
-export function Overview({ data, connected, sessions, logs, onNavigate }: { data: OverviewData | null; connected: boolean; sessions: SessionInfo[]; logs: LogEntry[]; onNavigate: (tab: Tab) => void }) {
+export function Overview() {
+  const { overview: data, connected, sessions, logs } = useData();
+  const navigate = useNavigate();
+
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
-        <StatCard title="Groups" value={data?.groups ?? 0} onClick={() => onNavigate("groups")} />
-        <StatCard title="Channels" value={data?.channels ?? 0} onClick={() => onNavigate("channels")} />
-        <StatCard title="Tasks" value={data?.tasks ?? 0} onClick={() => onNavigate("tasks")} />
-        <StatCard title="Active Tasks" value={data?.activeTasks ?? 0} onClick={() => onNavigate("tasks")} />
-        <StatCard title="Sessions" value={sessions.length} onClick={() => onNavigate("sessions")} />
-        <StatCard title="Logs" value={logs.length} onClick={() => onNavigate("logs")} />
+        <StatCard title="Groups" value={data?.groups ?? 0} onClick={() => navigate("/groups")} />
+        <StatCard title="Channels" value={data?.channels ?? 0} onClick={() => navigate("/channels")} />
+        <StatCard title="Tasks" value={data?.tasks ?? 0} onClick={() => navigate("/tasks")} />
+        <StatCard title="Active Tasks" value={data?.activeTasks ?? 0} onClick={() => navigate("/tasks")} />
+        <StatCard title="Sessions" value={sessions.length} onClick={() => navigate("/sessions")} />
+        <StatCard title="Logs" value={logs.length} onClick={() => navigate("/logs")} />
       </div>
 
       <div className="mt-6">

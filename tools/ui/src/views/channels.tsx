@@ -1,6 +1,8 @@
-import type { ChannelInfo } from "../types.ts";
+import { useData } from "../contexts/data-context.tsx";
 
-export function Channels({ channels }: { channels: ChannelInfo[] }) {
+export function Channels() {
+  const { channels } = useData();
+
   if (channels.length === 0) {
     return <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900">No channels connected</div>;
   }

@@ -1,6 +1,6 @@
-import type { Tab } from "../types.ts";
+import { NavLink } from "react-router";
 
-const ICONS: Record<Tab, string> = {
+const ICONS: Record<string, string> = {
   overview: "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4",
   groups: "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z",
   channels: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1",
@@ -10,22 +10,24 @@ const ICONS: Record<Tab, string> = {
   settings: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
 };
 
-function TabIcon({ tab, className }: { tab: Tab; className?: string }) {
+function TabIcon({ id, className }: { id: string; className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d={ICONS[tab]} />
+      <path d={ICONS[id]} />
     </svg>
   );
 }
 
-const TAB_GROUPS = [
-  { label: "Monitor", tabs: [{ id: "overview" as Tab, label: "Overview" }, { id: "groups" as Tab, label: "Groups" }, { id: "channels" as Tab, label: "Channels" }] },
-  { label: "Agent", tabs: [{ id: "sessions" as Tab, label: "Sessions" }] },
-  { label: "Automation", tabs: [{ id: "tasks" as Tab, label: "Tasks" }] },
-  { label: "System", tabs: [{ id: "logs" as Tab, label: "Logs" }, { id: "settings" as Tab, label: "Settings" }] },
+type NavTab = { id: string; label: string; to: string };
+
+const TAB_GROUPS: { label: string; tabs: NavTab[] }[] = [
+  { label: "Monitor", tabs: [{ id: "overview", label: "Overview", to: "/" }, { id: "groups", label: "Groups", to: "/groups" }, { id: "channels", label: "Channels", to: "/channels" }] },
+  { label: "Agent", tabs: [{ id: "sessions", label: "Sessions", to: "/sessions" }] },
+  { label: "Automation", tabs: [{ id: "tasks", label: "Tasks", to: "/tasks" }] },
+  { label: "System", tabs: [{ id: "logs", label: "Logs", to: "/logs" }, { id: "settings", label: "Settings", to: "/settings" }] },
 ];
 
-export function NavSidebar({ tab, collapsed, onTabChange, onToggle }: { tab: Tab; collapsed: boolean; onTabChange: (t: Tab) => void; onToggle: () => void }) {
+export function NavSidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   return (
     <nav className={`shrink-0 border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col py-3 overflow-y-auto transition-all ${collapsed ? "w-14" : "w-56"}`}>
       <div className={`flex items-center gap-2 px-3 mb-2 ${collapsed ? "justify-center" : ""}`}>
@@ -40,19 +42,22 @@ export function NavSidebar({ tab, collapsed, onTabChange, onToggle }: { tab: Tab
             </div>
           )}
           {group.tabs.map((t) => (
-            <button
+            <NavLink
               key={t.id}
-              onClick={() => onTabChange(t.id)}
+              to={t.to}
+              end={t.to === "/"}
               title={collapsed ? t.label : undefined}
-              className={`w-full flex items-center gap-2 py-1.5 text-sm transition-colors ${collapsed ? "justify-center px-2" : "px-4"} ${
-                tab === t.id
-                  ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
-                  : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-              }`}
+              className={({ isActive }) =>
+                `w-full flex items-center gap-2 py-1.5 text-sm transition-colors ${collapsed ? "justify-center px-2" : "px-4"} ${
+                  isActive
+                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
+                    : "text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                }`
+              }
             >
-              <TabIcon tab={t.id} className="w-4 h-4 shrink-0" />
+              <TabIcon id={t.id} className="w-4 h-4 shrink-0" />
               {!collapsed && t.label}
-            </button>
+            </NavLink>
           ))}
         </div>
       ))}

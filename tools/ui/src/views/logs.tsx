@@ -1,3 +1,5 @@
+import { useSearchParams } from "react-router";
+import { useData } from "../contexts/data-context.tsx";
 import type { LogEntry, LogFilter, ContainerLog, TaskRunLog } from "../types.ts";
 
 const FILTERS: { value: LogFilter; label: string }[] = [
@@ -56,22 +58,25 @@ function TaskLogRow({ log }: { log: TaskRunLog }) {
   );
 }
 
-export function Logs({
-  logs,
-  filter,
-  onFilterChange,
-}: {
-  logs: LogEntry[];
-  filter: LogFilter;
-  onFilterChange: (f: LogFilter) => void;
-}) {
+export function Logs() {
+  const { logs: allLogs, fetchLogs } = useData();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filter = (searchParams.get("filter") as LogFilter) || "all";
+
+  const handleFilterChange = async (f: LogFilter) => {
+    setSearchParams(f === "all" ? {} : { filter: f });
+    await fetchLogs(f);
+  };
+
+  const logs: LogEntry[] = allLogs;
+
   return (
     <>
       <div className="flex gap-2 mb-4">
         {FILTERS.map((f) => (
           <button
             key={f.value}
-            onClick={() => onFilterChange(f.value)}
+            onClick={() => handleFilterChange(f.value)}
             className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === f.value
                 ? "bg-indigo-500 text-white"

@@ -1,6 +1,9 @@
+import { useData } from "../contexts/data-context.tsx";
 import type { ThemeMode } from "../types.ts";
 
-export function Settings({ themeMode, onThemeChange }: { themeMode: ThemeMode; onThemeChange: (mode: ThemeMode) => void }) {
+export function Settings() {
+  const { themeMode, setThemeMode } = useData();
+
   const modes: { value: ThemeMode; label: string }[] = [
     { value: "system", label: "System" },
     { value: "light", label: "Light" },
@@ -17,7 +20,7 @@ export function Settings({ themeMode, onThemeChange }: { themeMode: ThemeMode; o
             {modes.map((m) => (
               <button
                 key={m.value}
-                onClick={() => onThemeChange(m.value)}
+                onClick={() => setThemeMode(m.value)}
                 className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                   themeMode === m.value
                     ? "bg-indigo-500 text-white"
