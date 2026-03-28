@@ -13,7 +13,7 @@ export const NagiConfigSchema = z.object({
       maxOutputSize: z.number().min(1024).default(10485760),
       idleTimeout: z.number().min(0).default(1800000),
       maxConcurrent: z.number().min(1).default(5),
-      credentialProxyPort: z.number().min(1024).max(65535).default(3001),
+      credentialProxyPort: z.number().min(1024).max(65535).default(3002),
     })
     .default({
       image: "nagi-agent:latest",
@@ -21,7 +21,7 @@ export const NagiConfigSchema = z.object({
       maxOutputSize: 10485760,
       idleTimeout: 1800000,
       maxConcurrent: 5,
-      credentialProxyPort: 3001,
+      credentialProxyPort: 3002,
     }),
   intervals: z
     .object({

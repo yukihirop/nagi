@@ -28,7 +28,7 @@ describe("loadConfig", () => {
     expect(config.container.timeout).toBe(1800000);
     expect(config.container.maxOutputSize).toBe(10485760);
     expect(config.container.maxConcurrent).toBe(5);
-    expect(config.container.credentialProxyPort).toBe(3001);
+    expect(config.container.credentialProxyPort).toBe(3002);
     expect(config.intervals.poll).toBe(2000);
     expect(config.intervals.schedulerPoll).toBe(60000);
     expect(config.intervals.ipcPoll).toBe(1000);
