@@ -1,6 +1,6 @@
 ---
-name: add-slack
-description: Add Slack as a channel. Uses Socket Mode (no public URL needed). Triggers on "add slack", "setup slack", "connect slack".
+name: add-channel-slack
+description: Add Slack as a channel. Uses Socket Mode (no public URL needed). Triggers on "add slack", "setup slack", "connect slack", "add channel slack".
 ---
 
 # Add Slack Channel
