@@ -11,6 +11,36 @@ function truncateInput(input: Record<string, unknown>): string {
   return json;
 }
 
+function toolSummary(name: string, input: Record<string, unknown>): string {
+  switch (name) {
+    case "Read":
+    case "Write":
+    case "Glob":
+      return typeof input.file_path === "string" ? input.file_path : typeof input.pattern === "string" ? input.pattern : "";
+    case "Edit":
+      return typeof input.file_path === "string" ? input.file_path : "";
+    case "Grep":
+      return typeof input.pattern === "string" ? input.pattern : "";
+    case "Bash":
+      return typeof input.command === "string" ? (input.command.length > 60 ? input.command.slice(0, 60) + "..." : input.command) : "";
+    case "Skill":
+      return typeof input.skill === "string" ? input.skill : "";
+    case "Agent":
+      return typeof input.description === "string" ? input.description : "";
+    case "WebSearch":
+      return typeof input.query === "string" ? input.query : "";
+    case "WebFetch":
+      return typeof input.url === "string" ? input.url : "";
+    default: {
+      // Try common field names
+      for (const key of ["file_path", "path", "command", "query", "name", "url"]) {
+        if (typeof input[key] === "string") return input[key] as string;
+      }
+      return "";
+    }
+  }
+}
+
 export function ChatBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.type === "user";
 
@@ -43,10 +73,12 @@ export function ChatBubble({ msg }: { msg: ChatMessage }) {
               {msg.toolUses.map((t, i) => (
                 <details key={i} className="rounded bg-zinc-100 dark:bg-zinc-900">
                   <summary className="cursor-pointer flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-blue-700 dark:text-blue-300 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded">
-                    <span className="inline-block rounded bg-blue-100 px-1.5 py-0.5 text-[10px] dark:bg-blue-900">
+                    <span className="inline-block shrink-0 rounded bg-blue-100 px-1.5 py-0.5 text-[10px] dark:bg-blue-900">
                       {t.name}
                     </span>
-                    <span className="text-zinc-400">params</span>
+                    <span className="text-zinc-500 dark:text-zinc-400 truncate">
+                      {toolSummary(t.name, t.input) || "params"}
+                    </span>
                   </summary>
                   <pre className="px-2 py-1 text-[10px] text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap max-h-48 overflow-y-auto">
                     {truncateInput(t.input)}
