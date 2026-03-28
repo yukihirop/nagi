@@ -3,3 +3,4 @@ dist
 .turbo
 nanoclaw
 entry.ts
+.env
