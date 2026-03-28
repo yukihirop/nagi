@@ -1,5 +1,3 @@
-export type Tab = "overview" | "groups" | "channels" | "sessions" | "tasks" | "logs" | "settings";
-
 export type GroupInfo = {
   name: string;
   folder: string;

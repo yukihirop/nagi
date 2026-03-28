@@ -1,6 +1,8 @@
-import type { TaskInfo } from "../types.ts";
+import { useData } from "../contexts/data-context.tsx";
 
-export function Tasks({ tasks }: { tasks: TaskInfo[] }) {
+export function Tasks() {
+  const { tasks } = useData();
+
   if (tasks.length === 0) {
     return <div className="rounded-lg border border-zinc-200 bg-white p-8 text-center text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900">No scheduled tasks</div>;
   }

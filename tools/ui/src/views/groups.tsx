@@ -1,6 +1,7 @@
-import type { GroupInfo } from "../types.ts";
+import { useData } from "../contexts/data-context.tsx";
 
-export function Groups({ groups }: { groups: Record<string, GroupInfo> }) {
+export function Groups() {
+  const { groups } = useData();
   const entries = Object.entries(groups);
 
   if (entries.length === 0) {
