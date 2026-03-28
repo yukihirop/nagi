@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@nagi/agent-hooks-claude-code':
+        specifier: workspace:*
+        version: link:plugins/agent-hooks-claude-code
       '@nagi/channel-core':
         specifier: workspace:*
         version: link:libs/channel-core
@@ -313,6 +316,12 @@ importers:
       vitest:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  plugins/agent-hooks-claude-code:
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
   plugins/channel-discord:
     dependencies:

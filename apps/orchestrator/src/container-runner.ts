@@ -38,6 +38,7 @@ export interface ContainerInput {
   isScheduledTask?: boolean;
   assistantName?: string;
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  hooksConfig?: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] };
 }
 
 export interface ContainerOutput {

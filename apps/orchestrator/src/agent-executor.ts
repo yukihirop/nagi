@@ -28,6 +28,7 @@ export interface AgentExecutorDeps {
   queue: GroupQueue;
   channels: Channel[];
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  hooksConfig?: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] } | null;
   mountAllowlist?: import("@nagi/types").MountAllowlist | null;
 }
 
@@ -91,6 +92,7 @@ export async function runAgent(
         isMain,
         assistantName: config.assistantName,
         mcpPlugins: deps.mcpPlugins,
+        hooksConfig: deps.hooksConfig ?? undefined,
       },
       config,
       (proc: ChildProcess, containerName: string) => {

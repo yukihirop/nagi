@@ -31,6 +31,7 @@ interface ContainerInput {
   isScheduledTask?: boolean;
   assistantName?: string;
   mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
+  hooksConfig?: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] };
 }
 
 interface ContainerOutput {
@@ -178,7 +179,7 @@ const TOOL_ICONS: Record<string, string> = {
   TaskOutput: "\u{1F4E4}", TaskStop: "\u{23F9}\uFE0F", TodoWrite: "\u{1F4CB}",
 };
 
-const SKIP_TOOLS = new Set(["mcp__nagi__send_message", "mcp__nagi__list_tasks"]);
+const DEFAULT_SKIP_TOOLS = ["mcp__nagi__send_message", "mcp__nagi__list_tasks"];
 
 function toolSummary(name: string, input: Record<string, unknown>): string {
   switch (name) {
@@ -204,16 +205,17 @@ function toolSummary(name: string, input: Record<string, unknown>): string {
   }
 }
 
-function createPostToolUseHook(chatJid: string, groupFolder: string): HookCallback {
+function createPostToolUseHook(chatJid: string, groupFolder: string, extraSkipTools?: string[]): HookCallback {
+  const skipTools = new Set([...DEFAULT_SKIP_TOOLS, ...(extraSkipTools ?? [])]);
   return async (input) => {
     try {
       const toolInput = input as { tool_name?: string; tool_input?: Record<string, unknown> };
       const name = toolInput.tool_name;
       log(`[hook:PostToolUse] tool=${name} chatJid=${chatJid}`);
-      if (!name || !chatJid || SKIP_TOOLS.has(name)) return {};
+      if (!name || !chatJid || skipTools.has(name)) return {};
       const icon = name.startsWith("mcp__") ? "\u{1F50C}" : (TOOL_ICONS[name] ?? "\u{2699}\uFE0F");
       const summary = toolSummary(name, toolInput.tool_input ?? {});
-      const text = summary ? `${icon} ${name}: ${summary}` : `${icon} ${name}`;
+      const text = summary ? `${icon} \`${name}: ${summary}\`` : `${icon} \`${name}\``;
       writeIpcMessage(chatJid, groupFolder, text);
       log(`[hook:PostToolUse] sent: ${text}`);
     } catch (err) {
@@ -567,12 +569,16 @@ async function runQuery(
         PreCompact: [
           { hooks: [createPreCompactHook(containerInput.assistantName)] },
         ],
-        PostToolUse: [
-          { hooks: [createPostToolUseHook(containerInput.chatJid, containerInput.groupFolder)] },
-        ],
-        SessionStart: [
-          { hooks: [createSessionStartHook(containerInput.chatJid, containerInput.groupFolder)] },
-        ],
+        ...(containerInput.hooksConfig?.postToolUse !== false && containerInput.hooksConfig ? {
+          PostToolUse: [
+            { hooks: [createPostToolUseHook(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig?.skipTools)] },
+          ],
+        } : {}),
+        ...(containerInput.hooksConfig?.sessionStart !== false && containerInput.hooksConfig ? {
+          SessionStart: [
+            { hooks: [createSessionStartHook(containerInput.chatJid, containerInput.groupFolder)] },
+          ],
+        } : {}),
       },
     },
   })) {
