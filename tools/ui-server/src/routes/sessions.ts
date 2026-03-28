@@ -6,6 +6,7 @@ export interface SessionInfo {
   groupFolder: string;
   sessionId: string;
   startedAt: number;
+  messageCount: number;
 }
 
 export interface ChatMessage {
@@ -45,10 +46,33 @@ export function handleSessions(dataDir: string): SessionInfo[] {
         const raw = fs.readFileSync(path.join(metaDir, metaFile), "utf-8");
         const meta = JSON.parse(raw) as { sessionId?: string; startedAt?: number };
         if (meta.sessionId) {
+          const jsonlPath = path.join(
+            sessionsDir, groupFolder, ".claude", "projects", "-workspace-group", `${meta.sessionId}.jsonl`,
+          );
+          let messageCount = 0;
+          try {
+            if (fs.existsSync(jsonlPath)) {
+              const content = fs.readFileSync(jsonlPath, "utf-8");
+              for (const line of content.split("\n")) {
+                if (!line.trim()) continue;
+                try {
+                  const entry = JSON.parse(line) as { type?: string; message?: { content?: unknown } };
+                  if (entry.type === "user") {
+                    // Skip tool_result user entries
+                    if (!Array.isArray(entry.message?.content)) messageCount++;
+                  } else if (entry.type === "assistant") {
+                    const c = entry.message?.content;
+                    if (Array.isArray(c) && c.some((b: { type?: string }) => b.type === "text")) messageCount++;
+                  }
+                } catch { /* skip */ }
+              }
+            }
+          } catch { /* skip */ }
           sessions.push({
             groupFolder,
             sessionId: meta.sessionId,
             startedAt: meta.startedAt ?? 0,
+            messageCount,
           });
         }
       } catch {

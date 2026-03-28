@@ -49,20 +49,16 @@ export function Sessions({
             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Group</th>
             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Session ID</th>
             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Started</th>
-            <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500"></th>
+            <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Messages</th>
           </tr>
         </thead>
         <tbody>
           {sessions.map((s) => (
-            <tr key={s.sessionId} className="border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50">
+            <tr key={s.sessionId} onClick={() => onSelect(s.sessionId)} className="border-b border-zinc-100 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/50 cursor-pointer">
               <td className="px-4 py-2"><span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">{s.groupFolder}</span></td>
               <td className="px-4 py-2"><code className="text-xs">{s.sessionId.slice(0, 8)}...</code></td>
               <td className="px-4 py-2 text-zinc-500">{s.startedAt ? new Date(s.startedAt).toLocaleString() : "—"}</td>
-              <td className="px-4 py-2">
-                <button onClick={() => onSelect(s.sessionId)} className="rounded border border-zinc-200 px-3 py-1 text-xs hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800">
-                  View
-                </button>
-              </td>
+              <td className="px-4 py-2 text-right text-zinc-500">{s.messageCount}</td>
             </tr>
           ))}
         </tbody>

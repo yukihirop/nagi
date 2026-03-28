@@ -39,6 +39,7 @@ export type SessionInfo = {
   groupFolder: string;
   sessionId: string;
   startedAt: number;
+  messageCount: number;
 };
 
 export type ChatMessage = {
