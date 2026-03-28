@@ -20,6 +20,15 @@ Open [Claude Code](https://claude.ai/code) in this directory and run:
 /setup
 ```
 
+## CLI
+
+Run agents from the terminal without opening Slack:
+
+```bash
+pnpm nagi "今日の天気を教えて"
+pnpm nagi --list
+```
+
 ## Architecture
 
 See [docs/architecture.md](docs/architecture.md)
