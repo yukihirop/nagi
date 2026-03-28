@@ -154,6 +154,89 @@ function getSessionSummary(
   return null;
 }
 
+const MESSAGES_DIR = "/workspace/ipc/messages";
+
+function writeIpcMessage(chatJid: string, groupFolder: string, text: string): void {
+  fs.mkdirSync(MESSAGES_DIR, { recursive: true });
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`;
+  const filepath = path.join(MESSAGES_DIR, filename);
+  const tempPath = `${filepath}.tmp`;
+  fs.writeFileSync(tempPath, JSON.stringify({
+    type: "message",
+    chatJid,
+    text,
+    groupFolder,
+    timestamp: new Date().toISOString(),
+  }));
+  fs.renameSync(tempPath, filepath);
+}
+
+const TOOL_ICONS: Record<string, string> = {
+  Bash: "\u{1F527}", Read: "\u{1F4D6}", Write: "\u{1F4DD}", Edit: "\u{270F}\uFE0F",
+  Glob: "\u{1F4C2}", Grep: "\u{1F50D}", Skill: "\u{26A1}", Agent: "\u{1F916}",
+  WebSearch: "\u{1F310}", WebFetch: "\u{1F310}", Task: "\u{23F0}",
+  TaskOutput: "\u{1F4E4}", TaskStop: "\u{23F9}\uFE0F", TodoWrite: "\u{1F4CB}",
+};
+
+const SKIP_TOOLS = new Set(["mcp__nagi__send_message", "mcp__nagi__list_tasks"]);
+
+function toolSummary(name: string, input: Record<string, unknown>): string {
+  switch (name) {
+    case "Read": case "Write": case "Glob":
+      return (input.file_path ?? input.pattern ?? "") as string;
+    case "Edit":
+      return (input.file_path ?? "") as string;
+    case "Grep":
+      return (input.pattern ?? "") as string;
+    case "Bash": {
+      const cmd = (input.command ?? "") as string;
+      return cmd.length > 80 ? cmd.slice(0, 80) + "..." : cmd;
+    }
+    case "Skill": return (input.skill ?? "") as string;
+    case "Agent": return (input.description ?? "") as string;
+    case "WebSearch": return (input.query ?? "") as string;
+    case "WebFetch": return (input.url ?? "") as string;
+    default:
+      for (const key of ["file_path", "path", "command", "query", "name", "url"]) {
+        if (typeof input[key] === "string") return input[key] as string;
+      }
+      return "";
+  }
+}
+
+function createPostToolUseHook(chatJid: string, groupFolder: string): HookCallback {
+  return async (input) => {
+    try {
+      const toolInput = input as { tool_name?: string; tool_input?: Record<string, unknown> };
+      const name = toolInput.tool_name;
+      log(`[hook:PostToolUse] tool=${name} chatJid=${chatJid}`);
+      if (!name || !chatJid || SKIP_TOOLS.has(name)) return {};
+      const icon = name.startsWith("mcp__") ? "\u{1F50C}" : (TOOL_ICONS[name] ?? "\u{2699}\uFE0F");
+      const summary = toolSummary(name, toolInput.tool_input ?? {});
+      const text = summary ? `${icon} ${name}: ${summary}` : `${icon} ${name}`;
+      writeIpcMessage(chatJid, groupFolder, text);
+      log(`[hook:PostToolUse] sent: ${text}`);
+    } catch (err) {
+      log(`[hook:PostToolUse] error: ${err}`);
+    }
+    return {};
+  };
+}
+
+function createSessionStartHook(chatJid: string, groupFolder: string): HookCallback {
+  return async (input) => {
+    try {
+      log(`[hook:SessionStart] chatJid=${chatJid} input=${JSON.stringify(input)}`);
+      if (!chatJid) return {};
+      writeIpcMessage(chatJid, groupFolder, "\u{1F4AD} Thinking...");
+      log("[hook:SessionStart] sent thinking message");
+    } catch (err) {
+      log(`[hook:SessionStart] error: ${err}`);
+    }
+    return {};
+  };
+}
+
 function createPreCompactHook(assistantName?: string): HookCallback {
   return async (input, _toolUseId, _context) => {
     const preCompact = input as PreCompactHookInput;
@@ -483,6 +566,12 @@ async function runQuery(
       hooks: {
         PreCompact: [
           { hooks: [createPreCompactHook(containerInput.assistantName)] },
+        ],
+        PostToolUse: [
+          { hooks: [createPostToolUseHook(containerInput.chatJid, containerInput.groupFolder)] },
+        ],
+        SessionStart: [
+          { hooks: [createSessionStartHook(containerInput.chatJid, containerInput.groupFolder)] },
         ],
       },
     },

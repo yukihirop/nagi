@@ -119,7 +119,8 @@ export function buildVolumeMounts(
     },
   };
   // Load group settings.json if it exists (e.g. groups/main/settings.json)
-  const groupSettingsFile = path.join(config.paths.groupsDir, "..", "groups", group.folder, "settings.json");
+  const rootDir = path.resolve(config.paths.dataDir, "..");
+  const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
   if (fs.existsSync(groupSettingsFile)) {
     try {
       const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
@@ -188,7 +189,7 @@ export function buildVolumeMounts(
     group.folder,
     "agent-runner-src",
   );
-  if (!fs.existsSync(groupAgentRunnerDir) && fs.existsSync(agentRunnerSrc)) {
+  if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   mounts.push({
