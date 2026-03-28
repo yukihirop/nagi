@@ -51,4 +51,29 @@ export type ChatMessage = {
   thinking?: string;
 };
 
+export type ContainerLog = {
+  type: "container";
+  filename: string;
+  timestamp: string;
+  group: string;
+  duration: string;
+  exitCode: string;
+  sessionId: string;
+  content: string;
+};
+
+export type TaskRunLog = {
+  type: "task";
+  taskId: string;
+  runAt: string;
+  durationMs: number;
+  status: string;
+  result: string | null;
+  error: string | null;
+};
+
+export type LogEntry = ContainerLog | TaskRunLog;
+
+export type LogFilter = "all" | "container" | "task";
+
 export type ThemeMode = "light" | "dark" | "system";

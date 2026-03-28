@@ -8,7 +8,7 @@ import { Sessions } from "./views/sessions.tsx";
 import { Tasks } from "./views/tasks.tsx";
 import { Logs } from "./views/logs.tsx";
 import { Settings } from "./views/settings.tsx";
-import type { Tab, ThemeMode, OverviewData, GroupInfo, ChannelInfo, TaskInfo, SessionInfo, ChatMessage } from "./types.ts";
+import type { Tab, ThemeMode, LogFilter, OverviewData, GroupInfo, ChannelInfo, TaskInfo, SessionInfo, ChatMessage, LogEntry } from "./types.ts";
 
 function applyTheme(mode: ThemeMode) {
   const isDark =
@@ -42,14 +42,17 @@ export function App() {
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [sessionMessages, setSessionMessages] = useState<ChatMessage[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logFilter, setLogFilter] = useState<LogFilter>("all");
 
   const loadAll = useCallback(async () => {
-    const [ov, gr, ch, ta, se] = await Promise.all([
+    const [ov, gr, ch, ta, se, lo] = await Promise.all([
       api.overview(),
       api.groups(),
       api.channels(),
       api.tasks(),
       api.sessions(),
+      api.logs(),
     ]);
     setConnected(ov !== null);
     if (ov) setOverview(ov);
@@ -57,6 +60,7 @@ export function App() {
     if (ch) setChannels(ch);
     if (ta) setTasks(ta);
     if (se) setSessions(se);
+    if (lo) setLogs(lo);
   }, []);
 
   useEffect(() => {
@@ -106,7 +110,11 @@ export function App() {
       case "tasks":
         return <Tasks tasks={tasks} />;
       case "logs":
-        return <Logs />;
+        return <Logs logs={logs} filter={logFilter} onFilterChange={async (f) => {
+          setLogFilter(f);
+          const lo = await api.logs(f);
+          if (lo) setLogs(lo);
+        }} />;
       case "settings":
         return <Settings themeMode={themeMode} onThemeChange={handleThemeChange} />;
     }

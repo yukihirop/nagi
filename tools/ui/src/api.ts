@@ -1,4 +1,4 @@
-import type { OverviewData, GroupInfo, ChannelInfo, TaskInfo, SessionInfo, ChatMessage } from "./types.ts";
+import type { OverviewData, GroupInfo, ChannelInfo, TaskInfo, SessionInfo, ChatMessage, LogEntry } from "./types.ts";
 
 async function fetchJson<T>(path: string): Promise<T | null> {
   try {
@@ -17,4 +17,5 @@ export const api = {
   tasks: () => fetchJson<TaskInfo[]>("/api/tasks"),
   sessions: () => fetchJson<SessionInfo[]>("/api/sessions"),
   sessionMessages: (id: string) => fetchJson<ChatMessage[]>(`/api/sessions/${id}/messages`),
+  logs: (filter?: string) => fetchJson<LogEntry[]>(`/api/logs${filter && filter !== "all" ? `?filter=${filter}` : ""}`),
 };

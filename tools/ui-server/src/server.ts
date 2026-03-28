@@ -8,6 +8,7 @@ import { handleChannels } from "./routes/channels.js";
 import { handleTasks, handleTaskLogs } from "./routes/tasks.js";
 import { handleMessages } from "./routes/messages.js";
 import { handleSessions, handleSessionMessages } from "./routes/sessions.js";
+import { handleLogs } from "./routes/logs.js";
 
 export interface AppOptions {
   db: NagiDatabase;
@@ -37,6 +38,8 @@ export function createApp(opts: AppOptions) {
     }
     return c.json(result);
   });
+
+  app.get("/api/logs", (c) => c.json(handleLogs(dataDir, db, c.req.query("filter") ?? undefined)));
 
   app.get("/api/sessions", (c) => c.json(handleSessions(dataDir)));
   app.get("/api/sessions/:id/messages", async (c) => {
