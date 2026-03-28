@@ -8,23 +8,13 @@ See [docs/architecture.md](docs/architecture.md) for detailed diagrams (system o
 
 ## Quick Start
 
-```bash
-# 1. Install
-pnpm install && pnpm build
+In Claude Code, run:
 
-# 2. Configure
-cp entry.template.ts entry.ts
-cp .env.example .env
-# Edit .env with your tokens
-
-# 3. Build container
-./container/build.sh
-
-# 4. Run
-pnpm dev
+```
+/setup
 ```
 
-Or use `/setup` skill in Claude Code for interactive setup.
+This interactively handles everything: dependencies, Docker, authentication, channels, and service startup.
 
 ## Configuration
 
@@ -48,57 +38,40 @@ All configuration is in two files:
 
 ## Skills
 
+All operations are done through Claude Code skills:
+
+### Setup & Configuration
+
 | Skill | Description |
 |---|---|
-| `/setup` | Initial setup wizard |
+| `/setup` | Initial setup wizard (dependencies, Docker, auth, channels) |
+| `/setup-launchd` | Install as macOS background service |
+| `/update-entry` | Sync entry.ts with latest template |
+| `/update-groups` | Sync group templates (CLAUDE.md etc.) |
+
+### Add Plugins
+
+| Skill | Description |
+|---|---|
 | `/add-channel-slack` | Configure Slack channel |
-| `/add-mcp-vercel` | Enable Vercel deployment |
-| `/add-mcp-ollama` | Enable local LLM |
-| `/create-plugin-channel` | Scaffold new channel plugin |
-| `/create-plugin-mcp` | Scaffold new MCP plugin |
-| `/update-entry` | Sync entry.ts with template |
-| `/update-groups` | Sync group templates |
-| `/setup-launchd` | macOS background service |
+| `/add-mcp-vercel` | Enable Vercel deployment tools |
+| `/add-mcp-ollama` | Enable local LLM tools |
+
+### Create Plugins
+
+| Skill | Description |
+|---|---|
+| `/create-plugin-channel` | Scaffold a new channel plugin |
+| `/create-plugin-mcp` | Scaffold a new MCP plugin |
+
+### Service Management
+
+| Skill | Description |
+|---|---|
 | `/nagi-start` | Start service |
 | `/nagi-stop` | Stop service |
 | `/nagi-restart` | Restart service |
 | `/nagi-logs` | View logs |
-
-## Service Management (macOS)
-
-```bash
-# Install as launchd service
-cp launchd/com.nagi.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.nagi.plist
-
-# Restart after changes
-launchctl kickstart -k gui/$(id -u)/com.nagi
-
-# Logs
-tail -f __data/logs/nagi.log
-```
-
-## Plugin System
-
-### Channel Plugins (host-side)
-
-```typescript
-// entry.ts
-registry.register("slack", createSlackFactory({ botToken: "..." }));
-```
-
-Use `/create-plugin-channel` to scaffold a new one.
-
-### MCP Plugins (container-side)
-
-```typescript
-// entry.ts
-orchestrator.registerMcpPlugin("ollama", {
-  entryPoint: "/app/mcp-plugins/ollama/dist/index.js",
-});
-```
-
-Use `/create-plugin-mcp` to scaffold a new one.
 
 ## Project Structure
 
@@ -108,27 +81,12 @@ nagi/
   entry.ts                ← Local config (gitignored)
   .env                    ← Tokens & settings (gitignored)
   __data/                 ← Runtime data (gitignored)
-    ├── store/            ← SQLite database
-    ├── groups/           ← Per-group workspaces
-    ├── sessions/         ← Claude sessions
-    ├── ipc/              ← Container IPC
-    └── logs/             ← Service logs
   groups/                 ← Group templates (git-tracked)
     └── main/CLAUDE.md    ← Agent behavior config
   container/
     ├── Dockerfile        ← Agent container image
-    ├── build.sh          ← Build script
     └── skills/           ← Container-side skills
   apps/                   ← Application packages
   libs/                   ← Shared libraries
   plugins/                ← Channel & MCP plugins
-```
-
-## Development
-
-```bash
-pnpm build          # Build all packages
-pnpm test           # Run all tests
-pnpm dev            # Start orchestrator (foreground)
-./container/build.sh  # Rebuild Docker image
 ```
