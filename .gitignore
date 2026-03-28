@@ -4,3 +4,4 @@ dist
 nanoclaw
 entry.ts
 .env
+store
