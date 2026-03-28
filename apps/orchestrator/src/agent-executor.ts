@@ -27,6 +27,7 @@ export interface AgentExecutorDeps {
   db: NagiDatabase;
   queue: GroupQueue;
   channels: Channel[];
+  mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
 }
 
 export async function runAgent(
@@ -88,6 +89,7 @@ export async function runAgent(
         chatJid: groupJid,
         isMain,
         assistantName: config.assistantName,
+        mcpPlugins: deps.mcpPlugins,
       },
       config,
       (proc: ChildProcess, containerName: string) => {

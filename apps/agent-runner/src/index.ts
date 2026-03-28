@@ -30,6 +30,7 @@ interface ContainerInput {
   isMain: boolean;
   isScheduledTask?: boolean;
   assistantName?: string;
+  mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
 }
 
 interface ContainerOutput {
@@ -450,6 +451,8 @@ async function runQuery(
         "Skill",
         "NotebookEdit",
         "mcp__nagi__*",
+        // Dynamically add MCP plugin tool patterns
+        ...(containerInput.mcpPlugins || []).map((p) => `mcp__${p.name}__*`),
       ],
       env: sdkEnv,
       permissionMode: "bypassPermissions",
@@ -465,6 +468,17 @@ async function runQuery(
             NAGI_IS_MAIN: containerInput.isMain ? "1" : "0",
           },
         },
+        // Dynamically register MCP plugins
+        ...Object.fromEntries(
+          (containerInput.mcpPlugins || []).map((p) => [
+            p.name,
+            {
+              command: "node",
+              args: [p.entryPoint],
+              env: p.env,
+            },
+          ]),
+        ),
       },
       hooks: {
         PreCompact: [

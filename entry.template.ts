@@ -42,6 +42,19 @@ if (discordEnv.DISCORD_BOT_TOKEN) {
 
 const orchestrator = new Orchestrator(config, registry);
 
+// Register MCP plugins (available inside agent containers)
+orchestrator.registerMcpPlugin("ollama", {
+  entryPoint: "/app/mcp-plugins/ollama/dist/index.js",
+});
+
+const vercelEnv = readEnvFile(["VERCEL_API_TOKEN"]);
+if (vercelEnv.VERCEL_API_TOKEN) {
+  orchestrator.registerMcpPlugin("vercel", {
+    entryPoint: "/app/mcp-plugins/vercel/dist/index.js",
+    env: { VERCEL_API_TOKEN: vercelEnv.VERCEL_API_TOKEN },
+  });
+}
+
 process.on("SIGTERM", async () => {
   await orchestrator.shutdown();
   process.exit(0);

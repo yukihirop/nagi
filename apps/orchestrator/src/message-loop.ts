@@ -18,6 +18,7 @@ export interface MessageLoopDeps {
   queue: GroupQueue;
   channels: Channel[];
   allowlist: SenderAllowlistConfig;
+  mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
 }
 
 export function startMessageLoop(deps: MessageLoopDeps): { stop: () => void } {
@@ -31,6 +32,7 @@ export function startMessageLoop(deps: MessageLoopDeps): { stop: () => void } {
     db,
     queue,
     channels,
+    mcpPlugins: deps.mcpPlugins,
   };
 
   // Set up queue's message processor

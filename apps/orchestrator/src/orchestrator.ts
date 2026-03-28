@@ -27,6 +27,13 @@ import {
 
 const logger = createLogger({ name: "orchestrator" });
 
+export interface McpPluginConfig {
+  /** Path to the MCP server entry point inside the container */
+  entryPoint: string;
+  /** Environment variables to pass to the MCP server process */
+  env?: Record<string, string>;
+}
+
 export class Orchestrator {
   private config: ResolvedConfig;
   private db: NagiDatabase;
@@ -34,6 +41,7 @@ export class Orchestrator {
   private channelRegistry: ChannelRegistry;
   private queue: GroupQueue;
   private channels: Channel[] = [];
+  private mcpPlugins = new Map<string, McpPluginConfig>();
   private allowlist: SenderAllowlistConfig;
   private scheduler: TaskScheduler | null = null;
   private ipcWatcher: IpcWatcher | null = null;
@@ -66,6 +74,19 @@ export class Orchestrator {
 
     // Load sender allowlist
     this.allowlist = loadSenderAllowlist(config.paths.senderAllowlistPath);
+  }
+
+  registerMcpPlugin(name: string, config: McpPluginConfig): void {
+    this.mcpPlugins.set(name, config);
+    logger.info({ name, entryPoint: config.entryPoint }, "MCP plugin registered");
+  }
+
+  getMcpPlugins(): Array<{ name: string; entryPoint: string; env?: Record<string, string> }> {
+    return [...this.mcpPlugins.entries()].map(([name, config]) => ({
+      name,
+      entryPoint: config.entryPoint,
+      env: config.env,
+    }));
   }
 
   async start(): Promise<void> {
@@ -207,6 +228,7 @@ export class Orchestrator {
       queue: this.queue,
       channels: this.channels,
       allowlist: this.allowlist,
+      mcpPlugins: this.getMcpPlugins(),
     };
     this.messageLoop = startMessageLoop(loopDeps);
 

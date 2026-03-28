@@ -36,6 +36,7 @@ export interface ContainerInput {
   isMain: boolean;
   isScheduledTask?: boolean;
   assistantName?: string;
+  mcpPlugins?: Array<{ name: string; entryPoint: string; env?: Record<string, string> }>;
 }
 
 export interface ContainerOutput {
