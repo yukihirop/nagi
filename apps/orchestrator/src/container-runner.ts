@@ -155,7 +155,7 @@ export function buildVolumeMounts(
   // Per-group agent-runner source
   const agentRunnerSrc = path.join(
     projectRoot,
-    "container",
+    "apps",
     "agent-runner",
     "src",
   );
