@@ -1,65 +1,48 @@
-import { GatewayClient } from "./gateway.ts";
 import type { NagiApp } from "./app.ts";
 
-let client: GatewayClient | null = null;
-
-function deriveWsUrl(): string {
-  const proto = location.protocol === "https:" ? "wss" : "ws";
-  return `${proto}://${location.host}/api/ws`;
-}
+let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 export function connectGateway(app: NagiApp): void {
-  if (client) return;
-
-  const url = deriveWsUrl();
-  client = new GatewayClient(
-    url,
-    (event, payload) => handleEvent(app, event, payload),
-    (connected) => {
-      app.connected = connected;
-      if (connected) {
-        loadInitialState(app);
-      }
-    },
-  );
-  client.connect();
+  loadAll(app);
+  pollTimer = setInterval(() => loadAll(app), 5000);
 }
 
 export function disconnectGateway(): void {
-  if (client) {
-    client.close();
-    client = null;
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
   }
 }
 
-async function loadInitialState(app: NagiApp): Promise<void> {
-  if (!client) return;
+async function fetchJson<T>(path: string): Promise<T | null> {
   try {
-    const state = await client.request<{
-      groups: number;
-      channels: number;
-      tasks: number;
-      activeTasks: number;
-    }>("state.overview");
-    app.groupCount = state.groups;
-    app.channelCount = state.channels;
-    app.queueDepth = 0;
-    app.taskCount = state.tasks;
+    const res = await fetch(path);
+    if (!res.ok) return null;
+    return (await res.json()) as T;
   } catch {
-    // orchestrator not yet available — will retry on reconnect
+    return null;
   }
 }
 
-function handleEvent(
-  app: NagiApp,
-  event: string,
-  _payload: unknown,
-): void {
-  switch (event) {
-    case "state.updated":
-    case "groups.changed":
-    case "tasks.changed":
-      loadInitialState(app);
-      break;
+async function loadAll(app: NagiApp): Promise<void> {
+  const [overview, groups, channels, tasks] = await Promise.all([
+    fetchJson<{ groups: number; channels: number; tasks: number; activeTasks: number }>("/api/overview"),
+    fetchJson<Record<string, { name: string; folder: string; trigger: string; added_at: string; isMain?: boolean }>>("/api/groups"),
+    fetchJson<Array<{ jid: string; name: string; channel: string; last_message_time: string; is_group: number }>>("/api/channels"),
+    fetchJson<Array<{ id: string; group_folder: string; chat_jid: string; prompt: string; schedule_type: string; schedule_value: string; status: string; next_run: string | null; last_run: string | null }>>("/api/tasks"),
+  ]);
+
+  if (overview) {
+    app.groupCount = overview.groups;
+    app.channelCount = overview.channels;
+    app.queueDepth = 0;
+    app.taskCount = overview.tasks;
+    app.connected = true;
+  } else {
+    app.connected = false;
   }
+
+  if (groups) app.groups = groups;
+  if (channels) app.channels = channels;
+  if (tasks) app.tasks = tasks;
 }

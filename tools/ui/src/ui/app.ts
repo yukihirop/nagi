@@ -16,11 +16,16 @@ export class NagiApp extends LitElement {
   @state() resolvedTheme: ResolvedTheme = "dark";
   @state() connected = false;
 
-  // Mock data for initial development
+  // Overview counts
   @state() groupCount = 0;
   @state() channelCount = 0;
   @state() queueDepth = 0;
   @state() taskCount = 0;
+
+  // Detail data
+  @state() groups: Record<string, { name: string; folder: string; trigger: string; added_at: string; isMain?: boolean }> = {};
+  @state() channels: Array<{ jid: string; name: string; channel: string; last_message_time: string; is_group: number }> = [];
+  @state() tasks: Array<{ id: string; group_folder: string; chat_jid: string; prompt: string; schedule_type: string; schedule_value: string; status: string; next_run: string | null; last_run: string | null }> = [];
 
   // Disable Shadow DOM to use global styles
   createRenderRoot() {
