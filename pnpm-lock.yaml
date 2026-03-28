@@ -95,6 +95,22 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/node@22.19.15)
 
+  libs/queue:
+    dependencies:
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../logger
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/node@22.19.15)
+
   libs/router:
     dependencies:
       '@nagi/channel-core':
