@@ -1,14 +1,16 @@
 import { StatCard } from "../components/stat-card.tsx";
-import type { OverviewData } from "../types.ts";
+import type { Tab, OverviewData, SessionInfo, LogEntry } from "../types.ts";
 
-export function Overview({ data, connected }: { data: OverviewData | null; connected: boolean }) {
+export function Overview({ data, connected, sessions, logs, onNavigate }: { data: OverviewData | null; connected: boolean; sessions: SessionInfo[]; logs: LogEntry[]; onNavigate: (tab: Tab) => void }) {
   return (
     <>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard title="Groups" value={data?.groups ?? 0} />
-        <StatCard title="Channels" value={data?.channels ?? 0} />
-        <StatCard title="Tasks" value={data?.tasks ?? 0} />
-        <StatCard title="Active Tasks" value={data?.activeTasks ?? 0} />
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+        <StatCard title="Groups" value={data?.groups ?? 0} onClick={() => onNavigate("groups")} />
+        <StatCard title="Channels" value={data?.channels ?? 0} onClick={() => onNavigate("channels")} />
+        <StatCard title="Tasks" value={data?.tasks ?? 0} onClick={() => onNavigate("tasks")} />
+        <StatCard title="Active Tasks" value={data?.activeTasks ?? 0} onClick={() => onNavigate("tasks")} />
+        <StatCard title="Sessions" value={sessions.length} onClick={() => onNavigate("sessions")} />
+        <StatCard title="Logs" value={logs.length} onClick={() => onNavigate("logs")} />
       </div>
 
       <div className="mt-6">

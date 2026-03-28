@@ -92,7 +92,7 @@ export function App() {
   const renderView = () => {
     switch (tab) {
       case "overview":
-        return <Overview data={overview} connected={connected} />;
+        return <Overview data={overview} connected={connected} sessions={sessions} logs={logs} onNavigate={setTab} />;
       case "groups":
         return <Groups groups={groups} />;
       case "channels":
