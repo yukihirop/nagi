@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: typecheck
+      run: pnpm exec tsc --noEmit
+
+    - name: build
+      run: pnpm build
+
+    - name: test
+      run: pnpm test
