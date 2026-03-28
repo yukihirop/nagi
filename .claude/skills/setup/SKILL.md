@@ -204,7 +204,7 @@ console.log('Main group registered');
 
 Create the group directory:
 ```bash
-mkdir -p groups/main
+mkdir -p __data/groups/main
 ```
 
 ## 9. Verify
@@ -229,6 +229,6 @@ Expected behavior:
 
 **No response to messages:** Check group is registered in DB. Check trigger pattern matches. Main group doesn't need trigger prefix.
 
-**Container fails:** Check `groups/main/logs/container-*.log` for details. Ensure Docker image `nagi-agent:latest` is built.
+**Container fails:** Check `__data/groups/main/logs/container-*.log` for details. Ensure Docker image `nagi-agent:latest` is built.
 
 **"SLACK_BOT_TOKEN not set":** Tokens must be in `.env` at the project root, not in environment variables.

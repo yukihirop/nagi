@@ -128,7 +128,7 @@ db.groups.set('slack:CHANNEL_ID', {
 });
 db.close();
 
-fs.mkdirSync('groups/main', { recursive: true });
+fs.mkdirSync('__data/groups/main', { recursive: true });
 console.log('Main group registered');
 "
 ```
@@ -196,7 +196,7 @@ Tell user:
    ```
 3. **Docker running?** — `docker info`
 4. **Container image built?** — `docker images nagi-agent`
-5. **Check container logs:** `ls groups/main/logs/`
+5. **Check container logs:** `ls __data/groups/main/logs/`
 
 ## Troubleshooting
 

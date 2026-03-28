@@ -36,7 +36,7 @@ describe("loadConfig", () => {
 
   it("generates paths from projectRoot", () => {
     const config = loadConfig({ projectRoot: "/my/project" });
-    expect(config.paths.groupsDir).toBe("/my/project/groups");
+    expect(config.paths.groupsDir).toBe("/my/project/__data/groups");
     expect(config.paths.dataDir).toBe("/my/project/__data");
   });
 
