@@ -8,24 +8,21 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script>
       (function () {
-        var MODES = { system: 1, light: 1, dark: 1 };
         try {
-          var raw = localStorage.getItem("nagi.ui.settings.v1");
-          if (!raw) return;
-          var s = JSON.parse(raw);
-          var m = s && s.themeMode;
-          if (typeof m !== "string") m = "";
-          var mode = MODES[m] ? m : "system";
-          if (mode === "system") {
-            mode = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+          var raw = localStorage.getItem("nagi.ui.theme");
+          var mode = raw === "light" || raw === "dark" ? raw : null;
+          if (!mode) {
+            mode = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
           }
-          document.documentElement.setAttribute("data-theme", mode);
+          if (mode === "dark") {
+            document.documentElement.classList.add("dark");
+          }
         } catch (e) {}
       })();
     </script>
   </head>
   <body>
-    <nagi-app></nagi-app>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
