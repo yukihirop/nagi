@@ -1,0 +1,260 @@
+---
+name: setup
+description: Run initial Nagi setup. Use when user wants to install dependencies, configure channels, register groups, or start services. Triggers on "setup", "install", "configure nagi", or first-time setup requests.
+---
+
+# Nagi Setup
+
+Run setup steps automatically. Only pause when user action is required (pasting tokens, configuration choices).
+
+**Principle:** When something is broken or missing, fix it. Don't tell the user to go fix it themselves unless it genuinely requires their manual action (e.g. pasting a secret token). If a dependency is missing, install it.
+
+**UX Note:** Use `AskUserQuestion` for all user-facing questions.
+
+## 1. Prerequisites (Node.js + pnpm)
+
+Check Node.js and pnpm are available:
+
+```bash
+node --version   # Must be >= 22
+pnpm --version   # Must be installed
+```
+
+- If Node.js missing or too old: install via nvm (`nvm install 22`) or brew (`brew install node@22`)
+- If pnpm missing: `corepack enable && corepack prepare pnpm@latest --activate`, or `npm install -g pnpm`
+
+## 2. Install Dependencies & Build
+
+```bash
+pnpm install
+pnpm build
+```
+
+If build fails, read the error and fix. Common issues:
+- Missing native build tools: `xcode-select --install` (macOS) or `sudo apt-get install build-essential` (Linux)
+- better-sqlite3 build failure: install build tools and retry
+
+## 3. Docker
+
+Check container runtime:
+
+```bash
+docker info
+```
+
+- If running: continue
+- If installed but not running: `open -a Docker` (macOS) or `sudo systemctl start docker` (Linux). Wait 15s, recheck.
+- If not installed: AskUserQuestion — install Docker? Then:
+  - macOS: `brew install --cask docker` then `open -a Docker`
+  - Linux: `curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER`
+
+## 4. Claude Authentication
+
+AskUserQuestion: Claude subscription (Pro/Max) vs Anthropic API key?
+
+Create `.env` in project root if it doesn't exist.
+
+**Subscription:** Tell user to run `! claude setup-token` (the `!` prefix runs it in the current terminal session), copy the token, then add to `.env`:
+```
+CLAUDE_CODE_OAUTH_TOKEN=<token>
+```
+
+**API key:** Tell user to add to `.env`:
+```
+ANTHROPIC_API_KEY=<key>
+```
+
+## 5. Channel Setup
+
+AskUserQuestion (multiSelect): Which messaging channels do you want to enable?
+- Slack (Socket Mode — no public URL needed)
+- Discord (bot token)
+
+### Slack
+
+Tell user to create a Slack app:
+1. Go to https://api.slack.com/apps → Create New App → From Manifest
+2. Use this manifest (adjust name as needed):
+```yaml
+display_information:
+  name: Nagi
+  description: AI Assistant
+features:
+  bot_user:
+    display_name: Nagi
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - channels:history
+      - channels:read
+      - chat:write
+      - groups:history
+      - groups:read
+      - im:history
+      - im:read
+      - users:read
+settings:
+  event_subscriptions:
+    bot_events:
+      - message.channels
+      - message.groups
+      - message.im
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+```
+3. Install to workspace
+4. Generate App-Level Token (Settings → Basic Information → App-Level Tokens → `connections:write` scope)
+5. Copy Bot Token (OAuth & Permissions page) and App Token
+
+Add to `.env`:
+```
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_APP_TOKEN=xapp-...
+```
+
+### Discord
+
+Tell user:
+1. Go to https://discord.com/developers/applications → New Application
+2. Bot → Reset Token → Copy
+3. Enable: MESSAGE CONTENT INTENT, SERVER MEMBERS INTENT
+4. Invite bot to server with this URL (replace CLIENT_ID):
+   `https://discord.com/api/oauth2/authorize?client_id=CLIENT_ID&permissions=274877908992&scope=bot`
+
+Add to `.env`:
+```
+DISCORD_BOT_TOKEN=...
+```
+
+## 6. Create Entry Point
+
+The orchestrator needs an entry point that registers channels. Create `apps/orchestrator/src/main.ts`:
+
+```typescript
+import { loadConfig, readEnvFile } from "@nagi/config";
+import { createLogger, setupGlobalErrorHandlers } from "@nagi/logger";
+import { ChannelRegistry } from "@nagi/channel-core";
+import { Orchestrator } from "./orchestrator.js";
+
+const logger = createLogger({ name: "nagi" });
+setupGlobalErrorHandlers(logger);
+
+const config = loadConfig();
+const registry = new ChannelRegistry();
+
+// Register Slack if configured
+const slackEnv = readEnvFile(["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"]);
+if (slackEnv.SLACK_BOT_TOKEN && slackEnv.SLACK_APP_TOKEN) {
+  const { createSlackFactory } = await import("@nagi/channel-slack");
+  registry.register("slack", createSlackFactory({
+    botToken: slackEnv.SLACK_BOT_TOKEN,
+    appToken: slackEnv.SLACK_APP_TOKEN,
+    assistantName: config.assistantName,
+    triggerPattern: config.triggerPattern,
+  }));
+  logger.info("Slack channel registered");
+}
+
+// Register Discord if configured
+const discordEnv = readEnvFile(["DISCORD_BOT_TOKEN"]);
+if (discordEnv.DISCORD_BOT_TOKEN) {
+  const { createDiscordFactory } = await import("@nagi/channel-discord");
+  registry.register("discord", createDiscordFactory({
+    botToken: discordEnv.DISCORD_BOT_TOKEN,
+    assistantName: config.assistantName,
+    triggerPattern: config.triggerPattern,
+  }));
+  logger.info("Discord channel registered");
+}
+
+const orchestrator = new Orchestrator(config, registry);
+
+process.on("SIGTERM", async () => {
+  await orchestrator.shutdown();
+  process.exit(0);
+});
+process.on("SIGINT", async () => {
+  await orchestrator.shutdown();
+  process.exit(0);
+});
+
+await orchestrator.start();
+```
+
+Add to `apps/orchestrator/package.json` scripts:
+```json
+"dev": "tsx src/main.ts",
+"start": "node dist/main.js"
+```
+
+Then rebuild:
+```bash
+pnpm build
+```
+
+## 7. Register Main Group
+
+The first group to register is "main" — it has elevated privileges (no trigger required, can register other groups).
+
+After the orchestrator starts and channels connect, check the logs for the channel ID / JID of your main chat:
+```bash
+pnpm --filter @nagi/orchestrator dev
+```
+
+Look for log lines like:
+- Slack: `Discord bot connected` or metadata logs showing `slack:C...` JIDs
+- Discord: `Discord bot: ...` showing the bot tag
+
+Then register the main group in the database. Create a quick script or use the DB directly:
+
+```bash
+# Example: register a Slack channel as main
+node -e "
+const { createDatabase } = require('@nagi/db');
+const db = createDatabase({ path: 'store/messages.db' });
+db.groups.set('slack:C_YOUR_CHANNEL_ID', {
+  name: 'Main',
+  folder: 'main',
+  trigger: '@Nagi',
+  added_at: new Date().toISOString(),
+  isMain: true,
+  requiresTrigger: false,
+});
+db.close();
+console.log('Main group registered');
+"
+```
+
+Create the group directory:
+```bash
+mkdir -p groups/main
+```
+
+## 8. Verify
+
+Restart the orchestrator and send a message in your main channel. Check logs:
+
+```bash
+pnpm --filter @nagi/orchestrator dev
+```
+
+Expected behavior:
+1. Channel connects (Slack/Discord bot comes online)
+2. Message received (log: "Discord message stored" or similar)
+3. Container spawned (log: "Spawning container agent")
+4. Response sent back to channel
+
+## Troubleshooting
+
+**"No channels connected":** Check `.env` has correct tokens. Restart orchestrator.
+
+**"Container runtime is required but failed to start":** Docker isn't running. Start it and retry.
+
+**No response to messages:** Check group is registered in DB. Check trigger pattern matches. Main group doesn't need trigger prefix.
+
+**Container fails:** Check `groups/main/logs/container-*.log` for details. Ensure Docker image `nagi-agent:latest` is built.
+
+**"SLACK_BOT_TOKEN not set":** Tokens must be in `.env` at the project root, not in environment variables.
