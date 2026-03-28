@@ -141,6 +141,9 @@ importers:
       '@nagi/logger':
         specifier: workspace:*
         version: link:../logger
+      '@nagi/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
