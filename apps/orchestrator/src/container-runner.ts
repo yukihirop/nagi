@@ -109,29 +109,33 @@ export function buildVolumeMounts(
     ".claude",
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
-  // Write settings.json with env + hooks (overwrite each time to keep hooks in sync)
+  // Merge base settings with group-specific settings.json
   const settingsFile = path.join(groupSessionsDir, "settings.json");
-  const settingsData = {
+  const baseSettings: Record<string, unknown> = {
     env: {
       CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
       CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
       CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
     },
-    hooks: {
-      PostToolUse: [
-        {
-          matcher: "",
-          hooks: [
-            {
-              type: "command",
-              command: "node /app/hooks/post-tool-use.mjs",
-            },
-          ],
-        },
-      ],
-    },
   };
-  fs.writeFileSync(settingsFile, JSON.stringify(settingsData, null, 2) + "\n");
+  // Load group settings.json if it exists (e.g. groups/main/settings.json)
+  const groupSettingsFile = path.join(config.paths.groupsDir, "..", "groups", group.folder, "settings.json");
+  if (fs.existsSync(groupSettingsFile)) {
+    try {
+      const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
+      // Merge env
+      if (typeof groupSettings.env === "object" && groupSettings.env !== null) {
+        baseSettings.env = { ...(baseSettings.env as Record<string, string>), ...(groupSettings.env as Record<string, string>) };
+      }
+      // Use group hooks if defined
+      if (groupSettings.hooks) {
+        baseSettings.hooks = groupSettings.hooks;
+      }
+    } catch {
+      logger.warn({ path: groupSettingsFile }, "Failed to parse group settings.json");
+    }
+  }
+  fs.writeFileSync(settingsFile, JSON.stringify(baseSettings, null, 2) + "\n");
 
   // Sync skills
   const skillsSrc = path.join(process.cwd(), "container", "skills");
