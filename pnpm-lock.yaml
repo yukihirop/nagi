@@ -384,6 +384,28 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  tools/cli:
+    dependencies:
+      '@nagi/config':
+        specifier: workspace:*
+        version: link:../../libs/config
+      '@nagi/db':
+        specifier: workspace:*
+        version: link:../../libs/db
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../libs/logger
+      '@nagi/types':
+        specifier: workspace:*
+        version: link:../../libs/types
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
 packages:
 
   '@anthropic-ai/claude-agent-sdk@0.2.86':

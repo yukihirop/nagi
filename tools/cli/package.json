@@ -1,0 +1,23 @@
+{
+  "name": "@nagi/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "nagi": "./bin/nagi"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nagi/config": "workspace:*",
+    "@nagi/db": "workspace:*",
+    "@nagi/logger": "workspace:*",
+    "@nagi/types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
