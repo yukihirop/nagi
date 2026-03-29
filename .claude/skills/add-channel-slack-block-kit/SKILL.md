@@ -44,11 +44,9 @@ const { createSlackFactory } = await import("@nagi/channel-slack-block-kit");
 
 No other changes needed — the factory function, config, and registration are identical.
 
-### 3. Update template
+**Note:** Do NOT change `apps/entry.template.ts`. The template should keep the default `@nagi/channel-slack`. Block Kit is a local customization in `apps/entry.ts` only.
 
-Apply the same change to `apps/entry.template.ts` so future `/update-entry` syncs preserve it.
-
-### 4. Verify
+### 3. Verify
 
 ```bash
 pnpm exec tsc --noEmit
@@ -56,7 +54,7 @@ pnpm exec tsc --noEmit
 
 TypeScript must compile without errors.
 
-### 5. Restart nagi
+### 4. Restart nagi
 
 ```bash
 launchctl kickstart -k gui/$(id -u)/com.nagi
@@ -64,7 +62,7 @@ sleep 2
 launchctl list | grep com.nagi
 ```
 
-### 6. Test
+### 5. Test
 
 Tell user:
 
