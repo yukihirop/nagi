@@ -1,20 +1,22 @@
 /**
  * Nagi Agent Runner — Open Code variant
  *
- * This agent runner uses Open Code SDK instead of Claude Agent SDK.
- * It implements the same ContainerInput/ContainerOutput protocol as the
- * Claude Code agent runner, so the orchestrator can use either interchangeably.
+ * Uses Open Code SDK (client-server architecture) instead of Claude Agent SDK.
+ * Implements the same ContainerInput/ContainerOutput protocol so the orchestrator
+ * can use either agent runner interchangeably.
  *
- * Stdin:  JSON ContainerInput (prompt, sessionId, groupFolder, chatJid, etc.)
+ * Stdin:  JSON ContainerInput
  * Stdout: OUTPUT_START_MARKER / OUTPUT_END_MARKER wrapped JSON results
- * IPC:   Follow-up messages written as JSON files to /workspace/ipc/input/
+ * IPC:   Follow-up messages via /workspace/ipc/input/
  */
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createOpencode, type OpencodeClient } from "@opencode-ai/sdk";
 
-// Shared types — same protocol as Claude Code agent runner
+// --- Shared protocol types (same as Claude Code agent runner) ---
+
 interface ContainerInput {
   prompt: string;
   sessionId?: string;
@@ -45,6 +47,10 @@ interface ContainerOutput {
 export const OUTPUT_START_MARKER = "---NAGI_OUTPUT_START---";
 export const OUTPUT_END_MARKER = "---NAGI_OUTPUT_END---";
 
+const IPC_INPUT_DIR = "/workspace/ipc/input";
+const IPC_INPUT_CLOSE_SENTINEL = path.join(IPC_INPUT_DIR, "_close");
+const IPC_POLL_MS = 500;
+
 function writeOutput(output: ContainerOutput): void {
   console.log(OUTPUT_START_MARKER);
   console.log(JSON.stringify(output));
@@ -65,6 +71,57 @@ async function readStdin(): Promise<string> {
   });
 }
 
+// --- IPC helpers (same pattern as Claude Code runner) ---
+
+function shouldClose(): boolean {
+  return fs.existsSync(IPC_INPUT_CLOSE_SENTINEL);
+}
+
+function drainIpcInput(): string[] {
+  const messages: string[] = [];
+  if (!fs.existsSync(IPC_INPUT_DIR)) return messages;
+
+  const files = fs
+    .readdirSync(IPC_INPUT_DIR)
+    .filter((f) => f.endsWith(".json"))
+    .sort();
+
+  for (const file of files) {
+    try {
+      const filepath = path.join(IPC_INPUT_DIR, file);
+      const raw = fs.readFileSync(filepath, "utf-8");
+      fs.unlinkSync(filepath);
+      const data = JSON.parse(raw);
+      if (data.type === "message" && typeof data.text === "string") {
+        messages.push(data.text);
+      }
+    } catch {
+      // skip
+    }
+  }
+  return messages;
+}
+
+function waitForIpcMessage(): Promise<string | null> {
+  return new Promise((resolve) => {
+    const poll = () => {
+      if (shouldClose()) {
+        resolve(null);
+        return;
+      }
+      const messages = drainIpcInput();
+      if (messages.length > 0) {
+        resolve(messages.join("\n"));
+        return;
+      }
+      setTimeout(poll, IPC_POLL_MS);
+    };
+    poll();
+  });
+}
+
+// --- Container plugin interface (same as Claude Code runner) ---
+
 export interface ContainerPlugin {
   name: string;
   createHooks: (
@@ -78,6 +135,152 @@ export interface ContainerPlugin {
 export interface RunConfig {
   containerPlugins?: ContainerPlugin[];
 }
+
+// --- MCP config builder ---
+
+function buildMcpConfig(
+  mcpServerPath: string,
+  containerInput: ContainerInput,
+): Record<string, { type: "local"; command: string[]; environment?: Record<string, string> }> {
+  const mcp: Record<string, { type: "local"; command: string[]; environment?: Record<string, string> }> = {
+    nagi: {
+      type: "local" as const,
+      command: ["node", mcpServerPath],
+      environment: {
+        NAGI_CHAT_JID: containerInput.chatJid,
+        NAGI_GROUP_FOLDER: containerInput.groupFolder,
+        NAGI_IS_MAIN: containerInput.isMain ? "1" : "0",
+      },
+    },
+  };
+
+  for (const plugin of containerInput.mcpPlugins ?? []) {
+    mcp[plugin.name] = {
+      type: "local" as const,
+      command: ["node", plugin.entryPoint],
+      ...(plugin.env ? { environment: plugin.env } : {}),
+    };
+  }
+
+  return mcp;
+}
+
+// --- SSE event processing ---
+
+async function processEvents(
+  client: OpencodeClient,
+  sessionId: string,
+  promptDone: Promise<unknown>,
+  containerInput: ContainerInput,
+  pluginHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>>,
+): Promise<{ result: string | null; error: string | null }> {
+  const events = await client.event.subscribe();
+  let result: string | null = null;
+  let error: string | null = null;
+  let finished = false;
+
+  promptDone.then(() => {
+    finished = true;
+  });
+
+  for await (const event of events.stream) {
+    const evt = event as { type: string; properties?: Record<string, unknown> };
+
+    switch (evt.type) {
+      case "session.created":
+      case "session.updated": {
+        // Fire SessionStart hooks
+        if (evt.type === "session.created") {
+          log(`Session event: ${evt.type}`);
+          const sessionStartHooks = pluginHooks["SessionStart"];
+          if (sessionStartHooks) {
+            for (const group of sessionStartHooks) {
+              for (const hook of group.hooks) {
+                try {
+                  await hook({ source: "opencode" });
+                } catch (err) {
+                  log(`SessionStart hook error: ${err}`);
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      case "message.part.updated": {
+        const props = evt.properties as Record<string, unknown> | undefined;
+        const partType = props?.type as string | undefined;
+
+        // Detect tool use for PostToolUse hooks
+        if (partType === "tool-invocation" || partType === "tool-result") {
+          const toolName = (props?.toolName as string) ?? "unknown";
+          log(`Tool event: ${toolName} (${partType})`);
+
+          if (partType === "tool-result") {
+            const postToolHooks = pluginHooks["PostToolUse"];
+            if (postToolHooks) {
+              for (const group of postToolHooks) {
+                for (const hook of group.hooks) {
+                  try {
+                    await hook({
+                      tool_name: toolName,
+                      tool_input: props?.args ?? {},
+                    });
+                  } catch (err) {
+                    log(`PostToolUse hook error: ${err}`);
+                  }
+                }
+              }
+            }
+          }
+        }
+        break;
+      }
+
+      case "session.idle": {
+        log("Session idle — agent finished responding");
+        // Fetch the last assistant message to get the result
+        try {
+          const messages = await client.session.messages({
+            path: { id: sessionId },
+          });
+          const msgList = (messages.data ?? []) as Array<{
+            role?: string;
+            parts?: Array<{ type?: string; text?: string }>;
+          }>;
+          const lastAssistant = [...msgList]
+            .reverse()
+            .find((m) => m.role === "assistant");
+          if (lastAssistant?.parts) {
+            const textParts = lastAssistant.parts
+              .filter((p) => p.type === "text" && p.text)
+              .map((p) => p.text!);
+            if (textParts.length > 0) {
+              result = textParts.join("\n");
+            }
+          }
+        } catch (err) {
+          log(`Failed to fetch messages: ${err}`);
+        }
+        break;
+      }
+
+      case "session.error": {
+        const props = evt.properties as Record<string, unknown> | undefined;
+        error = (props?.message as string) ?? "Unknown session error";
+        log(`Session error: ${error}`);
+        break;
+      }
+    }
+
+    if (finished) break;
+  }
+
+  return { result, error };
+}
+
+// --- Main ---
 
 export async function run(config?: RunConfig): Promise<void> {
   let containerInput: ContainerInput;
@@ -100,26 +303,147 @@ export async function run(config?: RunConfig): Promise<void> {
     process.exit(1);
   }
 
-  // TODO: Phase 2 — Integrate Open Code SDK
-  //
-  // Open Code uses a client-server architecture:
-  // 1. Start Open Code server (managed mode via SDK)
-  // 2. Connect SDK client to server
-  // 3. Send prompt and receive streaming responses
-  // 4. Handle tool execution events for hooks
-  // 5. Manage session persistence
-  //
-  // For now, output a placeholder response indicating Open Code is not yet implemented.
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const mcpServerPath = path.join(__dirname, "ipc-mcp-stdio.js");
 
-  log("Open Code agent runner is a skeleton — SDK integration pending (Phase 2)");
+  fs.mkdirSync(IPC_INPUT_DIR, { recursive: true });
+  try {
+    fs.unlinkSync(IPC_INPUT_CLOSE_SENTINEL);
+  } catch {
+    /* ignore */
+  }
 
-  writeOutput({
-    status: "error",
-    result: null,
-    error:
-      "Open Code agent runner is not yet implemented. " +
-      "This is a Phase 1 skeleton — SDK integration will be added in Phase 2.",
-  });
+  // Build plugin hooks
+  const pluginHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>> = {};
+  for (const plugin of config?.containerPlugins ?? []) {
+    const hooks = plugin.createHooks(
+      containerInput.chatJid,
+      containerInput.groupFolder,
+      containerInput.hooksConfig,
+      log,
+    ) as Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>>;
+    Object.assign(pluginHooks, hooks);
+  }
+
+  // Determine model from environment
+  const model = process.env.OPENCODE_MODEL || "anthropic/claude-sonnet-4-20250514";
+
+  // Start Open Code server + client
+  log(`Starting Open Code server (model: ${model})...`);
+
+  let client: OpencodeClient;
+  let serverHandle: { close: () => void };
+
+  try {
+    const oc = await createOpencode({
+      config: {
+        model,
+        mcp: buildMcpConfig(mcpServerPath, containerInput),
+      },
+    });
+    client = oc.client;
+    serverHandle = oc.server;
+    log("Open Code server started");
+  } catch (err) {
+    writeOutput({
+      status: "error",
+      result: null,
+      error: `Failed to start Open Code server: ${err instanceof Error ? err.message : String(err)}`,
+    });
+    process.exit(1);
+  }
+
+  let prompt = containerInput.prompt;
+  if (containerInput.isScheduledTask) {
+    prompt = `[SCHEDULED TASK]\n\n${prompt}`;
+  }
+  const pending = drainIpcInput();
+  if (pending.length > 0) {
+    log(`Draining ${pending.length} pending IPC messages into initial prompt`);
+    prompt += "\n" + pending.join("\n");
+  }
+
+  let sessionId = containerInput.sessionId;
+
+  try {
+    while (true) {
+      // Create or resume session
+      if (!sessionId) {
+        const session = await client.session.create({
+          body: {},
+        });
+        sessionId = (session.data as { id: string })?.id;
+        log(`New session created: ${sessionId}`);
+      }
+
+      log(`Sending prompt (session: ${sessionId}, ${prompt.length} chars)...`);
+
+      // Send prompt (non-blocking)
+      const promptDone = client.session.prompt({
+        path: { id: sessionId! },
+        body: {
+          parts: [{ type: "text", text: prompt }],
+        },
+      });
+
+      // Process SSE events until prompt completes
+      const { result, error } = await processEvents(
+        client,
+        sessionId!,
+        promptDone,
+        containerInput,
+        pluginHooks,
+      );
+
+      await promptDone;
+
+      if (error) {
+        writeOutput({
+          status: "error",
+          result: null,
+          newSessionId: sessionId,
+          error,
+        });
+        break;
+      }
+
+      if (result) {
+        writeOutput({
+          status: "success",
+          result,
+          newSessionId: sessionId,
+        });
+      }
+
+      if (shouldClose()) {
+        log("Close sentinel detected, exiting");
+        break;
+      }
+
+      log("Prompt done, waiting for next IPC message...");
+
+      const nextMessage = await waitForIpcMessage();
+      if (nextMessage === null) {
+        log("Close sentinel received, exiting");
+        break;
+      }
+
+      log(`Got new message (${nextMessage.length} chars), sending new prompt`);
+      prompt = nextMessage;
+    }
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    log(`Agent error: ${errorMessage}`);
+    writeOutput({
+      status: "error",
+      result: null,
+      newSessionId: sessionId,
+      error: errorMessage,
+    });
+  } finally {
+    log("Shutting down Open Code server...");
+    serverHandle.close();
+  }
 }
 
 // Only auto-run when executed directly (not when imported by entry.ts)

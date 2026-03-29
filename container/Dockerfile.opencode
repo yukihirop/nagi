@@ -44,8 +44,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
-# Install Open Code globally
-RUN npm install -g opencode@latest
+# Install Open Code CLI (Go binary)
+RUN curl -fsSL https://opencode.ai/install | bash
 
 # Create app directory
 WORKDIR /app
