@@ -41,6 +41,9 @@ function formatThinkingBlocks(): KnownBlock[] {
         },
       ],
     },
+    {
+      type: "divider",
+    },
   ];
 }
 

@@ -104,8 +104,12 @@ export function createSessionStartHook(chatJid, groupFolder, log) {
     try {
       log(`[hook:SessionStart] chatJid=${chatJid} source=${input?.source}`);
       if (!chatJid) return {};
-      writeIpcMessage(chatJid, groupFolder, "\u{1F4AD} Thinking...");
-      log("[hook:SessionStart] sent thinking message");
+      const thinking = input?.thinking ?? "";
+      const text = thinking
+        ? `\u{1F4AD} \`Thinking: ${thinking.length > 200 ? thinking.slice(0, 200) + "..." : thinking}\``
+        : "\u{1F4AD} Thinking...";
+      writeIpcMessage(chatJid, groupFolder, text);
+      log(`[hook:SessionStart] sent: ${text}`);
     } catch (err) {
       log(`[hook:SessionStart] error: ${err}`);
     }

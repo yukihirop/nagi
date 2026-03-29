@@ -414,6 +414,7 @@ async function runQuery(
 
   let newSessionId: string | undefined;
   let lastAssistantUuid: string | undefined;
+  let assistantSeen = false;
   let costUsd: number | undefined;
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
@@ -453,16 +454,6 @@ async function runQuery(
         nagiHooks[key] = value as unknown as Array<{ hooks: NagiHookCallback[] }>;
       } else {
         pluginHooks[key] = value;
-      }
-    }
-  }
-
-  // Fire SessionStart hooks before the first prompt
-  const sessionStartHooks = nagiHooks["SessionStart"];
-  if (sessionStartHooks) {
-    for (const group of sessionStartHooks) {
-      for (const hook of group.hooks) {
-        try { await hook({ source: "claude-code" }); } catch { /* ignore */ }
       }
     }
   }
@@ -558,6 +549,20 @@ async function runQuery(
 
     if (message.type === "assistant" && "uuid" in message) {
       lastAssistantUuid = (message as { uuid: string }).uuid;
+      // Fire SessionStart hook on first assistant message (with thinking content if available)
+      if (!assistantSeen) {
+        assistantSeen = true;
+        const am = message as { message?: { content?: Array<{ type?: string; thinking?: string }> } };
+        const thinkingBlock = am.message?.content?.find((b) => b.type === "thinking" && b.thinking);
+        const sessionStartHooks = nagiHooks["SessionStart"];
+        if (sessionStartHooks) {
+          for (const group of sessionStartHooks) {
+            for (const hook of group.hooks) {
+              try { await hook({ source: "claude-code", thinking: thinkingBlock?.thinking }); } catch { /* ignore */ }
+            }
+          }
+        }
+      }
     }
 
     if (message.type === "system" && message.subtype === "init") {
@@ -667,22 +672,7 @@ export async function run(config?: RunConfig): Promise<void> {
 
   let resumeAt: string | undefined;
   try {
-    // Build nagi hooks once (returned from first runQuery, reused for manual firing)
-    let cachedNagiHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>> | undefined;
-
     while (true) {
-      // Fire SessionStart hooks before each prompt
-      if (cachedNagiHooks) {
-        const sessionStartHooks = cachedNagiHooks["SessionStart"];
-        if (sessionStartHooks) {
-          for (const group of sessionStartHooks) {
-            for (const hook of group.hooks) {
-              try { await hook({ source: "claude-code" }); } catch { /* ignore */ }
-            }
-          }
-        }
-      }
-
       log(
         `Starting query (session: ${sessionId || "new"}, resumeAt: ${resumeAt || "latest"})...`,
       );
@@ -696,7 +686,7 @@ export async function run(config?: RunConfig): Promise<void> {
         resumeAt,
         config?.containerPlugins,
       );
-      cachedNagiHooks = queryResult.nagiHooks;
+      // nagiHooks are fired inside runQuery (SessionStart on thinking, PromptComplete below)
       if (queryResult.newSessionId) {
         sessionId = queryResult.newSessionId;
       }
