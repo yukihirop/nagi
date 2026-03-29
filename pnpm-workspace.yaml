@@ -3,3 +3,4 @@ packages:
   - "libs/*"
   - "tools/*"
   - "plugins/*"
+  - "container/plugins/*"

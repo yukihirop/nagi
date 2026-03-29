@@ -64,16 +64,16 @@ COPY apps/agent-runner/tsconfig.json ./
 RUN npm run build
 
 # Install MCP plugins
-COPY plugins/mcp-ollama/package*.json /app/mcp-plugins/ollama/
+COPY container/plugins/mcp-ollama/package*.json /app/mcp-plugins/ollama/
 RUN cd /app/mcp-plugins/ollama && npm install
-COPY plugins/mcp-ollama/src/ /app/mcp-plugins/ollama/src/
-COPY plugins/mcp-ollama/tsconfig.json /app/mcp-plugins/ollama/
+COPY container/plugins/mcp-ollama/src/ /app/mcp-plugins/ollama/src/
+COPY container/plugins/mcp-ollama/tsconfig.json /app/mcp-plugins/ollama/
 RUN cd /app/mcp-plugins/ollama && npx tsc
 
-COPY plugins/mcp-vercel/package*.json /app/mcp-plugins/vercel/
+COPY container/plugins/mcp-vercel/package*.json /app/mcp-plugins/vercel/
 RUN cd /app/mcp-plugins/vercel && npm install
-COPY plugins/mcp-vercel/src/ /app/mcp-plugins/vercel/src/
-COPY plugins/mcp-vercel/tsconfig.json /app/mcp-plugins/vercel/
+COPY container/plugins/mcp-vercel/src/ /app/mcp-plugins/vercel/src/
+COPY container/plugins/mcp-vercel/tsconfig.json /app/mcp-plugins/vercel/
 RUN cd /app/mcp-plugins/vercel && npx tsc
 
 # Create workspace directories
