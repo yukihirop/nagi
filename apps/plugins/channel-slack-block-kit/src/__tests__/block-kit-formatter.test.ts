@@ -9,8 +9,9 @@ describe("formatToolNotification", () => {
     it("converts thinking message to context block", () => {
       const blocks = formatToolNotification("💭 Thinking...");
       expect(blocks).not.toBeNull();
-      expect(blocks!).toHaveLength(1);
+      expect(blocks!).toHaveLength(2);
       expect(blocks![0].type).toBe("context");
+      expect(blocks![1].type).toBe("divider");
     });
   });
 

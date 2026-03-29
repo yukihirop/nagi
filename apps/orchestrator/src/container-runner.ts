@@ -8,17 +8,16 @@ import path from "node:path";
 
 import { createLogger } from "@nagi/logger";
 import { readEnvFile, type ResolvedConfig } from "@nagi/config";
-import { detectAuthMode } from "@nagi/credential-proxy";
 import type { RegisteredGroup, MountAllowlist } from "@nagi/types";
 import { validateAdditionalMounts } from "@nagi/auth";
 
 import {
-  CONTAINER_HOST_GATEWAY,
   CONTAINER_RUNTIME_BIN,
   hostGatewayArgs,
   readonlyMountArgs,
   stopContainer,
 } from "./container-runtime.js";
+import { resolveAgentConfig } from "./container-runner-configs/agent-config.js";
 import {
   resolveGroupFolderPath,
   resolveGroupIpcPath,
@@ -102,42 +101,18 @@ export function buildVolumeMounts(
     }
   }
 
-  // Per-group Claude sessions directory
+  // Resolve agent-specific config based on container image
+  const agentConfig = resolveAgentConfig(config.container.image);
+
+  // Per-group sessions directory
   const groupSessionsDir = path.join(
     config.paths.dataDir,
     "sessions",
     group.folder,
-    ".claude",
+    agentConfig.sessionSubdir,
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
-  // Merge base settings with group-specific settings.json
-  const settingsFile = path.join(groupSessionsDir, "settings.json");
-  const baseSettings: Record<string, unknown> = {
-    env: {
-      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-      CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
-      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
-    },
-  };
-  // Load group settings.json if it exists (e.g. groups/main/settings.json)
-  const rootDir = path.resolve(config.paths.dataDir, "..");
-  const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
-  if (fs.existsSync(groupSettingsFile)) {
-    try {
-      const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
-      // Merge env
-      if (typeof groupSettings.env === "object" && groupSettings.env !== null) {
-        baseSettings.env = { ...(baseSettings.env as Record<string, string>), ...(groupSettings.env as Record<string, string>) };
-      }
-      // Use group hooks if defined
-      if (groupSettings.hooks) {
-        baseSettings.hooks = groupSettings.hooks;
-      }
-    } catch {
-      logger.warn({ path: groupSettingsFile }, "Failed to parse group settings.json");
-    }
-  }
-  fs.writeFileSync(settingsFile, JSON.stringify(baseSettings, null, 2) + "\n");
+  agentConfig.initSessionDir(groupSessionsDir, config, group);
 
   // Sync skills
   const skillsSrc = path.join(process.cwd(), "container", "skills");
@@ -152,16 +127,29 @@ export function buildVolumeMounts(
   }
   mounts.push({
     hostPath: groupSessionsDir,
-    containerPath: "/home/node/.claude",
+    containerPath: agentConfig.sessionContainerPath,
     readonly: false,
   });
 
-  // Container plugins (agent hooks, etc.)
-  const containerPluginsDir = path.join(process.cwd(), "container", "plugins");
-  if (fs.existsSync(containerPluginsDir)) {
+  // Agent-specific additional mounts
+  mounts.push(...agentConfig.additionalMounts(config, group));
+
+  // Container plugins — shared (MCP plugins)
+  const sharedPluginsDir = path.join(process.cwd(), "container", "plugins");
+  if (fs.existsSync(sharedPluginsDir)) {
     mounts.push({
-      hostPath: containerPluginsDir,
+      hostPath: sharedPluginsDir,
       containerPath: "/app/plugins",
+      readonly: true,
+    });
+  }
+
+  // Container plugins — agent-specific (e.g. agent-hooks)
+  const agentPluginsDir = path.join(process.cwd(), "container", agentConfig.agentType, "plugins");
+  if (fs.existsSync(agentPluginsDir)) {
+    mounts.push({
+      hostPath: agentPluginsDir,
+      containerPath: "/app/agent-plugins",
       readonly: true,
     });
   }
@@ -181,20 +169,24 @@ export function buildVolumeMounts(
   const agentRunnerSrc = path.join(
     projectRoot,
     "apps",
-    "agent-runner",
+    agentConfig.agentRunnerPkg,
     "src",
   );
   const groupAgentRunnerDir = path.join(
     config.paths.dataDir,
     "sessions",
     group.folder,
-    "agent-runner-src",
+    agentConfig.agentRunnerDirName,
   );
   if (fs.existsSync(agentRunnerSrc)) {
+    // Clean stale files from previous agent type before copying
+    if (fs.existsSync(groupAgentRunnerDir)) {
+      fs.rmSync(groupAgentRunnerDir, { recursive: true });
+    }
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
-  // Copy container/entry.ts into agent-runner source
-  const containerEntryPath = path.join(process.cwd(), "container", "entry.ts");
+  // Copy container/{agent}/entry.ts into agent-runner source
+  const containerEntryPath = path.join(process.cwd(), "container", agentConfig.agentType, "entry.ts");
   if (fs.existsSync(containerEntryPath)) {
     fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
   }
@@ -232,17 +224,9 @@ export function buildContainerArgs(
 
   args.push("-e", `TZ=${config.timezone}`);
 
-  args.push(
-    "-e",
-    `ANTHROPIC_BASE_URL=http://${CONTAINER_HOST_GATEWAY}:${config.container.credentialProxyPort}`,
-  );
-
-  const authMode = detectAuthMode();
-  if (authMode === "api-key") {
-    args.push("-e", "ANTHROPIC_API_KEY=placeholder");
-  } else {
-    args.push("-e", "CLAUDE_CODE_OAUTH_TOKEN=placeholder");
-  }
+  // Agent-specific environment variables
+  const agentConfig = resolveAgentConfig(config.container.image);
+  args.push(...agentConfig.buildEnvArgs(config));
 
   const envSecrets = readEnvFile(["VERCEL_API_TOKEN", "YOUTUBE_API_KEY"]);
   if (envSecrets.VERCEL_API_TOKEN) {

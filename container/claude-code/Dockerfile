@@ -51,14 +51,14 @@ RUN npm install -g agent-browser @anthropic-ai/claude-code
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY apps/agent-runner/package*.json ./
+COPY apps/agent-runner-claudecode/package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy source code (only src/ and tsconfig — avoid node_modules/dist conflicts)
-COPY apps/agent-runner/src/ ./src/
-COPY apps/agent-runner/tsconfig.json ./
+COPY apps/agent-runner-claudecode/src/ ./src/
+COPY apps/agent-runner-claudecode/tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build

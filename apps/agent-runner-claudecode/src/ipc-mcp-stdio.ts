@@ -1,3 +1,6 @@
+// IMPORTANT: This file is intentionally duplicated in agent-runner-claudecode and agent-runner-opencode.
+// Each agent may diverge independently — sharing via a common lib with conditional branches
+// tends to cause subtle bugs when one agent's behavior changes. Keep copies in sync manually.
 /**
  * Stdio MCP Server for Nagi
  * Standalone process that agent teams subagents can inherit.
@@ -46,7 +49,7 @@ server.tool(
       .string()
       .optional()
       .describe(
-        'Your role/identity name (e.g. "Researcher"). When set, messages appear from a dedicated bot in Telegram.',
+        'Your role/identity name (e.g. "Researcher"). When set, messages appear from a named sender in the chat.',
       ),
   },
   async (args) => {

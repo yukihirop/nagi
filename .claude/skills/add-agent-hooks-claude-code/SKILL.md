@@ -1,6 +1,6 @@
 ---
-name: add-agent-hooks-claude-code
-description: Add agent-hooks-claude-code plugin for sending tool execution and session start notifications to chat channels. Triggers on "add agent hooks", "enable hooks", "setup agent hooks", "add hooks".
+name: add-agent-hooks
+description: Add agent-hooks plugin for sending tool execution and session start notifications to chat channels. Triggers on "add agent hooks", "enable hooks", "setup agent hooks", "add hooks".
 ---
 
 # Add Agent Hooks (Claude Code)
@@ -17,18 +17,18 @@ Enable PostToolUse and SessionStart hooks that send real-time notifications to t
 ### 1. Check prerequisites
 
 ```bash
-test -f container/plugins/agent-hooks-claude-code/index.mjs && echo "PLUGIN_EXISTS" || echo "PLUGIN_MISSING"
+test -f container/claude-code/plugins/agent-hooks/index.mjs && echo "PLUGIN_EXISTS" || echo "PLUGIN_MISSING"
 test -f apps/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
-test -f container/entry.ts && echo "CONTAINER_ENTRY_EXISTS" || echo "CONTAINER_ENTRY_MISSING"
+test -f container/claude-code/entry.ts && echo "CONTAINER_ENTRY_EXISTS" || echo "CONTAINER_ENTRY_MISSING"
 ```
 
 If plugin is missing, something is wrong — the plugin ships with the repo.
 
 If `apps/entry.ts` is missing, run `/setup` first.
 
-If `container/entry.ts` is missing:
+If `container/claude-code/entry.ts` is missing:
 ```bash
-cp container/entry.template.ts container/entry.ts
+cp container/claude-code/entry.template.ts container/claude-code/entry.ts
 ```
 
 ### 2. Enable hooks in apps/entry.ts (host side)
@@ -45,19 +45,19 @@ orchestrator.registerHooksPlugin({
 });
 ```
 
-### 3. Enable hooks in container/entry.ts (container side)
+### 3. Enable hooks in container/claude-code/entry.ts (container side)
 
-Read `container/entry.ts` and check if the `agent-hooks-claude-code` plugin is loaded.
+Read `container/claude-code/entry.ts` and check if the `agent-hooks` plugin is loaded.
 
 If not present, ensure the plugin import block exists:
 
 ```typescript
 try {
-  const pluginPath = "/app/plugins/agent-hooks-claude-code/index.mjs";
+  const pluginPath = "/app/agent-plugins/agent-hooks/index.mjs";
   const agentHooks = await import(/* webpackIgnore: true */ pluginPath);
 
   plugins.push({
-    name: "agent-hooks-claude-code",
+    name: "agent-hooks",
     createHooks: (
       chatJid: string,
       groupFolder: string,

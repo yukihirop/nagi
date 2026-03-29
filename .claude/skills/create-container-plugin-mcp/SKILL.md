@@ -120,7 +120,12 @@ If no API token is needed, remove the `API_TOKEN` line.
 
 ## Step 3: Add to Dockerfile
 
-Append the following block to `container/Dockerfile` **before** the `# Create workspace directories` line:
+AskUserQuestion: Which agent's Dockerfile should include this plugin?
+- **Claude Code** — `container/claude-code/Dockerfile`
+- **Open Code** — `container/open-code/Dockerfile`
+- **Both** — Add to both
+
+Append the following block to the selected Dockerfile **before** the `# Create workspace directories` line:
 
 ```dockerfile
 COPY container/plugins/mcp-{name}/package*.json /app/mcp-plugins/{name}/
@@ -166,7 +171,7 @@ All packages must build successfully.
 Tell the user:
 
 1. **Implement tools** — Edit `container/plugins/mcp-{name}/src/index.ts` to add real MCP tools
-2. **Rebuild Docker image** — `./container/build.sh`
+2. **Rebuild Docker image** — `./container/claude-code/build.sh` and/or `./container/open-code/build.sh`
 3. **Sync entry.ts** — Run `/update-entry` to add the plugin registration to your local entry.ts
 4. **If API token needed** — Add `{ENV_VAR}=...` to `.env`
 5. **Restart nagi** — Run `/nagi-restart`

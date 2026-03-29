@@ -1,18 +1,21 @@
+// IMPORTANT: This file is intentionally duplicated per agent (claude-code / open-code).
+// Each agent's plugin wiring may diverge independently — sharing with conditional branches
+// tends to cause subtle bugs. Keep copies in sync manually where applicable.
 import { run } from "./index.js";
 
 // Load container plugins dynamically
 const plugins = [];
 
 try {
-  const pluginPath = "/app/plugins/agent-hooks-claude-code/index.mjs";
+  const pluginPath = "/app/agent-plugins/agent-hooks/index.mjs";
   const agentHooks = await import(/* webpackIgnore: true */ pluginPath);
 
   plugins.push({
-    name: "agent-hooks-claude-code",
+    name: "agent-hooks",
     createHooks: (
       chatJid: string,
       groupFolder: string,
-      hooksConfig: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] } | undefined,
+      hooksConfig: { postToolUse?: boolean; sessionStart?: boolean; promptComplete?: boolean; skipTools?: string[] } | undefined,
       log: (msg: string) => void,
     ) => ({
       ...(hooksConfig?.postToolUse !== false ? {
@@ -20,6 +23,9 @@ try {
       } : {}),
       ...(hooksConfig?.sessionStart !== false ? {
         SessionStart: [{ hooks: [agentHooks.createSessionStartHook(chatJid, groupFolder, log)] }],
+      } : {}),
+      ...(hooksConfig?.promptComplete !== false ? {
+        PromptComplete: [{ hooks: [agentHooks.createPromptCompleteHook(chatJid, groupFolder, log)] }],
       } : {}),
     }),
   });

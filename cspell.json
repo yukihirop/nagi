@@ -52,7 +52,10 @@
     "nodenv",
     "pkill",
     "openclaw",
-    "yukihirop"
+    "yukihirop",
+    "opencode",
+    "openrouter",
+    "claudecode"
   ],
   "ignorePaths": [
     "node_modules",

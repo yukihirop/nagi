@@ -1,3 +1,6 @@
+// IMPORTANT: This file is intentionally duplicated per agent (claude-code / open-code).
+// Each agent's hooks may diverge independently — sharing with conditional branches
+// tends to cause subtle bugs. Keep copies in sync manually where applicable.
 import fs from "node:fs";
 import path from "node:path";
 
@@ -70,13 +73,43 @@ export function createPostToolUseHook(chatJid, groupFolder, extraSkipTools, log)
   };
 }
 
+export function createPromptCompleteHook(chatJid, groupFolder, log) {
+  return async (input) => {
+    try {
+      if (!chatJid) return {};
+      const model = input?.model ?? "";
+      const cost = input?.cost;
+      let text;
+      if (cost && (cost.cost > 0 || cost.tokens?.input > 0)) {
+        const costStr = cost.cost > 0 ? `$${cost.cost.toFixed(4)}` : "N/A";
+        const tokensIn = (cost.tokens?.input ?? 0).toLocaleString();
+        const tokensOut = (cost.tokens?.output ?? 0).toLocaleString();
+        text = `\u{1F4B0} \`${model} | ${costStr} | ${tokensIn} in / ${tokensOut} out\``;
+      } else if (model) {
+        text = `\u{1F4B0} \`${model}\``;
+      } else {
+        return {};
+      }
+      writeIpcMessage(chatJid, groupFolder, text);
+      log(`[hook:PromptComplete] sent: ${text}`);
+    } catch (err) {
+      log(`[hook:PromptComplete] error: ${err}`);
+    }
+    return {};
+  };
+}
+
 export function createSessionStartHook(chatJid, groupFolder, log) {
   return async (input) => {
     try {
       log(`[hook:SessionStart] chatJid=${chatJid} source=${input?.source}`);
       if (!chatJid) return {};
-      writeIpcMessage(chatJid, groupFolder, "\u{1F4AD} Thinking...");
-      log("[hook:SessionStart] sent thinking message");
+      const thinking = input?.thinking ?? "";
+      const text = thinking
+        ? `\u{1F4AD} \`Thinking: ${thinking.length > 200 ? thinking.slice(0, 200) + "..." : thinking}\``
+        : "\u{1F4AD} Thinking...";
+      writeIpcMessage(chatJid, groupFolder, text);
+      log(`[hook:SessionStart] sent: ${text}`);
     } catch (err) {
       log(`[hook:SessionStart] error: ${err}`);
     }

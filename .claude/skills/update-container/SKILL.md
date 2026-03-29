@@ -5,41 +5,59 @@ description: Rebuild the nagi-agent Docker image. Use after changing Dockerfile,
 
 # Update Container Image
 
-Rebuild the `nagi-agent:latest` Docker image to pick up changes in:
-- `container/Dockerfile`
-- `apps/agent-runner/src/`
-- `container/plugins/` (MCP plugins, agent hooks)
-- `container/entry.template.ts`
+Rebuild a nagi agent Docker image to pick up changes.
 
 ## Steps
 
-### 1. Check Docker is running
+### 1. Choose agent
+
+AskUserQuestion: Which agent image to rebuild?
+
+- **Claude Code** — `nagi-agent:latest` (default)
+- **Open Code** — `nagi-agent-opencode:latest`
+
+### 2. Check Docker is running
 
 ```bash
 docker info > /dev/null 2>&1 && echo "RUNNING" || echo "NOT_RUNNING"
 ```
 
-If not running, start Docker:
-- macOS: `open -a Docker` then wait 15s
-- Linux: `sudo systemctl start docker`
+If not running, start Docker.
 
-### 2. Build
+### 3. Build
 
+**Claude Code:**
 ```bash
-./container/build.sh
+./container/claude-code/build.sh
 ```
 
-This takes a few minutes on first build (cached afterwards).
+Rebuilds based on:
+- `container/claude-code/Dockerfile`
+- `apps/agent-runner-claudecode/src/`
+- `container/plugins/`
+- `container/claude-code/entry.template.ts`
 
-### 3. Verify
+**Open Code:**
+```bash
+./container/open-code/build.sh
+```
+
+Rebuilds based on:
+- `container/open-code/Dockerfile`
+- `apps/agent-runner-opencode/src/`
+- `container/plugins/`
+
+### 4. Verify
 
 ```bash
+# Claude Code:
 docker images nagi-agent --format "{{.Repository}}:{{.Tag}} {{.Size}} {{.CreatedSince}}"
+
+# Open Code:
+docker images nagi-agent-opencode --format "{{.Repository}}:{{.Tag}} {{.Size}} {{.CreatedSince}}"
 ```
 
-Expected: `nagi-agent:latest` with a recent timestamp.
-
-### 4. Restart nagi
+### 5. Restart nagi
 
 ```bash
 launchctl kickstart -k gui/$(id -u)/com.nagi
@@ -48,9 +66,7 @@ launchctl list | grep com.nagi
 tail -5 __data/logs/nagi.log
 ```
 
-Expected: PID is a number, logs show `Orchestrator started`.
-
-### 5. Summary
+### 6. Summary
 
 Report:
 - Image size

@@ -72,7 +72,7 @@ orchestrator.registerMcpPlugin("ollama", {
 ### Rebuild Docker image (if not already built with Ollama plugin)
 
 ```bash
-./container/build.sh
+./container/claude-code/build.sh
 ```
 
 ### Restart nagi
@@ -109,7 +109,7 @@ Once configured, container agents have access to:
 ### Agent doesn't see Ollama tools
 
 1. Check `apps/entry.ts` has `registerMcpPlugin("ollama", ...)`
-2. Check Docker image was rebuilt: `./container/build.sh`
+2. Check Docker image was rebuilt: `./container/claude-code/build.sh`
 3. Restart nagi
 
 ### No models available

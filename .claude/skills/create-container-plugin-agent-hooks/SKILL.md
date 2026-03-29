@@ -1,11 +1,11 @@
 ---
 name: create-container-plugin-agent-hooks
-description: Scaffold a new agent-hooks plugin for nagi containers. Generates index.mjs with hook factories and container/entry.template.ts registration. Triggers on "create agent hooks plugin", "new agent hooks", "scaffold agent hooks".
+description: Scaffold a new agent-hooks plugin for nagi containers. Generates index.mjs with hook factories and container/claude-code/entry.template.ts registration. Triggers on "create agent hooks plugin", "new agent hooks", "scaffold agent hooks".
 ---
 
 # Create Agent-Hooks Plugin
 
-Scaffold a new agent-hooks plugin that runs inside agent containers and sends notifications to chat channels via IPC, following the established pattern (agent-hooks-claude-code).
+Scaffold a new agent-hooks plugin that runs inside agent containers and sends notifications to chat channels via IPC, following the established pattern (agent-hooks).
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.
 
@@ -18,9 +18,16 @@ AskUserQuestion:
 
 The full plugin name will be `agent-hooks-{name}`.
 
-## Step 2: Generate plugin
+## Step 2: Choose target agent
 
-Create `container/plugins/agent-hooks-{name}/` with a single file:
+AskUserQuestion: Which agent should this plugin be created for?
+- **Claude Code** — `container/claude-code/plugins/agent-hooks-{name}/`
+- **Open Code** — `container/open-code/plugins/agent-hooks-{name}/`
+- **Both** — Create in both
+
+## Step 3: Generate plugin
+
+Create the plugin in the selected directory with a single file:
 
 ### index.mjs
 
@@ -99,13 +106,18 @@ export function createSessionStartHook(chatJid, groupFolder, log) {
 
 Replace `{name}`, `{Name}`, `{description}` placeholders.
 
-## Step 3: Add to container/entry.template.ts
+## Step 4: Add to container entry.template.ts
 
-Add a new try/catch block after the existing agent-hooks-claude-code block:
+AskUserQuestion: Which agent's entry.template.ts should register this plugin?
+- **Claude Code** — `container/claude-code/entry.template.ts`
+- **Open Code** — `container/open-code/entry.template.ts` (create if missing)
+- **Both** — Add to both
+
+Add a new try/catch block after any existing agent-hooks blocks:
 
 ```typescript
 try {
-  const pluginPath = "/app/plugins/agent-hooks-{name}/index.mjs";
+  const pluginPath = "/app/agent-plugins/agent-hooks-{name}/index.mjs";
   const agentHooks = await import(/* webpackIgnore: true */ pluginPath);
 
   plugins.push({
@@ -133,7 +145,7 @@ try {
 
 Remove hook type entries that were not selected in Step 1.
 
-## Step 4: Verify
+## Step 5: Verify
 
 No build step needed — agent-hooks plugins are pure `.mjs` files loaded at runtime.
 
@@ -145,13 +157,13 @@ Verify TypeScript still compiles:
 pnpm exec tsc --noEmit
 ```
 
-## Step 5: Next steps
+## Step 6: Next steps
 
 Tell the user:
 
 1. **Implement hooks** — Edit `container/plugins/agent-hooks-{name}/index.mjs` to customize notification format and behavior
-2. **Sync container entry** — Run `/update-container-entry` to add the plugin to your local container/entry.ts
-3. **Rebuild Docker image** — `./container/build.sh` (needed if this is the first plugin using new dependencies)
+2. **Sync container entry** — Run `/update-container-entry` to add the plugin to your local entry.ts (select the agent you chose)
+3. **Rebuild Docker image** — `./container/claude-code/build.sh` and/or `./container/open-code/build.sh`
 4. **Restart nagi** — Run `/nagi-restart`
 5. **Test** — Send a message in Slack/Discord that triggers tool use
 
@@ -167,4 +179,4 @@ Tell the user:
 ## Reference
 
 Existing agent-hooks plugins to study:
-- `container/plugins/agent-hooks-claude-code/` — PostToolUse (tool icons, summary) + SessionStart ("Thinking...")
+- `container/claude-code/plugins/agent-hooks/` — PostToolUse (tool icons, summary) + SessionStart ("Thinking...")

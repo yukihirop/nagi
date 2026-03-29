@@ -32,7 +32,16 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
   const homeDir = os.homedir();
 
   // Read from .env file (not loaded into process.env)
-  const envFile = readEnvFile(["ASSISTANT_NAME", "ASSISTANT_HAS_OWN_NUMBER"]);
+  const envFile = readEnvFile([
+    "ASSISTANT_NAME",
+    "ASSISTANT_HAS_OWN_NUMBER",
+    "CONTAINER_IMAGE",
+    "CONTAINER_TIMEOUT",
+    "CONTAINER_MAX_OUTPUT_SIZE",
+    "IDLE_TIMEOUT",
+    "MAX_CONCURRENT_CONTAINERS",
+    "CREDENTIAL_PROXY_PORT",
+  ]);
 
   const raw = {
     assistantName:
@@ -44,22 +53,22 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
       overrides?.timezone || process.env.TZ || undefined,
     container: {
       image:
-        overrides?.container?.image || process.env.CONTAINER_IMAGE || undefined,
+        overrides?.container?.image || envFile.CONTAINER_IMAGE || process.env.CONTAINER_IMAGE || undefined,
       timeout:
         overrides?.container?.timeout ??
-        parseEnvNumber(process.env.CONTAINER_TIMEOUT),
+        parseEnvNumber(envFile.CONTAINER_TIMEOUT || process.env.CONTAINER_TIMEOUT),
       maxOutputSize:
         overrides?.container?.maxOutputSize ??
-        parseEnvNumber(process.env.CONTAINER_MAX_OUTPUT_SIZE),
+        parseEnvNumber(envFile.CONTAINER_MAX_OUTPUT_SIZE || process.env.CONTAINER_MAX_OUTPUT_SIZE),
       idleTimeout:
         overrides?.container?.idleTimeout ??
-        parseEnvNumber(process.env.IDLE_TIMEOUT),
+        parseEnvNumber(envFile.IDLE_TIMEOUT || process.env.IDLE_TIMEOUT),
       maxConcurrent:
         overrides?.container?.maxConcurrent ??
-        parseEnvNumber(process.env.MAX_CONCURRENT_CONTAINERS),
+        parseEnvNumber(envFile.MAX_CONCURRENT_CONTAINERS || process.env.MAX_CONCURRENT_CONTAINERS),
       credentialProxyPort:
         overrides?.container?.credentialProxyPort ??
-        parseEnvNumber(process.env.CREDENTIAL_PROXY_PORT),
+        parseEnvNumber(envFile.CREDENTIAL_PROXY_PORT || process.env.CREDENTIAL_PROXY_PORT),
     },
     intervals: {
       poll: overrides?.intervals?.poll,
