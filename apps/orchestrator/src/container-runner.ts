@@ -200,11 +200,12 @@ export function buildVolumeMounts(
     agentRunnerPkg,
     "src",
   );
+  const agentRunnerDirName = isOpenCode ? "agent-runner-opencode-src" : "agent-runner-src";
   const groupAgentRunnerDir = path.join(
     config.paths.dataDir,
     "sessions",
     group.folder,
-    "agent-runner-src",
+    agentRunnerDirName,
   );
   if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });

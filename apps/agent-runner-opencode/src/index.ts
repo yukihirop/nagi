@@ -299,13 +299,20 @@ export async function run(config?: RunConfig): Promise<void> {
           path: { id: sessionId! },
         });
         const msgList = (messages.data ?? []) as Array<{
-          info?: { role?: string };
+          info?: { role?: string; error?: { name?: string; message?: string; data?: { message?: string } } };
           parts?: Array<{ type?: string; text?: string; toolName?: string }>;
         }>;
 
         const assistantMsgs = msgList.filter((m) => m.info?.role === "assistant");
 
-        const assistantMsgCount = assistantMsgs.length;
+        // Check for API errors in assistant messages
+        const lastAssistantForError = assistantMsgs[assistantMsgs.length - 1];
+        if (lastAssistantForError?.info?.error) {
+          const err = lastAssistantForError.info.error;
+          const errMsg = err.data?.message ?? err.message ?? err.name ?? "Unknown error";
+          log(`API error detected: ${errMsg}`);
+          result = `⚠️ ${err.name ?? "Error"}: ${errMsg}`;
+        }
 
         // Fire PostToolUse hooks BEFORE sending result (so tool notifications appear first)
         const postToolHooks = pluginHooks["PostToolUse"];
@@ -333,9 +340,9 @@ export async function run(config?: RunConfig): Promise<void> {
           await new Promise((r) => setTimeout(r, 1000));
         }
 
-        // Collect text from last assistant message
+        // Collect text from last assistant message (skip if error already captured)
         const lastAssistant = assistantMsgs[assistantMsgs.length - 1];
-        if (lastAssistant?.parts) {
+        if (!result && lastAssistant?.parts) {
           // Collect text, fall back to all assistant messages
           let textParts = lastAssistant.parts
             .filter((p) => p.type === "text" && p.text)
@@ -356,13 +363,11 @@ export async function run(config?: RunConfig): Promise<void> {
         log(`Failed to fetch messages: ${err}`);
       }
 
-      if (result) {
-        writeOutput({
-          status: "success",
-          result,
-          newSessionId: sessionId,
-        });
-      }
+      writeOutput({
+        status: "success",
+        result: result ?? "(no text response)",
+        newSessionId: sessionId,
+      });
 
       if (shouldClose()) {
         log("Close sentinel detected, exiting");
