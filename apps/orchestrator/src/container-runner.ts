@@ -178,10 +178,12 @@ export function buildVolumeMounts(
   });
 
   // Per-group agent-runner source
+  const isOpenCode = config.container.image.includes("opencode");
+  const agentRunnerPkg = isOpenCode ? "agent-runner-opencode" : "agent-runner";
   const agentRunnerSrc = path.join(
     projectRoot,
     "apps",
-    "agent-runner",
+    agentRunnerPkg,
     "src",
   );
   const groupAgentRunnerDir = path.join(
