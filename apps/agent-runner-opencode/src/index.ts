@@ -382,7 +382,10 @@ export async function run(config?: RunConfig): Promise<void> {
     prompt += "\n" + pending.join("\n");
   }
 
-  let sessionId = containerInput.sessionId;
+  // Ignore non-OpenCode session IDs (e.g. Claude Code UUIDs)
+  let sessionId = containerInput.sessionId?.startsWith("ses_")
+    ? containerInput.sessionId
+    : undefined;
 
   try {
     while (true) {
