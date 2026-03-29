@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router";
 import { useData } from "../contexts/data-context.tsx";
+import { CopyButton } from "../components/copy-button.tsx";
 import type { LogEntry, LogFilter, ContainerLog, TaskRunLog } from "../types.ts";
 
 const FILTERS: { value: LogFilter; label: string }[] = [
@@ -26,9 +27,12 @@ function ContainerLogRow({ log }: { log: ContainerLog }) {
         <span className="text-zinc-500 text-xs">{log.duration}</span>
         <span className="ml-auto text-zinc-400 text-xs">{new Date(log.timestamp).toLocaleString()}</span>
       </summary>
-      <pre className="mx-4 mb-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-96 overflow-y-auto">
-        {log.content}
-      </pre>
+      <div className="group relative mx-4 mb-3">
+        <CopyButton text={log.content} />
+        <pre className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-96 overflow-y-auto">
+          {log.content}
+        </pre>
+      </div>
     </details>
   );
 }

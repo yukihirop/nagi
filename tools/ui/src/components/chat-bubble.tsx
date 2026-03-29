@@ -1,5 +1,6 @@
 import Markdown from "react-markdown";
 import type { ChatMessage } from "../types.ts";
+import { CopyButton } from "./copy-button.tsx";
 
 function formatTime(ts: string): string {
   if (!ts) return "";
@@ -162,9 +163,12 @@ function AssistantTimeline({ msg }: { msg: ChatMessage }) {
                       {summary}
                     </span>
                   </summary>
-                  <pre className="mt-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-64 overflow-y-auto">
-                    {truncateInput(t.input)}
-                  </pre>
+                  <div className="group relative mt-2">
+                    <CopyButton text={truncateInput(t.input)} />
+                    <pre className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[11px] text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 whitespace-pre-wrap max-h-64 overflow-y-auto">
+                      {truncateInput(t.input)}
+                    </pre>
+                  </div>
                 </details>
               </TimelineStep>
             );
