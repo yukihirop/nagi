@@ -33,7 +33,7 @@ If not running, start Docker.
 
 Rebuilds based on:
 - `container/claude-code/Dockerfile`
-- `apps/agent-runner/src/`
+- `apps/agent-runner-claudecode/src/`
 - `container/plugins/`
 - `container/claude-code/entry.template.ts`
 

@@ -14,7 +14,7 @@ const logger = createLogger({ name: "orchestrator" });
 export const claudeCodeConfig: AgentConfig = {
   sessionSubdir: ".claude",
   sessionContainerPath: "/home/node/.claude",
-  agentRunnerPkg: "agent-runner",
+  agentRunnerPkg: "agent-runner-claudecode",
   agentRunnerDirName: "agent-runner-claudecode-src",
   agentType: "claude-code",
 

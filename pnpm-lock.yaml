@@ -52,7 +52,7 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
-  apps/agent-runner:
+  apps/agent-runner-claudecode:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.2.76

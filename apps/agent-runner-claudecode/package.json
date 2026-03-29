@@ -1,5 +1,5 @@
 {
-  "name": "@nagi/agent-runner",
+  "name": "@nagi/agent-runner-claudecode",
   "version": "0.0.1",
   "type": "module",
   "description": "Container-side agent runner for Nagi",

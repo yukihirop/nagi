@@ -1,4 +1,4 @@
-// IMPORTANT: This file is intentionally duplicated in agent-runner and agent-runner-opencode.
+// IMPORTANT: This file is intentionally duplicated in agent-runner-claudecode and agent-runner-opencode.
 // Each agent may diverge independently — sharing via a common lib with conditional branches
 // tends to cause subtle bugs when one agent's behavior changes. Keep copies in sync manually.
 /**

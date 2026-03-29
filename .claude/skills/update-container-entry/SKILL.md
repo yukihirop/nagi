@@ -55,7 +55,7 @@ Apply new template additions to entry.ts while preserving user customizations:
 
 ```bash
 # Claude Code:
-pnpm exec tsc --noEmit -p apps/agent-runner/tsconfig.json
+pnpm exec tsc --noEmit -p apps/agent-runner-claudecode/tsconfig.json
 
 # Open Code:
 pnpm exec tsc --noEmit -p apps/agent-runner-opencode/tsconfig.json
