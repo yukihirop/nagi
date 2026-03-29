@@ -8,17 +8,16 @@ import path from "node:path";
 
 import { createLogger } from "@nagi/logger";
 import { readEnvFile, type ResolvedConfig } from "@nagi/config";
-import { detectAuthMode } from "@nagi/credential-proxy";
 import type { RegisteredGroup, MountAllowlist } from "@nagi/types";
 import { validateAdditionalMounts } from "@nagi/auth";
 
 import {
-  CONTAINER_HOST_GATEWAY,
   CONTAINER_RUNTIME_BIN,
   hostGatewayArgs,
   readonlyMountArgs,
   stopContainer,
 } from "./container-runtime.js";
+import { resolveAgentConfig } from "./container-runner-configs/agent-config.js";
 import {
   resolveGroupFolderPath,
   resolveGroupIpcPath,
@@ -102,46 +101,18 @@ export function buildVolumeMounts(
     }
   }
 
-  // Per-group sessions directory (agent-specific)
-  const isOpenCode = config.container.image.includes("opencode");
-  const sessionSubdir = isOpenCode ? ".opencode" : ".claude";
+  // Resolve agent-specific config based on container image
+  const agentConfig = resolveAgentConfig(config.container.image);
+
+  // Per-group sessions directory
   const groupSessionsDir = path.join(
     config.paths.dataDir,
     "sessions",
     group.folder,
-    sessionSubdir,
+    agentConfig.sessionSubdir,
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
-  // Merge base settings with group-specific settings.json (Claude Code only)
-  if (!isOpenCode) {
-    const settingsFile = path.join(groupSessionsDir, "settings.json");
-    const baseSettings: Record<string, unknown> = {
-      env: {
-        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-        CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
-        CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
-      },
-    };
-    // Load group settings.json if it exists (e.g. groups/main/settings.json)
-    const rootDir = path.resolve(config.paths.dataDir, "..");
-    const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
-    if (fs.existsSync(groupSettingsFile)) {
-      try {
-        const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
-        // Merge env
-        if (typeof groupSettings.env === "object" && groupSettings.env !== null) {
-          baseSettings.env = { ...(baseSettings.env as Record<string, string>), ...(groupSettings.env as Record<string, string>) };
-        }
-        // Use group hooks if defined
-        if (groupSettings.hooks) {
-          baseSettings.hooks = groupSettings.hooks;
-        }
-      } catch {
-        logger.warn({ path: groupSettingsFile }, "Failed to parse group settings.json");
-      }
-    }
-    fs.writeFileSync(settingsFile, JSON.stringify(baseSettings, null, 2) + "\n");
-  }
+  agentConfig.initSessionDir(groupSessionsDir, config, group);
 
   // Sync skills
   const skillsSrc = path.join(process.cwd(), "container", "skills");
@@ -156,25 +127,12 @@ export function buildVolumeMounts(
   }
   mounts.push({
     hostPath: groupSessionsDir,
-    containerPath: isOpenCode ? "/home/node/.opencode" : "/home/node/.claude",
+    containerPath: agentConfig.sessionContainerPath,
     readonly: false,
   });
 
-  // Open Code data backup directory (for UI viewing, not read by Open Code)
-  if (isOpenCode) {
-    const openCodeBackupDir = path.join(
-      config.paths.dataDir,
-      "sessions",
-      group.folder,
-      ".opencode-data",
-    );
-    fs.mkdirSync(openCodeBackupDir, { recursive: true });
-    mounts.push({
-      hostPath: openCodeBackupDir,
-      containerPath: "/workspace/opencode-backup",
-      readonly: false,
-    });
-  }
+  // Agent-specific additional mounts
+  mounts.push(...agentConfig.additionalMounts(config, group));
 
   // Container plugins — shared (MCP plugins)
   const sharedPluginsDir = path.join(process.cwd(), "container", "plugins");
@@ -187,8 +145,7 @@ export function buildVolumeMounts(
   }
 
   // Container plugins — agent-specific (e.g. agent-hooks)
-  const agentType = isOpenCode ? "open-code" : "claude-code";
-  const agentPluginsDir = path.join(process.cwd(), "container", agentType, "plugins");
+  const agentPluginsDir = path.join(process.cwd(), "container", agentConfig.agentType, "plugins");
   if (fs.existsSync(agentPluginsDir)) {
     mounts.push({
       hostPath: agentPluginsDir,
@@ -209,25 +166,23 @@ export function buildVolumeMounts(
   });
 
   // Per-group agent-runner source
-  const agentRunnerPkg = isOpenCode ? "agent-runner-opencode" : "agent-runner";
   const agentRunnerSrc = path.join(
     projectRoot,
     "apps",
-    agentRunnerPkg,
+    agentConfig.agentRunnerPkg,
     "src",
   );
-  const agentRunnerDirName = isOpenCode ? "agent-runner-opencode-src" : "agent-runner-src";
   const groupAgentRunnerDir = path.join(
     config.paths.dataDir,
     "sessions",
     group.folder,
-    agentRunnerDirName,
+    agentConfig.agentRunnerDirName,
   );
   if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   // Copy container/{agent}/entry.ts into agent-runner source
-  const containerEntryPath = path.join(process.cwd(), "container", agentType, "entry.ts");
+  const containerEntryPath = path.join(process.cwd(), "container", agentConfig.agentType, "entry.ts");
   if (fs.existsSync(containerEntryPath)) {
     fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
   }
@@ -265,42 +220,9 @@ export function buildContainerArgs(
 
   args.push("-e", `TZ=${config.timezone}`);
 
-  const isOpenCode = config.container.image.includes("opencode");
-
-  if (isOpenCode) {
-    // Open Code: pass provider API keys directly (no credential proxy)
-    const opencodeEnv = readEnvFile([
-      "OPENCODE_MODEL",
-      "OPENROUTER_API_KEY",
-      "GOOGLE_API_KEY",
-      "OPENAI_API_KEY",
-    ]);
-    if (opencodeEnv.OPENCODE_MODEL) {
-      args.push("-e", `OPENCODE_MODEL=${opencodeEnv.OPENCODE_MODEL}`);
-    }
-    if (opencodeEnv.OPENROUTER_API_KEY) {
-      args.push("-e", `OPENROUTER_API_KEY=${opencodeEnv.OPENROUTER_API_KEY}`);
-    }
-    if (opencodeEnv.GOOGLE_API_KEY) {
-      args.push("-e", `GOOGLE_API_KEY=${opencodeEnv.GOOGLE_API_KEY}`);
-    }
-    if (opencodeEnv.OPENAI_API_KEY) {
-      args.push("-e", `OPENAI_API_KEY=${opencodeEnv.OPENAI_API_KEY}`);
-    }
-  } else {
-    // Claude Code: use credential proxy
-    args.push(
-      "-e",
-      `ANTHROPIC_BASE_URL=http://${CONTAINER_HOST_GATEWAY}:${config.container.credentialProxyPort}`,
-    );
-
-    const authMode = detectAuthMode();
-    if (authMode === "api-key") {
-      args.push("-e", "ANTHROPIC_API_KEY=placeholder");
-    } else {
-      args.push("-e", "CLAUDE_CODE_OAUTH_TOKEN=placeholder");
-    }
-  }
+  // Agent-specific environment variables
+  const agentConfig = resolveAgentConfig(config.container.image);
+  args.push(...agentConfig.buildEnvArgs(config));
 
   const envSecrets = readEnvFile(["VERCEL_API_TOKEN", "YOUTUBE_API_KEY"]);
   if (envSecrets.VERCEL_API_TOKEN) {
