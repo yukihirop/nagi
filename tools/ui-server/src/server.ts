@@ -7,7 +7,7 @@ import { handleGroups } from "./routes/groups.js";
 import { handleChannels } from "./routes/channels.js";
 import { handleTasks, handleTaskLogs } from "./routes/tasks.js";
 import { handleMessages } from "./routes/messages.js";
-import { handleSessions, handleSessionMessages } from "./routes/sessions.js";
+import { handleSessions, handleSessionMessages, handleSessionThreads, handleSessionThreadMessages } from "./routes/sessions.js";
 import { handleLogs } from "./routes/logs.js";
 
 export interface AppOptions {
@@ -44,6 +44,18 @@ export function createApp(opts: AppOptions) {
   app.get("/api/sessions", (c) => c.json(handleSessions(dataDir)));
   app.get("/api/sessions/:id/messages", async (c) => {
     const messages = await handleSessionMessages(dataDir, c.req.param("id"));
+    return c.json(messages);
+  });
+  app.get("/api/sessions/:id/threads", async (c) => {
+    const threads = await handleSessionThreads(dataDir, c.req.param("id"));
+    return c.json(threads);
+  });
+  app.get("/api/sessions/:id/threads/:index/messages", async (c) => {
+    const messages = await handleSessionThreadMessages(
+      dataDir,
+      c.req.param("id"),
+      parseInt(c.req.param("index"), 10),
+    );
     return c.json(messages);
   });
 

@@ -18,6 +18,13 @@ export interface ChatMessage {
   thinking?: string;
 }
 
+export interface ThreadSummary {
+  index: number;
+  firstUserMessage: string;
+  messageCount: number;
+  timestamp: string;
+}
+
 function findSessionsDir(dataDir: string): string {
   return path.join(dataDir, "sessions");
 }
@@ -271,4 +278,56 @@ export async function handleSessionMessages(
   flushAssistant();
 
   return messages;
+}
+
+/**
+ * Split a flat message list into threads.
+ * A new thread starts at each user message (the first message is always a thread start).
+ */
+function splitIntoThreads(messages: ChatMessage[]): ChatMessage[][] {
+  const threads: ChatMessage[][] = [];
+  let current: ChatMessage[] = [];
+
+  for (const msg of messages) {
+    if (msg.type === "user" && current.length > 0) {
+      threads.push(current);
+      current = [];
+    }
+    current.push(msg);
+  }
+  if (current.length > 0) {
+    threads.push(current);
+  }
+
+  return threads;
+}
+
+export async function handleSessionThreads(
+  dataDir: string,
+  sessionId: string,
+): Promise<ThreadSummary[]> {
+  const messages = await handleSessionMessages(dataDir, sessionId);
+  const threads = splitIntoThreads(messages);
+
+  return threads.map((thread, index) => {
+    const firstUser = thread.find((m) => m.type === "user");
+    return {
+      index,
+      firstUserMessage: firstUser
+        ? firstUser.content.slice(0, 200)
+        : "(no user message)",
+      messageCount: thread.length,
+      timestamp: thread[0]?.timestamp ?? "",
+    };
+  });
+}
+
+export async function handleSessionThreadMessages(
+  dataDir: string,
+  sessionId: string,
+  threadIndex: number,
+): Promise<ChatMessage[]> {
+  const messages = await handleSessionMessages(dataDir, sessionId);
+  const threads = splitIntoThreads(messages);
+  return threads[threadIndex] ?? [];
 }
