@@ -30,7 +30,8 @@ import { claudeCodeConfig } from "./claude-code.js";
 import { openCodeConfig } from "./open-code.js";
 
 export function resolveAgentConfig(image: string): AgentConfig {
-  if (image.includes("opencode")) {
+  const imageName = image.split(":")[0];
+  if (imageName.endsWith("-opencode")) {
     return openCodeConfig;
   }
   return claudeCodeConfig;

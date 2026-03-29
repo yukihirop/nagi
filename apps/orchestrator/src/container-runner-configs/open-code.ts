@@ -42,19 +42,28 @@ export const openCodeConfig: AgentConfig = {
       "OPENROUTER_API_KEY",
       "GOOGLE_API_KEY",
       "OPENAI_API_KEY",
+      "ANTHROPIC_API_KEY",
     ]);
-    if (opencodeEnv.OPENCODE_MODEL) {
-      args.push("-e", `OPENCODE_MODEL=${opencodeEnv.OPENCODE_MODEL}`);
+
+    const model = opencodeEnv.OPENCODE_MODEL || "anthropic/claude-sonnet-4-20250514";
+    args.push("-e", `OPENCODE_MODEL=${model}`);
+
+    // Only pass the API key for the active provider
+    const providerID = model.split("/")[0];
+    const PROVIDER_KEY: Record<string, string> = {
+      openrouter: "OPENROUTER_API_KEY",
+      google: "GOOGLE_API_KEY",
+      openai: "OPENAI_API_KEY",
+      anthropic: "ANTHROPIC_API_KEY",
+    };
+    const envKey = PROVIDER_KEY[providerID];
+    if (envKey) {
+      const value = opencodeEnv[envKey as keyof typeof opencodeEnv];
+      if (value) {
+        args.push("-e", `${envKey}=${value}`);
+      }
     }
-    if (opencodeEnv.OPENROUTER_API_KEY) {
-      args.push("-e", `OPENROUTER_API_KEY=${opencodeEnv.OPENROUTER_API_KEY}`);
-    }
-    if (opencodeEnv.GOOGLE_API_KEY) {
-      args.push("-e", `GOOGLE_API_KEY=${opencodeEnv.GOOGLE_API_KEY}`);
-    }
-    if (opencodeEnv.OPENAI_API_KEY) {
-      args.push("-e", `OPENAI_API_KEY=${opencodeEnv.OPENAI_API_KEY}`);
-    }
+
     return args;
   },
 };

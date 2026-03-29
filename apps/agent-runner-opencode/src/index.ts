@@ -219,15 +219,15 @@ export async function run(config?: RunConfig): Promise<void> {
   log(`Starting Open Code server (model: ${model})...`);
 
   let client: OpencodeClient;
-  let serverHandle: { close: () => void };
+  let serverHandle: { close: () => void } = { close: () => {} };
 
   try {
     const oc = await createOpencode({
       config: {
         model,
         mcp: buildMcpConfig(mcpServerPath, containerInput),
-        // Auto-approve all tool permissions (running in container)
-        permission: "allow" as unknown as undefined,
+        // @ts-expect-error Open Code SDK types don't expose "allow" permission, but the server accepts it
+        permission: "allow",
       },
     });
     client = oc.client;
@@ -258,6 +258,7 @@ export async function run(config?: RunConfig): Promise<void> {
   // Always create a new session — Open Code server is fresh each container run
   // Previous session IDs are not resumable
   let sessionId: string | undefined;
+  let lastProcessedMsgIndex = 0;
 
   try {
     while (true) {
@@ -316,10 +317,11 @@ export async function run(config?: RunConfig): Promise<void> {
           result = `⚠️ ${err.name ?? "Error"}: ${errMsg}`;
         }
 
-        // Fire PostToolUse hooks BEFORE sending result (so tool notifications appear first)
+        // Fire PostToolUse hooks only for NEW messages since last prompt
         const postToolHooks = pluginHooks["PostToolUse"];
         let toolHooksFired = false;
-        for (const am of assistantMsgs) {
+        const newAssistantMsgs = assistantMsgs.slice(lastProcessedMsgIndex);
+        for (const am of newAssistantMsgs) {
           for (const part of am.parts ?? []) {
             const p = part as Record<string, unknown>;
             const toolInfo = extractToolInfo(p, providerID);
@@ -336,6 +338,7 @@ export async function run(config?: RunConfig): Promise<void> {
             }
           }
         }
+        lastProcessedMsgIndex = assistantMsgs.length;
         // Wait for IPC watcher to process tool notifications before sending result
         if (toolHooksFired) {
           await new Promise((r) => setTimeout(r, 1000));
