@@ -5,7 +5,7 @@ description: Scaffold a new agent-hooks plugin for nagi containers. Generates in
 
 # Create Agent-Hooks Plugin
 
-Scaffold a new agent-hooks plugin that runs inside agent containers and sends notifications to chat channels via IPC, following the established pattern (agent-hooks-claude-code).
+Scaffold a new agent-hooks plugin that runs inside agent containers and sends notifications to chat channels via IPC, following the established pattern (agent-hooks).
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.
 
@@ -172,4 +172,4 @@ Tell the user:
 ## Reference
 
 Existing agent-hooks plugins to study:
-- `container/plugins/agent-hooks-claude-code/` — PostToolUse (tool icons, summary) + SessionStart ("Thinking...")
+- `container/claude-code/plugins/agent-hooks/` — PostToolUse (tool icons, summary) + SessionStart ("Thinking...")

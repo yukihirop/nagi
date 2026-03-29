@@ -160,14 +160,31 @@ export function buildVolumeMounts(
     readonly: false,
   });
 
-  // Container plugins (agent hooks, etc.)
-  const containerPluginsDir = path.join(process.cwd(), "container", "plugins");
-  if (fs.existsSync(containerPluginsDir)) {
+  // Container plugins — shared (MCP plugins)
+  const sharedPluginsDir = path.join(process.cwd(), "container", "plugins");
+  if (fs.existsSync(sharedPluginsDir)) {
     mounts.push({
-      hostPath: containerPluginsDir,
+      hostPath: sharedPluginsDir,
       containerPath: "/app/plugins",
       readonly: true,
     });
+  }
+
+  // Container plugins — agent-specific (e.g. agent-hooks)
+  const agentType = isOpenCode ? "open-code" : "claude-code";
+  const agentPluginsDir = path.join(process.cwd(), "container", agentType, "plugins");
+  if (fs.existsSync(agentPluginsDir)) {
+    // Mount each sub-plugin individually into /app/plugins/
+    for (const entry of fs.readdirSync(agentPluginsDir)) {
+      const pluginDir = path.join(agentPluginsDir, entry);
+      if (fs.statSync(pluginDir).isDirectory()) {
+        mounts.push({
+          hostPath: pluginDir,
+          containerPath: `/app/plugins/${entry}`,
+          readonly: true,
+        });
+      }
+    }
   }
 
   // Per-group IPC namespace
@@ -199,7 +216,6 @@ export function buildVolumeMounts(
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   // Copy container/{agent}/entry.ts into agent-runner source
-  const agentType = config.container.image.includes("opencode") ? "open-code" : "claude-code";
   const containerEntryPath = path.join(process.cwd(), "container", agentType, "entry.ts");
   if (fs.existsSync(containerEntryPath)) {
     fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
