@@ -102,42 +102,46 @@ export function buildVolumeMounts(
     }
   }
 
-  // Per-group Claude sessions directory
+  // Per-group sessions directory (agent-specific)
+  const isOpenCode = config.container.image.includes("opencode");
+  const sessionSubdir = isOpenCode ? ".opencode" : ".claude";
   const groupSessionsDir = path.join(
     config.paths.dataDir,
     "sessions",
     group.folder,
-    ".claude",
+    sessionSubdir,
   );
   fs.mkdirSync(groupSessionsDir, { recursive: true });
-  // Merge base settings with group-specific settings.json
-  const settingsFile = path.join(groupSessionsDir, "settings.json");
-  const baseSettings: Record<string, unknown> = {
-    env: {
-      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
-      CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
-      CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
-    },
-  };
-  // Load group settings.json if it exists (e.g. groups/main/settings.json)
-  const rootDir = path.resolve(config.paths.dataDir, "..");
-  const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
-  if (fs.existsSync(groupSettingsFile)) {
-    try {
-      const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
-      // Merge env
-      if (typeof groupSettings.env === "object" && groupSettings.env !== null) {
-        baseSettings.env = { ...(baseSettings.env as Record<string, string>), ...(groupSettings.env as Record<string, string>) };
+  // Merge base settings with group-specific settings.json (Claude Code only)
+  if (!isOpenCode) {
+    const settingsFile = path.join(groupSessionsDir, "settings.json");
+    const baseSettings: Record<string, unknown> = {
+      env: {
+        CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: "1",
+        CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD: "1",
+        CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
+      },
+    };
+    // Load group settings.json if it exists (e.g. groups/main/settings.json)
+    const rootDir = path.resolve(config.paths.dataDir, "..");
+    const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
+    if (fs.existsSync(groupSettingsFile)) {
+      try {
+        const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;
+        // Merge env
+        if (typeof groupSettings.env === "object" && groupSettings.env !== null) {
+          baseSettings.env = { ...(baseSettings.env as Record<string, string>), ...(groupSettings.env as Record<string, string>) };
+        }
+        // Use group hooks if defined
+        if (groupSettings.hooks) {
+          baseSettings.hooks = groupSettings.hooks;
+        }
+      } catch {
+        logger.warn({ path: groupSettingsFile }, "Failed to parse group settings.json");
       }
-      // Use group hooks if defined
-      if (groupSettings.hooks) {
-        baseSettings.hooks = groupSettings.hooks;
-      }
-    } catch {
-      logger.warn({ path: groupSettingsFile }, "Failed to parse group settings.json");
     }
+    fs.writeFileSync(settingsFile, JSON.stringify(baseSettings, null, 2) + "\n");
   }
-  fs.writeFileSync(settingsFile, JSON.stringify(baseSettings, null, 2) + "\n");
 
   // Sync skills
   const skillsSrc = path.join(process.cwd(), "container", "skills");
@@ -152,7 +156,7 @@ export function buildVolumeMounts(
   }
   mounts.push({
     hostPath: groupSessionsDir,
-    containerPath: "/home/node/.claude",
+    containerPath: isOpenCode ? "/home/node/.opencode" : "/home/node/.claude",
     readonly: false,
   });
 
@@ -178,7 +182,6 @@ export function buildVolumeMounts(
   });
 
   // Per-group agent-runner source
-  const isOpenCode = config.container.image.includes("opencode");
   const agentRunnerPkg = isOpenCode ? "agent-runner-opencode" : "agent-runner";
   const agentRunnerSrc = path.join(
     projectRoot,
