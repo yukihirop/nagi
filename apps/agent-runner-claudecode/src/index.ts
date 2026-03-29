@@ -449,10 +449,20 @@ async function runQuery(
   for (const plugin of containerPlugins ?? []) {
     const hooks = plugin.createHooks(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig, log);
     for (const [key, value] of Object.entries(hooks)) {
-      if (key === "PromptComplete") {
+      if (key === "PromptComplete" || key === "SessionStart") {
         nagiHooks[key] = value as unknown as Array<{ hooks: NagiHookCallback[] }>;
       } else {
         pluginHooks[key] = value;
+      }
+    }
+  }
+
+  // Fire SessionStart hooks before the first prompt
+  const sessionStartHooks = nagiHooks["SessionStart"];
+  if (sessionStartHooks) {
+    for (const group of sessionStartHooks) {
+      for (const hook of group.hooks) {
+        try { await hook({ source: "claude-code" }); } catch { /* ignore */ }
       }
     }
   }
@@ -657,7 +667,22 @@ export async function run(config?: RunConfig): Promise<void> {
 
   let resumeAt: string | undefined;
   try {
+    // Build nagi hooks once (returned from first runQuery, reused for manual firing)
+    let cachedNagiHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>> | undefined;
+
     while (true) {
+      // Fire SessionStart hooks before each prompt
+      if (cachedNagiHooks) {
+        const sessionStartHooks = cachedNagiHooks["SessionStart"];
+        if (sessionStartHooks) {
+          for (const group of sessionStartHooks) {
+            for (const hook of group.hooks) {
+              try { await hook({ source: "claude-code" }); } catch { /* ignore */ }
+            }
+          }
+        }
+      }
+
       log(
         `Starting query (session: ${sessionId || "new"}, resumeAt: ${resumeAt || "latest"})...`,
       );
@@ -671,6 +696,7 @@ export async function run(config?: RunConfig): Promise<void> {
         resumeAt,
         config?.containerPlugins,
       );
+      cachedNagiHooks = queryResult.nagiHooks;
       if (queryResult.newSessionId) {
         sessionId = queryResult.newSessionId;
       }
