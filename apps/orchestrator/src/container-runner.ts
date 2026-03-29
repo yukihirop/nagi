@@ -193,8 +193,9 @@ export function buildVolumeMounts(
   if (fs.existsSync(agentRunnerSrc)) {
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
-  // Copy container/entry.ts into agent-runner source
-  const containerEntryPath = path.join(process.cwd(), "container", "entry.ts");
+  // Copy container/{agent}/entry.ts into agent-runner source
+  const agentType = config.container.image.includes("opencode") ? "open-code" : "claude-code";
+  const containerEntryPath = path.join(process.cwd(), "container", agentType, "entry.ts");
   if (fs.existsSync(containerEntryPath)) {
     fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
   }

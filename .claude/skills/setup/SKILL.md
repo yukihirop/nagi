@@ -53,7 +53,7 @@ docker info
 Build the `nagi-agent:latest` Docker image:
 
 ```bash
-./container/build.sh
+./container/claude-code/build.sh
 ```
 
 This builds the agent container with Chromium, Python/Jupyter, Claude Agent SDK, and MCP servers. Takes a few minutes on first build (cached afterwards).
@@ -158,13 +158,13 @@ Copy the templates to create your local entry points:
 
 ```bash
 cp -n apps/entry.template.ts apps/entry.ts
-cp -n container/entry.template.ts container/entry.ts
+cp -n container/claude-code/entry.template.ts container/claude-code/entry.ts
 ```
 
-Both are gitignored — they're your local configuration. The `.template.ts` files are tracked in git as references.
+All are gitignored — they're your local configuration. The `.template.ts` files are tracked in git as references.
 
 - `apps/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
-- `container/entry.ts` — container-side agent config (container plugins like agent-hooks)
+- `container/claude-code/entry.ts` — container-side agent config (container plugins like agent-hooks)
 
 To start nagi in development mode:
 ```bash

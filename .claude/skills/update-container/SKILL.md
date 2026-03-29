@@ -6,10 +6,10 @@ description: Rebuild the nagi-agent Docker image. Use after changing Dockerfile,
 # Update Container Image
 
 Rebuild the `nagi-agent:latest` Docker image to pick up changes in:
-- `container/Dockerfile`
+- `container/claude-code/Dockerfile`
 - `apps/agent-runner/src/`
 - `container/plugins/` (MCP plugins, agent hooks)
-- `container/entry.template.ts`
+- `container/claude-code/entry.template.ts`
 
 ## Steps
 
@@ -26,7 +26,7 @@ If not running, start Docker:
 ### 2. Build
 
 ```bash
-./container/build.sh
+./container/claude-code/build.sh
 ```
 
 This takes a few minutes on first build (cached afterwards).

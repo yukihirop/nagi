@@ -65,7 +65,7 @@ If `apps/entry.ts` is outdated, compare with `apps/entry.template.ts` and update
 ### Rebuild Docker image (if not already built with Vercel plugin)
 
 ```bash
-./container/build.sh
+./container/claude-code/build.sh
 ```
 
 ### Restart nagi
@@ -104,7 +104,7 @@ The token must be in `.env` at the project root AND registered in `apps/entry.ts
 ### Agent doesn't see Vercel tools
 
 1. Check `apps/entry.ts` has `registerMcpPlugin("vercel", ...)`
-2. Check Docker image was rebuilt after adding the plugin: `./container/build.sh`
+2. Check Docker image was rebuilt after adding the plugin: `./container/claude-code/build.sh`
 3. Restart nagi after changes
 
 ### Deploy fails

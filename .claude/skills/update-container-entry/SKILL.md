@@ -1,31 +1,31 @@
 ---
 name: update-container-entry
-description: Sync container/entry.ts with container/entry.template.ts. Use when the template has been updated with new container plugins or after pulling upstream changes. Triggers on "update container entry", "sync container entry", "refresh container entry".
+description: Sync container/claude-code/entry.ts with container/claude-code/entry.template.ts. Use when the template has been updated with new container plugins or after pulling upstream changes. Triggers on "update container entry", "sync container entry", "refresh container entry".
 ---
 
 # Update Container Entry Point
 
-Sync `container/entry.ts` (local, gitignored) with `container/entry.template.ts` (tracked in git). Preserves user customizations while incorporating new features from the template.
+Sync `container/claude-code/entry.ts` (local, gitignored) with `container/claude-code/entry.template.ts` (tracked in git). Preserves user customizations while incorporating new features from the template.
 
 ## Steps
 
 ### 1. Check current state
 
 ```bash
-test -f container/entry.ts && echo "EXISTS" || echo "MISSING"
+test -f container/claude-code/entry.ts && echo "EXISTS" || echo "MISSING"
 ```
 
-If `container/entry.ts` doesn't exist, simply copy:
+If `container/claude-code/entry.ts` doesn't exist, simply copy:
 ```bash
-cp container/entry.template.ts container/entry.ts
+cp container/claude-code/entry.template.ts container/claude-code/entry.ts
 ```
 Done.
 
 ### 2. Diff template vs local
 
 Read both files:
-- `container/entry.template.ts` — the latest template (git-tracked)
-- `container/entry.ts` — the user's local version (gitignored)
+- `container/claude-code/entry.template.ts` — the latest template (git-tracked)
+- `container/claude-code/entry.ts` — the user's local version (gitignored)
 
 Compare them and identify:
 - **New in template** — new container plugin registrations, hook additions
@@ -34,7 +34,7 @@ Compare them and identify:
 
 ### 3. Merge changes
 
-Apply new template additions to `container/entry.ts` while preserving user customizations:
+Apply new template additions to `container/claude-code/entry.ts` while preserving user customizations:
 
 - **New container plugins** — add plugin blocks that don't exist in local
 - **Updated imports** — add missing imports

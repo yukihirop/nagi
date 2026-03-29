@@ -112,7 +112,7 @@ OPENAI_API_KEY=sk-...
 ## Step 6: Build Docker Image
 
 ```bash
-./container/build-opencode.sh
+./container/open-code/build.sh
 ```
 
 This builds the `nagi-agent-opencode:latest` image with Open Code CLI.
@@ -162,7 +162,7 @@ Then restart nagi.
 
 ### Container fails to start
 - Check Docker is running: `docker info`
-- Rebuild image: `./container/build-opencode.sh`
+- Rebuild image: `./container/open-code/build.sh`
 - Check logs: `tail -20 __data/logs/nagi.error.log`
 
 ### No response from agent
