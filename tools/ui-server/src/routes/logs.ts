@@ -25,22 +25,19 @@ export interface TaskRunLog {
 
 export type LogEntry = ContainerLog | TaskRunLog;
 
-function parseContainerLog(filename: string, raw: string): Omit<ContainerLog, "content"> & { content: string } {
-  let timestamp = "";
-  let group = "";
-  let duration = "";
-  let exitCode = "";
-  let sessionId = "";
+function parseContainerLog(filename: string, raw: string): ContainerLog {
+  const data = JSON.parse(raw) as Record<string, unknown>;
 
-  for (const line of raw.split("\n").slice(0, 15)) {
-    if (line.startsWith("Timestamp: ")) timestamp = line.slice(11).trim();
-    else if (line.startsWith("Group: ")) group = line.slice(7).trim();
-    else if (line.startsWith("Duration: ")) duration = line.slice(10).trim();
-    else if (line.startsWith("Exit Code: ")) exitCode = line.slice(11).trim();
-    else if (line.startsWith("Session ID: ")) sessionId = line.slice(12).trim();
-  }
-
-  return { type: "container", filename, timestamp, group, duration, exitCode, sessionId, content: raw };
+  return {
+    type: "container",
+    filename,
+    timestamp: String(data.timestamp ?? ""),
+    group: String(data.group ?? ""),
+    duration: `${data.duration ?? 0}ms`,
+    exitCode: String(data.exitCode ?? ""),
+    sessionId: String(data.sessionId ?? ""),
+    content: raw,
+  };
 }
 
 export function handleLogs(
@@ -63,7 +60,7 @@ export function handleLogs(
         if (!fs.existsSync(logsDir)) continue;
 
         const logFiles = fs.readdirSync(logsDir)
-          .filter((f) => f.startsWith("container-") && f.endsWith(".log"))
+          .filter((f) => f.startsWith("container-") && f.endsWith(".json"))
           .sort()
           .reverse();
 

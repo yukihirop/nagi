@@ -447,18 +447,18 @@ export async function runContainerAgent(
 
       if (timedOut) {
         const ts = new Date().toISOString().replace(/[:.]/g, "-");
-        const timeoutLog = path.join(logsDir, `container-${ts}.log`);
+        const timeoutLog = path.join(logsDir, `container-${ts}.json`);
         fs.writeFileSync(
           timeoutLog,
-          [
-            `=== Container Run Log (TIMEOUT) ===`,
-            `Timestamp: ${new Date().toISOString()}`,
-            `Group: ${group.name}`,
-            `Container: ${containerName}`,
-            `Duration: ${duration}ms`,
-            `Exit Code: ${code}`,
-            `Had Streaming Output: ${hadStreamingOutput}`,
-          ].join("\n"),
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            group: group.name,
+            container: containerName,
+            duration,
+            exitCode: code,
+            hadStreamingOutput,
+            timeout: true,
+          }, null, 2),
         );
 
         if (hadStreamingOutput) {
@@ -482,35 +482,28 @@ export async function runContainerAgent(
 
       // Write log file
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const logFile = path.join(logsDir, `container-${timestamp}.log`);
+      const logFile = path.join(logsDir, `container-${timestamp}.json`);
       const isVerbose =
         process.env.LOG_LEVEL === "debug" ||
         process.env.LOG_LEVEL === "trace";
       const isError = code !== 0;
 
-      const logLines = [
-        `=== Container Run Log ===`,
-        `Timestamp: ${new Date().toISOString()}`,
-        `Group: ${group.name}`,
-        `IsMain: ${input.isMain}`,
-        `Duration: ${duration}ms`,
-        `Exit Code: ${code}`,
-        ``,
-      ];
+      const logData: Record<string, unknown> = {
+        timestamp: new Date().toISOString(),
+        group: group.name,
+        isMain: input.isMain,
+        duration,
+        exitCode: code,
+        sessionId: input.sessionId || null,
+      };
 
       if (isVerbose || isError) {
-        logLines.push(
-          `=== Input Summary ===`,
-          `Prompt length: ${input.prompt.length} chars`,
-          `Session ID: ${input.sessionId || "new"}`,
-          ``,
-          `=== Stderr${stderrTruncated ? " (TRUNCATED)" : ""} ===`,
-          stderr,
-          ``,
-        );
+        logData.promptLength = input.prompt.length;
+        logData.stderr = stderr;
+        logData.stderrTruncated = stderrTruncated;
       }
 
-      fs.writeFileSync(logFile, logLines.join("\n"));
+      fs.writeFileSync(logFile, JSON.stringify(logData, null, 2));
 
       if (code !== 0) {
         logger.error(
