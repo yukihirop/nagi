@@ -41,6 +41,33 @@ function toolSummary(name: string, input: Record<string, unknown>): string {
   }
 }
 
+function MentionBadge({ name }: { name: string }) {
+  return (
+    <span className="inline-flex items-center rounded bg-white/90 px-1.5 py-0.5 text-xs font-semibold text-indigo-600">
+      @{name}
+    </span>
+  );
+}
+
+function UserContent({ text }: { text: string }) {
+  const parts: React.ReactNode[] = [];
+  const re = /@(\w[\w.-]*)/g;
+  let last = 0;
+  let key = 0;
+
+  for (const match of text.matchAll(re)) {
+    if (match.index > last) {
+      parts.push(<Markdown key={key++}>{text.slice(last, match.index)}</Markdown>);
+    }
+    parts.push(<MentionBadge key={key++} name={match[1]} />);
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) {
+    parts.push(<Markdown key={key++}>{text.slice(last)}</Markdown>);
+  }
+  return <>{parts}</>;
+}
+
 function UserBubble({ msg }: { msg: ChatMessage }) {
   return (
     <div className="flex justify-end">
@@ -48,7 +75,7 @@ function UserBubble({ msg }: { msg: ChatMessage }) {
         <span className="text-[10px] font-medium text-indigo-500">You</span>
         <div className="rounded-xl px-3 py-2 bg-indigo-500 text-white rounded-br-sm">
           <div className="text-sm leading-relaxed prose prose-sm prose-invert max-w-none prose-p:my-1 prose-pre:my-2 prose-ul:my-1 prose-ol:my-1 prose-li:my-0 prose-headings:my-2 prose-p:text-white prose-headings:text-white prose-strong:text-white prose-code:text-white/90 prose-a:text-white/90">
-            <Markdown>{msg.content}</Markdown>
+            <UserContent text={msg.content} />
           </div>
           <div className="mt-1 text-right text-[10px] text-white/70">{formatTime(msg.timestamp)}</div>
         </div>
