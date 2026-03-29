@@ -99,9 +99,14 @@ export function createSessionStartHook(chatJid, groupFolder, log) {
 
 Replace `{name}`, `{Name}`, `{description}` placeholders.
 
-## Step 3: Add to container/claude-code/entry.template.ts
+## Step 3: Add to container entry.template.ts
 
-Add a new try/catch block after the existing agent-hooks-claude-code block:
+AskUserQuestion: Which agent's entry.template.ts should register this plugin?
+- **Claude Code** — `container/claude-code/entry.template.ts`
+- **Open Code** — `container/open-code/entry.template.ts` (create if missing)
+- **Both** — Add to both
+
+Add a new try/catch block after any existing agent-hooks blocks:
 
 ```typescript
 try {
@@ -150,8 +155,8 @@ pnpm exec tsc --noEmit
 Tell the user:
 
 1. **Implement hooks** — Edit `container/plugins/agent-hooks-{name}/index.mjs` to customize notification format and behavior
-2. **Sync container entry** — Run `/update-container-entry` to add the plugin to your local container/claude-code/entry.ts
-3. **Rebuild Docker image** — `./container/claude-code/build.sh` (needed if this is the first plugin using new dependencies)
+2. **Sync container entry** — Run `/update-container-entry` to add the plugin to your local entry.ts (select the agent you chose)
+3. **Rebuild Docker image** — `./container/claude-code/build.sh` and/or `./container/open-code/build.sh`
 4. **Restart nagi** — Run `/nagi-restart`
 5. **Test** — Send a message in Slack/Discord that triggers tool use
 
