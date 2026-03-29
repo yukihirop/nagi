@@ -400,11 +400,9 @@ async function runQuery(
       ipcPolling = false;
       return;
     }
-    const messages = drainIpcInput();
-    for (const text of messages) {
-      log(`Piping IPC message into active query (${text.length} chars)`);
-      stream.push(text);
-    }
+    // Don't pipe IPC messages into active queries — hooks (PostToolUse, etc.)
+    // don't fire for piped follow-up turns. Instead, let the query complete
+    // and process follow-ups as new queries with fresh hooks.
     setTimeout(pollIpcDuringQuery, IPC_POLL_MS);
   };
   setTimeout(pollIpcDuringQuery, IPC_POLL_MS);
