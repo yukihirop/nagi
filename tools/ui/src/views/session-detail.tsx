@@ -3,7 +3,48 @@ import { useParams, useNavigate } from "react-router";
 import { api } from "../api.ts";
 import type { ThreadSummary } from "../types.ts";
 
-function HighlightMatch({ text, query }: { text: string; query: string }) {
+const MENTION_PATTERN = /@(\w[\w.-]*(?:\s*\([^)]*\))?)/g;
+
+function MentionTag({ mention }: { mention: string }) {
+  return (
+    <span className="inline-flex items-center rounded bg-indigo-100 px-1.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+      @{mention}
+    </span>
+  );
+}
+
+function RichText({ text, query }: { text: string; query?: string }) {
+  // Split text by mention patterns, then apply search highlight within non-mention segments
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let key = 0;
+
+  for (const match of text.matchAll(MENTION_PATTERN)) {
+    const before = text.slice(lastIndex, match.index);
+    if (before) {
+      parts.push(
+        <HighlightSegment key={key++} text={before} query={query} />,
+      );
+    }
+    parts.push(<MentionTag key={key++} mention={match[1]} />);
+    lastIndex = match.index + match[0].length;
+  }
+
+  const after = text.slice(lastIndex);
+  if (after) {
+    parts.push(<HighlightSegment key={key++} text={after} query={query} />);
+  }
+
+  return <>{parts.length > 0 ? parts : text}</>;
+}
+
+function HighlightSegment({
+  text,
+  query,
+}: {
+  text: string;
+  query?: string;
+}) {
   if (!query) return <>{text}</>;
 
   const lowerText = text.toLowerCase();
@@ -128,7 +169,7 @@ export function SessionDetail() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
-                  <HighlightMatch text={thread.firstUserMessage} query={query} />
+                  <RichText text={thread.firstUserMessage} query={query} />
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
                   {thread.messageCount} message{thread.messageCount !== 1 ? "s" : ""}
