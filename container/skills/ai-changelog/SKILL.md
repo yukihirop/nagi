@@ -148,7 +148,6 @@ Respond to the user with:
 1. The deployed URL
 2. A brief summary: how many updates were found per provider
 3. Any providers that were unavailable
-4. **ツール使用状況（必須）**: 末尾に `🔧 使用ツール` セクションを必ず追加
 
 ### Examples
 
@@ -170,16 +169,6 @@ AI更新情報をデプロイしました！🎉
 | ⚫ OpenAI | 1件 | gpt-5.3-chat-latest モデルスラッグ更新 |
 | 🔵 Google Gemini | 3件 | OpenAI互換機能拡張 |
 
----
-```
-🔧 使用ツール:
-- Bash(python3 skills/ui-ux-pro-max/scripts/search.py "dashboard dark mode editorial news" --design-system)
-- WebFetch(platform.claude.com/docs/en/release-notes/overview)
-- WebFetch(developers.openai.com/changelog/)
-- Bash(agent-browser open "https://ai.google.dev/gemini-api/docs/changelog")
-- Bash(agent-browser snapshot)
-- mcp__vercel__vercel_deploy(name: "ai-changelog", files: 1)
-```
 ````
 
 **Example 2: 一部プロバイダー取得失敗**
@@ -199,19 +188,6 @@ AI更新情報をデプロイしました！🎉
 | 🟠 Anthropic | 2件 |
 | ⚫ OpenAI | ⚠️ 取得失敗 |
 | 🔵 Google Gemini | 1件 |
-
----
-```
-🔧 使用ツール:
-- Bash(python3 skills/ui-ux-pro-max/scripts/search.py "dashboard dark mode editorial news" --design-system)
-- WebFetch(platform.claude.com/docs/en/release-notes/overview)
-- WebFetch(developers.openai.com/changelog/) → 403 Error
-- Bash(agent-browser open "https://ai.google.dev/gemini-api/docs/changelog")
-- mcp__vercel__vercel_deploy(name: "ai-changelog", files: 1)
 ```
 ````
 
-**IMPORTANT**:
-- `🔧 使用ツール` セクションは必ず回答の末尾に追加すること
-- function-call style で書く: `ToolName(key_param)`
-- ui-ux-pro-max のBashコマンドを必ず含めること（使用した証拠）

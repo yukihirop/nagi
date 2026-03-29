@@ -383,9 +383,11 @@ async function runQuery(
   newSessionId?: string;
   lastAssistantUuid?: string;
   closedDuringQuery: boolean;
+  lastResult?: string;
 }> {
   const stream = new MessageStream();
   stream.push(prompt);
+  let lastResult: string | undefined;
 
   let ipcPolling = true;
   let closedDuringQuery = false;
@@ -398,11 +400,9 @@ async function runQuery(
       ipcPolling = false;
       return;
     }
-    const messages = drainIpcInput();
-    for (const text of messages) {
-      log(`Piping IPC message into active query (${text.length} chars)`);
-      stream.push(text);
-    }
+    // Don't pipe IPC messages into active queries — hooks (PostToolUse, etc.)
+    // don't fire for piped follow-up turns. Instead, let the query complete
+    // and process follow-ups as new queries with fresh hooks.
     setTimeout(pollIpcDuringQuery, IPC_POLL_MS);
   };
   setTimeout(pollIpcDuringQuery, IPC_POLL_MS);
@@ -561,11 +561,14 @@ async function runQuery(
       log(
         `Result #${resultCount}: subtype=${message.subtype}${textResult ? ` text=${textResult.slice(0, 200)}` : ""}`,
       );
-      writeOutput({
-        status: "success",
-        result: textResult || null,
-        newSessionId,
-      });
+      // Buffer the last result with text content — only write after query completes
+      // to avoid duplicate outputs when SDK emits multiple result messages
+      if (textResult) {
+        lastResult = textResult;
+      }
+      // End the stream so the SDK completes this query.
+      // Follow-up messages will be handled as new queries.
+      stream.end();
     }
   }
 
@@ -573,7 +576,7 @@ async function runQuery(
   log(
     `Query done. Messages: ${messageCount}, results: ${resultCount}, lastAssistantUuid: ${lastAssistantUuid || "none"}, closedDuringQuery: ${closedDuringQuery}`,
   );
-  return { newSessionId, lastAssistantUuid, closedDuringQuery };
+  return { newSessionId, lastAssistantUuid, closedDuringQuery, lastResult };
 }
 
 export async function run(config?: RunConfig): Promise<void> {
@@ -650,16 +653,18 @@ export async function run(config?: RunConfig): Promise<void> {
         resumeAt = queryResult.lastAssistantUuid;
       }
 
+      if (queryResult.lastResult) {
+        writeOutput({
+          status: "success",
+          result: queryResult.lastResult,
+          newSessionId: sessionId,
+        });
+      }
+
       if (queryResult.closedDuringQuery) {
         log("Close sentinel consumed during query, exiting");
         break;
       }
-
-      writeOutput({
-        status: "success",
-        result: null,
-        newSessionId: sessionId,
-      });
 
       log("Query ended, waiting for next IPC message...");
 
@@ -685,4 +690,10 @@ export async function run(config?: RunConfig): Promise<void> {
   }
 }
 
-run();
+// Only auto-run when executed directly (not when imported by entry.ts)
+const isDirectRun =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url).endsWith(process.argv[1].replace(/.*\/dist\//, "dist/"));
+if (isDirectRun) {
+  run();
+}
