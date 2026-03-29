@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.png" alt="Nagi" width="240" />
+  <img src="docs/assets/icon.png" alt="Nagi" width="240" />
 </p>
 
 <h1 align="center">Nagi (凪)</h1>
