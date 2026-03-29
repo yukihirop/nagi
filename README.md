@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.png" alt="Nagi" width="240" />
+  <img src="docs/assets/icon.png" alt="Nagi" width="240" />
 </p>
 
 <h1 align="center">Nagi (凪)</h1>
@@ -13,6 +13,12 @@ AI assistant that runs Claude Agent SDK in Docker containers and communicates th
 Built as a clean-room reimplementation of [NanoClaw](https://github.com/qwibitai/nanoclaw) with a Turborepo monorepo architecture, plugin system, and DI-based design.
 
 ## Quick Start
+
+```bash
+git clone https://github.com/yukihirop/nagi.git
+cd nagi
+claude
+```
 
 Open [Claude Code](https://claude.ai/code) in this directory and run:
 

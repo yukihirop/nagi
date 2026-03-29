@@ -13,10 +13,10 @@ importers:
         version: link:libs/channel-core
       '@nagi/channel-discord':
         specifier: workspace:*
-        version: link:plugins/channel-discord
+        version: link:apps/plugins/channel-discord
       '@nagi/channel-slack':
         specifier: workspace:*
-        version: link:plugins/channel-slack
+        version: link:apps/plugins/channel-slack
       '@nagi/config':
         specifier: workspace:*
         version: link:libs/config
@@ -141,6 +141,85 @@ importers:
       vitest:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  apps/plugins/channel-discord:
+    dependencies:
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:../../../libs/channel-core
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../../libs/logger
+      '@nagi/types':
+        specifier: workspace:*
+        version: link:../../../libs/types
+      discord.js:
+        specifier: ^14.25.1
+        version: 14.25.1
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  apps/plugins/channel-slack:
+    dependencies:
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:../../../libs/channel-core
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../../libs/logger
+      '@nagi/types':
+        specifier: workspace:*
+        version: link:../../../libs/types
+      '@slack/bolt':
+        specifier: ^4.6.0
+        version: 4.6.0(@types/express@5.0.6)
+      '@slack/types':
+        specifier: ^2.20.1
+        version: 2.20.1
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  container/plugins/mcp-ollama:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.12.1
+        version: 1.28.0(zod@4.3.6)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  container/plugins/mcp-vercel:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.12.1
+        version: 1.28.0(zod@4.3.6)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
 
   libs/auth:
     dependencies:
@@ -313,85 +392,6 @@ importers:
       vitest:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
-
-  plugins/channel-discord:
-    dependencies:
-      '@nagi/channel-core':
-        specifier: workspace:*
-        version: link:../../libs/channel-core
-      '@nagi/logger':
-        specifier: workspace:*
-        version: link:../../libs/logger
-      '@nagi/types':
-        specifier: workspace:*
-        version: link:../../libs/types
-      discord.js:
-        specifier: ^14.25.1
-        version: 14.25.1
-    devDependencies:
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-      vitest:
-        specifier: ^3.1.4
-        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
-
-  plugins/channel-slack:
-    dependencies:
-      '@nagi/channel-core':
-        specifier: workspace:*
-        version: link:../../libs/channel-core
-      '@nagi/logger':
-        specifier: workspace:*
-        version: link:../../libs/logger
-      '@nagi/types':
-        specifier: workspace:*
-        version: link:../../libs/types
-      '@slack/bolt':
-        specifier: ^4.6.0
-        version: 4.6.0(@types/express@5.0.6)
-      '@slack/types':
-        specifier: ^2.20.1
-        version: 2.20.1
-    devDependencies:
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-      vitest:
-        specifier: ^3.1.4
-        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
-
-  plugins/mcp-ollama:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.12.1
-        version: 1.28.0(zod@4.3.6)
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.0
-        version: 22.19.15
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  plugins/mcp-vercel:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.12.1
-        version: 1.28.0(zod@4.3.6)
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.0
-        version: 22.19.15
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
 
   tools/cli:
     dependencies:

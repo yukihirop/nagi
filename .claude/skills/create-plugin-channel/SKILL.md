@@ -1,6 +1,6 @@
 ---
 name: create-plugin-channel
-description: Scaffold a new channel plugin for nagi. Generates package with Channel interface implementation, factory function, tests, and entry.template.ts registration. Triggers on "create channel plugin", "new channel", "scaffold channel", "add channel plugin".
+description: Scaffold a new channel plugin for nagi. Generates package with Channel interface implementation, factory function, tests, and apps/entry.template.ts registration. Triggers on "create channel plugin", "new channel", "scaffold channel", "add channel plugin".
 ---
 
 # Create Channel Plugin
@@ -20,7 +20,7 @@ AskUserQuestion:
 
 ## Step 2: Generate package
 
-Create `plugins/channel-{name}/` with the following structure:
+Create `apps/plugins/channel-{name}/` with the following structure:
 
 ### package.json
 
@@ -253,9 +253,9 @@ Add the new package to root `package.json` dependencies for type resolution:
 "@nagi/channel-{name}": "workspace:*"
 ```
 
-## Step 4: Add to entry.template.ts
+## Step 4: Add to apps/entry.template.ts
 
-Add a registration block to `entry.template.ts`:
+Add a registration block to `apps/entry.template.ts`:
 
 ```typescript
 // Register {Name} if configured
@@ -288,7 +288,7 @@ All packages must build and tests must pass.
 
 Tell the user:
 
-1. **Implement the Channel interface** — Edit `plugins/channel-{name}/src/{name}-channel.ts`:
+1. **Implement the Channel interface** — Edit `apps/plugins/channel-{name}/src/{name}-channel.ts`:
    - `connect()` — Set up SDK client, register message handlers
    - `sendMessage()` — Send text to a JID
    - `setTyping()` — Typing indicator (no-op if unsupported)
@@ -311,5 +311,5 @@ Tell the user:
 ## Reference
 
 Existing channel plugins to study:
-- `plugins/channel-slack/` — Socket Mode, thread replies, message queueing, user name cache
-- `plugins/channel-discord/` — Gateway intents, thread creation, attachment handling, 2000-char splitting
+- `apps/plugins/channel-slack/` — Socket Mode, thread replies, message queueing, user name cache
+- `apps/plugins/channel-discord/` — Gateway intents, thread creation, attachment handling, 2000-char splitting

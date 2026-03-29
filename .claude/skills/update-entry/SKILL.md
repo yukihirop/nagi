@@ -1,31 +1,31 @@
 ---
 name: update-entry
-description: Sync entry.ts with entry.template.ts. Use when the template has been updated with new plugins, config changes, or after pulling upstream changes. Triggers on "update entry", "sync entry", "refresh entry".
+description: Sync apps/entry.ts with apps/entry.template.ts. Use when the template has been updated with new plugins, config changes, or after pulling upstream changes. Triggers on "update entry", "sync entry", "refresh entry".
 ---
 
 # Update Entry Point
 
-Sync `entry.ts` (local, gitignored) with `entry.template.ts` (tracked in git). Preserves user customizations while incorporating new features from the template.
+Sync `apps/entry.ts` (local, gitignored) with `apps/entry.template.ts` (tracked in git). Preserves user customizations while incorporating new features from the template.
 
 ## Steps
 
 ### 1. Check current state
 
 ```bash
-test -f entry.ts && echo "EXISTS" || echo "MISSING"
+test -f apps/entry.ts && echo "EXISTS" || echo "MISSING"
 ```
 
-If `entry.ts` doesn't exist, simply copy:
+If `apps/entry.ts` doesn't exist, simply copy:
 ```bash
-cp entry.template.ts entry.ts
+cp apps/entry.template.ts apps/entry.ts
 ```
 Done.
 
 ### 2. Diff template vs local
 
 Read both files:
-- `entry.template.ts` — the latest template (git-tracked)
-- `entry.ts` — the user's local version (gitignored)
+- `apps/entry.template.ts` — the latest template (git-tracked)
+- `apps/entry.ts` — the user's local version (gitignored)
 
 Compare them and identify:
 - **New in template** — new plugin registrations, config changes, imports
@@ -34,7 +34,7 @@ Compare them and identify:
 
 ### 3. Merge changes
 
-Apply new template additions to `entry.ts` while preserving user customizations:
+Apply new template additions to `apps/entry.ts` while preserving user customizations:
 
 - **New channel plugins** — add registration blocks that don't exist in local
 - **New MCP plugins** — add `registerMcpPlugin` calls that don't exist in local

@@ -8,8 +8,7 @@ description: Rebuild the nagi-agent Docker image. Use after changing Dockerfile,
 Rebuild the `nagi-agent:latest` Docker image to pick up changes in:
 - `container/Dockerfile`
 - `apps/agent-runner/src/`
-- `plugins/mcp-ollama/`, `plugins/mcp-vercel/`
-- `container/plugins/`
+- `container/plugins/` (MCP plugins, agent hooks)
 - `container/entry.template.ts`
 
 ## Steps

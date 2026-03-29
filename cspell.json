@@ -48,7 +48,11 @@
     "oneline",
     "Hikakin",
     "Noto",
-    "usermod"
+    "usermod",
+    "nodenv",
+    "pkill",
+    "openclaw",
+    "yukihirop"
   ],
   "ignorePaths": [
     "node_modules",

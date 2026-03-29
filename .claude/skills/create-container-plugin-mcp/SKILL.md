@@ -1,6 +1,6 @@
 ---
-name: create-plugin-mcp
-description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
+name: create-container-plugin-mcp
+description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and apps/entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
 ---
 
 # Create MCP Plugin
@@ -18,7 +18,7 @@ AskUserQuestion:
 
 ## Step 2: Generate package
 
-Create `plugins/mcp-{name}/` with three files:
+Create `container/plugins/mcp-{name}/` with three files:
 
 ### package.json
 
@@ -123,16 +123,16 @@ If no API token is needed, remove the `API_TOKEN` line.
 Append the following block to `container/Dockerfile` **before** the `# Create workspace directories` line:
 
 ```dockerfile
-COPY plugins/mcp-{name}/package*.json /app/mcp-plugins/{name}/
+COPY container/plugins/mcp-{name}/package*.json /app/mcp-plugins/{name}/
 RUN cd /app/mcp-plugins/{name} && npm install
-COPY plugins/mcp-{name}/src/ /app/mcp-plugins/{name}/src/
-COPY plugins/mcp-{name}/tsconfig.json /app/mcp-plugins/{name}/
+COPY container/plugins/mcp-{name}/src/ /app/mcp-plugins/{name}/src/
+COPY container/plugins/mcp-{name}/tsconfig.json /app/mcp-plugins/{name}/
 RUN cd /app/mcp-plugins/{name} && npx tsc
 ```
 
-## Step 4: Add to entry.template.ts
+## Step 4: Add to apps/entry.template.ts
 
-Add a `registerMcpPlugin` block to `entry.template.ts`:
+Add a `registerMcpPlugin` block to `apps/entry.template.ts`:
 
 **If API token required:**
 ```typescript
@@ -165,7 +165,7 @@ All packages must build successfully.
 
 Tell the user:
 
-1. **Implement tools** — Edit `plugins/mcp-{name}/src/index.ts` to add real MCP tools
+1. **Implement tools** — Edit `container/plugins/mcp-{name}/src/index.ts` to add real MCP tools
 2. **Rebuild Docker image** — `./container/build.sh`
 3. **Sync entry.ts** — Run `/update-entry` to add the plugin registration to your local entry.ts
 4. **If API token needed** — Add `{ENV_VAR}=...` to `.env`
@@ -175,5 +175,5 @@ Tell the user:
 ## Reference
 
 Existing MCP plugins to study:
-- `plugins/mcp-ollama/` — No API token, connects to local service via `host.docker.internal`
-- `plugins/mcp-vercel/` — Requires `VERCEL_API_TOKEN`, calls external REST API
+- `container/plugins/mcp-ollama/` — No API token, connects to local service via `host.docker.internal`
+- `container/plugins/mcp-vercel/` — Requires `VERCEL_API_TOKEN`, calls external REST API

@@ -8,7 +8,7 @@
     <array>
         <string>/Users/yukihirop/.nodenv/versions/22.13.1/bin/node</string>
         <string>/Users/yukihirop/JavaScriptProjects/nagi/node_modules/.pnpm/tsx@4.21.0/node_modules/tsx/dist/cli.mjs</string>
-        <string>/Users/yukihirop/JavaScriptProjects/nagi/entry.ts</string>
+        <string>/Users/yukihirop/JavaScriptProjects/nagi/apps/entry.ts</string>
     </array>
     <key>WorkingDirectory</key>
     <string>/Users/yukihirop/JavaScriptProjects/nagi</string>
