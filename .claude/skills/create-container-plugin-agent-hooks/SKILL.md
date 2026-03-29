@@ -18,9 +18,16 @@ AskUserQuestion:
 
 The full plugin name will be `agent-hooks-{name}`.
 
-## Step 2: Generate plugin
+## Step 2: Choose target agent
 
-Create `container/plugins/agent-hooks-{name}/` with a single file:
+AskUserQuestion: Which agent should this plugin be created for?
+- **Claude Code** — `container/claude-code/plugins/agent-hooks-{name}/`
+- **Open Code** — `container/open-code/plugins/agent-hooks-{name}/`
+- **Both** — Create in both
+
+## Step 3: Generate plugin
+
+Create the plugin in the selected directory with a single file:
 
 ### index.mjs
 
@@ -99,7 +106,7 @@ export function createSessionStartHook(chatJid, groupFolder, log) {
 
 Replace `{name}`, `{Name}`, `{description}` placeholders.
 
-## Step 3: Add to container entry.template.ts
+## Step 4: Add to container entry.template.ts
 
 AskUserQuestion: Which agent's entry.template.ts should register this plugin?
 - **Claude Code** — `container/claude-code/entry.template.ts`
@@ -138,7 +145,7 @@ try {
 
 Remove hook type entries that were not selected in Step 1.
 
-## Step 4: Verify
+## Step 5: Verify
 
 No build step needed — agent-hooks plugins are pure `.mjs` files loaded at runtime.
 
@@ -150,7 +157,7 @@ Verify TypeScript still compiles:
 pnpm exec tsc --noEmit
 ```
 
-## Step 5: Next steps
+## Step 6: Next steps
 
 Tell the user:
 
