@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createOpencode, type OpencodeClient } from "@opencode-ai/sdk";
-import { setProviderAuth } from "./providers.js";
+import { setProviderAuth, extractToolInfo, getProviderID } from "./providers.js";
 
 // --- Shared protocol types (same as Claude Code agent runner) ---
 
@@ -211,8 +211,9 @@ export async function run(config?: RunConfig): Promise<void> {
     Object.assign(pluginHooks, hooks);
   }
 
-  // Determine model from environment
+  // Determine model and provider from environment
   const model = process.env.OPENCODE_MODEL || "anthropic/claude-sonnet-4-20250514";
+  const providerID = getProviderID(model);
 
   // Start Open Code server + client
   log(`Starting Open Code server (model: ${model})...`);
@@ -320,10 +321,9 @@ export async function run(config?: RunConfig): Promise<void> {
         for (const am of assistantMsgs) {
           for (const part of am.parts ?? []) {
             const p = part as Record<string, unknown>;
-            if (p.type === "tool" && p.tool) {
-              const toolName = p.tool as string;
-              const metadata = p.metadata as Record<string, unknown> | undefined;
-              const toolInput = (metadata?.args ?? metadata?.input ?? metadata ?? {}) as Record<string, unknown>;
+            const toolInfo = extractToolInfo(p, providerID);
+            if (toolInfo) {
+              const { toolName, toolInput } = toolInfo;
               if (postToolHooks) {
                 for (const group of postToolHooks) {
                   for (const hook of group.hooks) {
