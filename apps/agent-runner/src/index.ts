@@ -383,9 +383,11 @@ async function runQuery(
   newSessionId?: string;
   lastAssistantUuid?: string;
   closedDuringQuery: boolean;
+  lastResult?: string;
 }> {
   const stream = new MessageStream();
   stream.push(prompt);
+  let lastResult: string | undefined;
 
   let ipcPolling = true;
   let closedDuringQuery = false;
@@ -561,11 +563,11 @@ async function runQuery(
       log(
         `Result #${resultCount}: subtype=${message.subtype}${textResult ? ` text=${textResult.slice(0, 200)}` : ""}`,
       );
-      writeOutput({
-        status: "success",
-        result: textResult || null,
-        newSessionId,
-      });
+      // Buffer the last result with text content — only write after query completes
+      // to avoid duplicate outputs when SDK emits multiple result messages
+      if (textResult) {
+        lastResult = textResult;
+      }
     }
   }
 
@@ -573,7 +575,7 @@ async function runQuery(
   log(
     `Query done. Messages: ${messageCount}, results: ${resultCount}, lastAssistantUuid: ${lastAssistantUuid || "none"}, closedDuringQuery: ${closedDuringQuery}`,
   );
-  return { newSessionId, lastAssistantUuid, closedDuringQuery };
+  return { newSessionId, lastAssistantUuid, closedDuringQuery, lastResult };
 }
 
 export async function run(config?: RunConfig): Promise<void> {
@@ -650,16 +652,18 @@ export async function run(config?: RunConfig): Promise<void> {
         resumeAt = queryResult.lastAssistantUuid;
       }
 
+      if (queryResult.lastResult) {
+        writeOutput({
+          status: "success",
+          result: queryResult.lastResult,
+          newSessionId: sessionId,
+        });
+      }
+
       if (queryResult.closedDuringQuery) {
         log("Close sentinel consumed during query, exiting");
         break;
       }
-
-      writeOutput({
-        status: "success",
-        result: null,
-        newSessionId: sessionId,
-      });
 
       log("Query ended, waiting for next IPC message...");
 
