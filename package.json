@@ -20,6 +20,7 @@
     "@nagi/channel-core": "workspace:*",
     "@nagi/channel-discord": "workspace:*",
     "@nagi/channel-slack": "workspace:*",
+    "@nagi/channel-slack-block-kit": "workspace:*",
     "@nagi/config": "workspace:*",
     "@nagi/logger": "workspace:*",
     "@nagi/orchestrator": "workspace:*"

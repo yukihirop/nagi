@@ -19,7 +19,7 @@ export interface SlackChannelConfig {
 export class SlackChannel implements Channel {
   name = "slack";
 
-  private app: App;
+  protected app: App;
   private config: {
     assistantName: string;
     triggerPattern: RegExp;
@@ -29,7 +29,7 @@ export class SlackChannel implements Channel {
   private outgoingQueue: Array<{ jid: string; text: string }> = [];
   private flushing = false;
   private userNameCache = new Map<string, string>();
-  private lastThreadTs = new Map<string, string>();
+  protected lastThreadTs = new Map<string, string>();
   private opts: ChannelOpts;
 
   constructor(config: SlackChannelConfig, opts: ChannelOpts) {
