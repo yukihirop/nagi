@@ -1,4 +1,6 @@
-// IMPORTANT: This file is duplicated in agent-runner and agent-runner-opencode. Keep in sync.
+// IMPORTANT: This file is intentionally duplicated in agent-runner and agent-runner-opencode.
+// Each agent may diverge independently — sharing via a common lib with conditional branches
+// tends to cause subtle bugs when one agent's behavior changes. Keep copies in sync manually.
 /**
  * Stdio MCP Server for Nagi
  * Standalone process that agent teams subagents can inherit.

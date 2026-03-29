@@ -1,3 +1,6 @@
+// IMPORTANT: This file is intentionally duplicated per agent (claude-code / open-code).
+// Each agent's hooks may diverge independently — sharing with conditional branches
+// tends to cause subtle bugs. Keep copies in sync manually where applicable.
 import fs from "node:fs";
 import path from "node:path";
 
