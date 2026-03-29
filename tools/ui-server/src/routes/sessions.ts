@@ -309,17 +309,19 @@ export async function handleSessionThreads(
   const messages = await handleSessionMessages(dataDir, sessionId);
   const threads = splitIntoThreads(messages);
 
-  return threads.map((thread, index) => {
-    const firstUser = thread.find((m) => m.type === "user");
-    return {
-      index,
-      firstUserMessage: firstUser
-        ? firstUser.content.slice(0, 200)
-        : "(no user message)",
-      messageCount: thread.length,
-      timestamp: thread[0]?.timestamp ?? "",
-    };
-  });
+  return threads
+    .map((thread, index) => {
+      const firstUser = thread.find((m) => m.type === "user");
+      return {
+        index,
+        firstUserMessage: firstUser
+          ? firstUser.content.slice(0, 200)
+          : "(no user message)",
+        messageCount: thread.length,
+        timestamp: thread[0]?.timestamp ?? "",
+      };
+    })
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 }
 
 export async function handleSessionThreadMessages(
