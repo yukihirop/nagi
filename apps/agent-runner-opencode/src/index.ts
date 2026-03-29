@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createOpencode, type OpencodeClient } from "@opencode-ai/sdk";
+import { setProviderAuth } from "./providers.js";
 
 // --- Shared protocol types (same as Claude Code agent runner) ---
 
@@ -165,121 +166,6 @@ function buildMcpConfig(
   return mcp;
 }
 
-// --- SSE event processing ---
-
-async function processEvents(
-  client: OpencodeClient,
-  sessionId: string,
-  promptDone: Promise<unknown>,
-  containerInput: ContainerInput,
-  pluginHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>>,
-): Promise<{ result: string | null; error: string | null }> {
-  const events = await client.event.subscribe();
-  let result: string | null = null;
-  let error: string | null = null;
-  let finished = false;
-
-  promptDone.then(() => {
-    finished = true;
-  });
-
-  for await (const event of events.stream) {
-    const evt = event as { type: string; properties?: Record<string, unknown> };
-
-    switch (evt.type) {
-      case "session.created":
-      case "session.updated": {
-        // Fire SessionStart hooks
-        if (evt.type === "session.created") {
-          log(`Session event: ${evt.type}`);
-          const sessionStartHooks = pluginHooks["SessionStart"];
-          if (sessionStartHooks) {
-            for (const group of sessionStartHooks) {
-              for (const hook of group.hooks) {
-                try {
-                  await hook({ source: "opencode" });
-                } catch (err) {
-                  log(`SessionStart hook error: ${err}`);
-                }
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      case "message.part.updated": {
-        const props = evt.properties as Record<string, unknown> | undefined;
-        const partType = props?.type as string | undefined;
-
-        // Detect tool use for PostToolUse hooks
-        if (partType === "tool-invocation" || partType === "tool-result") {
-          const toolName = (props?.toolName as string) ?? "unknown";
-          log(`Tool event: ${toolName} (${partType})`);
-
-          if (partType === "tool-result") {
-            const postToolHooks = pluginHooks["PostToolUse"];
-            if (postToolHooks) {
-              for (const group of postToolHooks) {
-                for (const hook of group.hooks) {
-                  try {
-                    await hook({
-                      tool_name: toolName,
-                      tool_input: props?.args ?? {},
-                    });
-                  } catch (err) {
-                    log(`PostToolUse hook error: ${err}`);
-                  }
-                }
-              }
-            }
-          }
-        }
-        break;
-      }
-
-      case "session.idle": {
-        log("Session idle — agent finished responding");
-        // Fetch the last assistant message to get the result
-        try {
-          const messages = await client.session.messages({
-            path: { id: sessionId },
-          });
-          const msgList = (messages.data ?? []) as Array<{
-            role?: string;
-            parts?: Array<{ type?: string; text?: string }>;
-          }>;
-          const lastAssistant = [...msgList]
-            .reverse()
-            .find((m) => m.role === "assistant");
-          if (lastAssistant?.parts) {
-            const textParts = lastAssistant.parts
-              .filter((p) => p.type === "text" && p.text)
-              .map((p) => p.text!);
-            if (textParts.length > 0) {
-              result = textParts.join("\n");
-            }
-          }
-        } catch (err) {
-          log(`Failed to fetch messages: ${err}`);
-        }
-        break;
-      }
-
-      case "session.error": {
-        const props = evt.properties as Record<string, unknown> | undefined;
-        error = (props?.message as string) ?? "Unknown session error";
-        log(`Session error: ${error}`);
-        break;
-      }
-    }
-
-    if (finished) break;
-  }
-
-  return { result, error };
-}
-
 // --- Main ---
 
 export async function run(config?: RunConfig): Promise<void> {
@@ -348,23 +234,7 @@ export async function run(config?: RunConfig): Promise<void> {
     log("Open Code server started");
 
     // Set provider API key
-    const providerID = model.split("/")[0];
-    const apiKeyMap: Record<string, string | undefined> = {
-      openrouter: process.env.OPENROUTER_API_KEY,
-      google: process.env.GOOGLE_API_KEY,
-      openai: process.env.OPENAI_API_KEY,
-      anthropic: process.env.ANTHROPIC_API_KEY,
-    };
-    const apiKey = apiKeyMap[providerID];
-    if (apiKey) {
-      await client.auth.set({
-        path: { id: providerID },
-        body: { type: "api" as const, key: apiKey },
-      });
-      log(`API key set for provider: ${providerID}`);
-    } else {
-      log(`Warning: No API key found for provider ${providerID}`);
-    }
+    await setProviderAuth(client, model, log);
   } catch (err) {
     writeOutput({
       status: "error",
@@ -435,23 +305,38 @@ export async function run(config?: RunConfig): Promise<void> {
 
         const assistantMsgs = msgList.filter((m) => m.info?.role === "assistant");
 
-        // Fire PostToolUse hooks for any tool uses
-        const lastAssistant = assistantMsgs[assistantMsgs.length - 1];
-        if (lastAssistant?.parts) {
-          const postToolHooks = pluginHooks["PostToolUse"];
-          if (postToolHooks) {
-            for (const part of lastAssistant.parts) {
-              if (part.type === "tool-invocation" && part.toolName) {
+        const assistantMsgCount = assistantMsgs.length;
+
+        // Fire PostToolUse hooks BEFORE sending result (so tool notifications appear first)
+        const postToolHooks = pluginHooks["PostToolUse"];
+        let toolHooksFired = false;
+        for (const am of assistantMsgs) {
+          for (const part of am.parts ?? []) {
+            const p = part as Record<string, unknown>;
+            if (p.type === "tool" && p.tool) {
+              const toolName = p.tool as string;
+              const metadata = p.metadata as Record<string, unknown> | undefined;
+              const toolInput = (metadata?.args ?? metadata?.input ?? metadata ?? {}) as Record<string, unknown>;
+              if (postToolHooks) {
                 for (const group of postToolHooks) {
                   for (const hook of group.hooks) {
-                    try { await hook({ tool_name: part.toolName, tool_input: {} }); } catch { /* ignore */ }
+                    try { await hook({ tool_name: toolName, tool_input: toolInput }); } catch { /* ignore */ }
                   }
                 }
+                toolHooksFired = true;
               }
             }
           }
+        }
+        // Wait for IPC watcher to process tool notifications before sending result
+        if (toolHooksFired) {
+          await new Promise((r) => setTimeout(r, 1000));
+        }
 
-          // Collect text from last assistant message first, fall back to all
+        // Collect text from last assistant message
+        const lastAssistant = assistantMsgs[assistantMsgs.length - 1];
+        if (lastAssistant?.parts) {
+          // Collect text, fall back to all assistant messages
           let textParts = lastAssistant.parts
             .filter((p) => p.type === "text" && p.text)
             .map((p) => p.text!);
