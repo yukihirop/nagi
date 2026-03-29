@@ -14,6 +14,9 @@ importers:
       '@nagi/channel-discord':
         specifier: workspace:*
         version: link:apps/plugins/channel-discord
+      '@nagi/channel-discord-embed':
+        specifier: workspace:*
+        version: link:apps/plugins/channel-discord-embed
       '@nagi/channel-slack':
         specifier: workspace:*
         version: link:apps/plugins/channel-slack
@@ -156,6 +159,28 @@ importers:
       '@nagi/types':
         specifier: workspace:*
         version: link:../../../libs/types
+      discord.js:
+        specifier: ^14.25.1
+        version: 14.25.1
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  apps/plugins/channel-discord-embed:
+    dependencies:
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:../../../libs/channel-core
+      '@nagi/channel-discord':
+        specifier: workspace:*
+        version: link:../channel-discord
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../../libs/logger
       discord.js:
         specifier: ^14.25.1
         version: 14.25.1
