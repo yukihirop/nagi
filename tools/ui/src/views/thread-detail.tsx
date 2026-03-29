@@ -2,19 +2,25 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { api } from "../api.ts";
 import { ChatBubble } from "../components/chat-bubble.tsx";
-import type { ChatMessage } from "../types.ts";
+import type { ChatMessage, ThreadSummary } from "../types.ts";
 
 export function ThreadDetail() {
   const { id, threadIndex } = useParams<{ id: string; threadIndex: string }>();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [threadCount, setThreadCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id || threadIndex === undefined) return;
     api.sessionThreadMessages(id, parseInt(threadIndex, 10)).then((msgs) => {
       if (msgs) setMessages(msgs);
     });
+    api.sessionThreads(id).then((threads: ThreadSummary[] | null) => {
+      if (threads) setThreadCount(threads.length);
+    });
   }, [id, threadIndex]);
+
+  const idx = Number(threadIndex) + 1;
 
   return (
     <>
@@ -26,7 +32,10 @@ export function ThreadDetail() {
           &larr; Threads
         </button>
         <span className="text-sm text-zinc-500">
-          Thread #{Number(threadIndex) + 1}
+          Thread #{idx}
+          {threadCount !== null && (
+            <span className="text-zinc-400"> of {threadCount}</span>
+          )}
         </span>
       </div>
       <div className="flex flex-col gap-2 w-full">
