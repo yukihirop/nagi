@@ -382,10 +382,9 @@ export async function run(config?: RunConfig): Promise<void> {
     prompt += "\n" + pending.join("\n");
   }
 
-  // Ignore non-OpenCode session IDs (e.g. Claude Code UUIDs)
-  let sessionId = containerInput.sessionId?.startsWith("ses_")
-    ? containerInput.sessionId
-    : undefined;
+  // Always create a new session — Open Code server is fresh each container run
+  // Previous session IDs are not resumable
+  let sessionId: string | undefined;
 
   try {
     while (true) {
@@ -431,8 +430,10 @@ export async function run(config?: RunConfig): Promise<void> {
           parts?: Array<{ type?: string; text?: string; toolName?: string }>;
         }>;
 
+        const assistantMsgs = msgList.filter((m) => m.info?.role === "assistant");
+
         // Fire PostToolUse hooks for any tool uses
-        const lastAssistant = [...msgList].reverse().find((m) => m.info?.role === "assistant");
+        const lastAssistant = assistantMsgs[assistantMsgs.length - 1];
         if (lastAssistant?.parts) {
           const postToolHooks = pluginHooks["PostToolUse"];
           if (postToolHooks) {
@@ -447,11 +448,20 @@ export async function run(config?: RunConfig): Promise<void> {
             }
           }
 
-          const textParts = lastAssistant.parts
+          // Collect text from last assistant message first, fall back to all
+          let textParts = lastAssistant.parts
             .filter((p) => p.type === "text" && p.text)
             .map((p) => p.text!);
+
+          if (textParts.length === 0) {
+            textParts = assistantMsgs
+              .flatMap((m) => m.parts ?? [])
+              .filter((p) => p.type === "text" && p.text)
+              .map((p) => p.text!);
+          }
+
           if (textParts.length > 0) {
-            result = textParts.join("\n");
+            result = textParts[textParts.length - 1];
           }
         }
       } catch (err) {
