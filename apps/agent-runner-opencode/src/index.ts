@@ -344,6 +344,25 @@ export async function run(config?: RunConfig): Promise<void> {
     client = oc.client;
     serverHandle = oc.server;
     log("Open Code server started");
+
+    // Set provider API key
+    const providerID = model.split("/")[0];
+    const apiKeyMap: Record<string, string | undefined> = {
+      openrouter: process.env.OPENROUTER_API_KEY,
+      google: process.env.GOOGLE_API_KEY,
+      openai: process.env.OPENAI_API_KEY,
+      anthropic: process.env.ANTHROPIC_API_KEY,
+    };
+    const apiKey = apiKeyMap[providerID];
+    if (apiKey) {
+      await client.auth.set({
+        path: { id: providerID },
+        body: { type: "api" as const, key: apiKey },
+      });
+      log(`API key set for provider: ${providerID}`);
+    } else {
+      log(`Warning: No API key found for provider ${providerID}`);
+    }
   } catch (err) {
     writeOutput({
       status: "error",
@@ -378,33 +397,62 @@ export async function run(config?: RunConfig): Promise<void> {
 
       log(`Sending prompt (session: ${sessionId}, ${prompt.length} chars)...`);
 
-      // Send prompt (non-blocking)
-      const promptDone = client.session.prompt({
+      // Fire SessionStart hooks
+      const sessionStartHooks = pluginHooks["SessionStart"];
+      if (sessionStartHooks) {
+        for (const group of sessionStartHooks) {
+          for (const hook of group.hooks) {
+            try { await hook({ source: "opencode" }); } catch { /* ignore */ }
+          }
+        }
+      }
+
+      // Send prompt and wait for completion
+      await client.session.prompt({
         path: { id: sessionId! },
         body: {
           parts: [{ type: "text", text: prompt }],
         },
       });
 
-      // Process SSE events until prompt completes
-      const { result, error } = await processEvents(
-        client,
-        sessionId!,
-        promptDone,
-        containerInput,
-        pluginHooks,
-      );
+      log("Prompt completed, fetching result...");
 
-      await promptDone;
-
-      if (error) {
-        writeOutput({
-          status: "error",
-          result: null,
-          newSessionId: sessionId,
-          error,
+      // Fetch messages to get the assistant's response
+      let result: string | null = null;
+      try {
+        const messages = await client.session.messages({
+          path: { id: sessionId! },
         });
-        break;
+        const msgList = (messages.data ?? []) as Array<{
+          info?: { role?: string };
+          parts?: Array<{ type?: string; text?: string; toolName?: string }>;
+        }>;
+
+        // Fire PostToolUse hooks for any tool uses
+        const lastAssistant = [...msgList].reverse().find((m) => m.info?.role === "assistant");
+        if (lastAssistant?.parts) {
+          const postToolHooks = pluginHooks["PostToolUse"];
+          if (postToolHooks) {
+            for (const part of lastAssistant.parts) {
+              if (part.type === "tool-invocation" && part.toolName) {
+                for (const group of postToolHooks) {
+                  for (const hook of group.hooks) {
+                    try { await hook({ tool_name: part.toolName, tool_input: {} }); } catch { /* ignore */ }
+                  }
+                }
+              }
+            }
+          }
+
+          const textParts = lastAssistant.parts
+            .filter((p) => p.type === "text" && p.text)
+            .map((p) => p.text!);
+          if (textParts.length > 0) {
+            result = textParts.join("\n");
+          }
+        }
+      } catch (err) {
+        log(`Failed to fetch messages: ${err}`);
       }
 
       if (result) {

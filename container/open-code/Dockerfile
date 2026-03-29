@@ -45,7 +45,10 @@ ENV AGENT_BROWSER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Install Open Code CLI (Go binary)
-RUN curl -fsSL https://opencode.ai/install | bash
+RUN curl -fsSL https://opencode.ai/install | bash \
+    && find / -name opencode -type f 2>/dev/null -exec cp {} /usr/local/bin/opencode \; \
+    && chmod +x /usr/local/bin/opencode \
+    && opencode --version
 
 # Create app directory
 WORKDIR /app
