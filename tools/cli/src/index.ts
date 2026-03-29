@@ -210,8 +210,10 @@ async function main(): Promise<void> {
   const { jid, group } = match;
   const isMain = group.isMain === true;
 
-  // Get session
-  const sessionId = args.sessionId || db.sessions.get(group.folder);
+  // Get session (detect agent type from container image)
+  const imageName = config.container.image.split(":")[0];
+  const agentType = imageName.endsWith("-opencode") ? "open-code" : "claude-code";
+  const sessionId = args.sessionId || db.sessions.get(group.folder, agentType);
 
   db.close();
 

@@ -18,6 +18,7 @@ import {
   type AvailableGroup,
 } from "./container-runner.js";
 import { resolveGroupFolderPath } from "./group-folder.js";
+import { resolveAgentConfig } from "./container-runner-configs/agent-config.js";
 
 const logger = createLogger({ name: "orchestrator" });
 
@@ -46,7 +47,8 @@ export async function runAgent(
 
   const isMain = group.isMain === true;
   const prompt = formatMessages(messages, config.timezone);
-  const sessionId = state.sessions[group.folder];
+  const agentType = resolveAgentConfig(config.container.image).agentType;
+  const sessionId = state.getSession(group.folder, agentType);
 
   // Write snapshots for container to read
   const allTasks = db.tasks.getAll();
@@ -100,7 +102,7 @@ export async function runAgent(
       },
       async (streamedOutput: ContainerOutput) => {
         if (streamedOutput.newSessionId) {
-          state.updateSession(db, group.folder, streamedOutput.newSessionId);
+          state.updateSession(db, group.folder, agentType, streamedOutput.newSessionId);
         }
         if (streamedOutput.result) {
           const text = formatOutbound(streamedOutput.result);
@@ -121,7 +123,7 @@ export async function runAgent(
     );
 
     if (output.newSessionId) {
-      state.updateSession(db, group.folder, output.newSessionId);
+      state.updateSession(db, group.folder, agentType, output.newSessionId);
     }
 
     return output.status === "error" ? "error" : "success";

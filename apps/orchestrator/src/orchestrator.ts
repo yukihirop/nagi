@@ -15,6 +15,7 @@ import { startCredentialProxy } from "@nagi/credential-proxy";
 import type { NewMessage } from "@nagi/types";
 
 import { AppState } from "./state.js";
+import { resolveAgentConfig } from "./container-runner-configs/agent-config.js";
 import {
   ensureContainerRuntimeRunning,
   cleanupOrphans,
@@ -74,7 +75,8 @@ export class Orchestrator {
 
     // Initialize state
     this.state = new AppState();
-    this.state.load(this.db);
+    const agentType = resolveAgentConfig(config.container.image).agentType;
+    this.state.load(this.db, agentType);
 
     // Initialize queue
     this.queue = new GroupQueue({

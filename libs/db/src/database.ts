@@ -83,8 +83,10 @@ function createSchema(db: Database.Database): void {
       value TEXT NOT NULL
     );
     CREATE TABLE IF NOT EXISTS sessions (
-      group_folder TEXT PRIMARY KEY,
-      session_id TEXT NOT NULL
+      group_folder TEXT NOT NULL,
+      agent_type TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      PRIMARY KEY (group_folder, agent_type)
     );
     CREATE TABLE IF NOT EXISTS registered_groups (
       jid TEXT PRIMARY KEY,
@@ -127,6 +129,29 @@ function runMigrations(db: Database.Database): void {
     );
   } catch {
     /* column already exists */
+  }
+
+  // Migrate sessions table: add agent_type column with composite PK
+  try {
+    const hasAgentType = db
+      .prepare("SELECT COUNT(*) as cnt FROM pragma_table_info('sessions') WHERE name = 'agent_type'")
+      .get() as { cnt: number };
+    if (hasAgentType.cnt === 0) {
+      db.exec(`
+        CREATE TABLE sessions_new (
+          group_folder TEXT NOT NULL,
+          agent_type TEXT NOT NULL,
+          session_id TEXT NOT NULL,
+          PRIMARY KEY (group_folder, agent_type)
+        );
+        INSERT OR IGNORE INTO sessions_new (group_folder, agent_type, session_id)
+          SELECT group_folder, 'unknown', session_id FROM sessions;
+        DROP TABLE sessions;
+        ALTER TABLE sessions_new RENAME TO sessions;
+      `);
+    }
+  } catch {
+    /* already migrated or fresh DB */
   }
 
   try {

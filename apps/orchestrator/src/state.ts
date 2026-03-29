@@ -11,15 +11,16 @@ const logger = createLogger({ name: "orchestrator" });
 export class AppState {
   lastTimestamp: string = "";
   lastAgentTimestamp: Record<string, string> = {};
-  sessions: Record<string, string> = {};
+  /** Sessions indexed by agentType → groupFolder → sessionId */
+  sessions: Record<string, Record<string, string>> = {};
   registeredGroups: Record<string, RegisteredGroup> = {};
 
-  load(db: NagiDatabase): void {
+  load(db: NagiDatabase, agentType: string): void {
     // Load registered groups
     this.registeredGroups = db.groups.getAll();
 
-    // Load sessions
-    this.sessions = db.sessions.getAll();
+    // Load sessions for current agent type
+    this.sessions[agentType] = db.sessions.getAllForAgent(agentType);
 
     // Load router state
     this.lastTimestamp = db.state.get("last_timestamp") ?? "";
@@ -29,9 +30,9 @@ export class AppState {
       : {};
 
     const groupCount = Object.keys(this.registeredGroups).length;
-    const sessionCount = Object.keys(this.sessions).length;
+    const sessionCount = Object.keys(this.sessions[agentType] ?? {}).length;
     logger.info(
-      { groupCount, sessionCount, lastTimestamp: this.lastTimestamp },
+      { groupCount, sessionCount, agentType, lastTimestamp: this.lastTimestamp },
       "State loaded",
     );
   }
@@ -54,12 +55,20 @@ export class AppState {
     logger.info({ jid, name: group.name, folder: group.folder }, "Group registered");
   }
 
+  getSession(groupFolder: string, agentType: string): string | undefined {
+    return this.sessions[agentType]?.[groupFolder];
+  }
+
   updateSession(
     db: NagiDatabase,
     groupFolder: string,
+    agentType: string,
     sessionId: string,
   ): void {
-    db.sessions.set(groupFolder, sessionId);
-    this.sessions[groupFolder] = sessionId;
+    db.sessions.set(groupFolder, agentType, sessionId);
+    if (!this.sessions[agentType]) {
+      this.sessions[agentType] = {};
+    }
+    this.sessions[agentType][groupFolder] = sessionId;
   }
 }
