@@ -412,6 +412,18 @@ export async function run(config?: RunConfig): Promise<void> {
       error: errorMessage,
     });
   } finally {
+    // Backup Open Code session data before shutdown
+    const backupDir = "/workspace/opencode-backup";
+    const sourceDir = "/home/node/.local/share/opencode";
+    try {
+      if (fs.existsSync(sourceDir) && fs.existsSync(backupDir)) {
+        fs.cpSync(sourceDir, backupDir, { recursive: true });
+        log(`Session data backed up to ${backupDir}`);
+      }
+    } catch (err) {
+      log(`Failed to backup session data: ${err}`);
+    }
+
     log("Shutting down Open Code server...");
     serverHandle.close();
   }

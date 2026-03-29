@@ -160,18 +160,18 @@ export function buildVolumeMounts(
     readonly: false,
   });
 
-  // Open Code data directory (session DB, auth, logs)
+  // Open Code data backup directory (for UI viewing, not read by Open Code)
   if (isOpenCode) {
-    const openCodeDataDir = path.join(
+    const openCodeBackupDir = path.join(
       config.paths.dataDir,
       "sessions",
       group.folder,
       ".opencode-data",
     );
-    fs.mkdirSync(openCodeDataDir, { recursive: true });
+    fs.mkdirSync(openCodeBackupDir, { recursive: true });
     mounts.push({
-      hostPath: openCodeDataDir,
-      containerPath: "/home/node/.local/share/opencode",
+      hostPath: openCodeBackupDir,
+      containerPath: "/workspace/opencode-backup",
       readonly: false,
     });
   }
