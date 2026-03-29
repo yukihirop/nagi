@@ -1,54 +1,69 @@
 ---
 name: update-container-entry
-description: Sync container/claude-code/entry.ts with container/claude-code/entry.template.ts. Use when the template has been updated with new container plugins or after pulling upstream changes. Triggers on "update container entry", "sync container entry", "refresh container entry".
+description: Sync container entry.ts with its template. Supports both Claude Code and Open Code. Triggers on "update container entry", "sync container entry", "refresh container entry".
 ---
 
 # Update Container Entry Point
 
-Sync `container/claude-code/entry.ts` (local, gitignored) with `container/claude-code/entry.template.ts` (tracked in git). Preserves user customizations while incorporating new features from the template.
+Sync a container's `entry.ts` (local, gitignored) with its `entry.template.ts` (tracked in git). Preserves user customizations while incorporating new features from the template.
 
 ## Steps
 
-### 1. Check current state
+### 1. Choose agent
+
+AskUserQuestion: Which agent's entry point to update?
+
+- **Claude Code** — `container/claude-code/entry.ts`
+- **Open Code** — `container/open-code/entry.ts`
+
+### 2. Check current state
 
 ```bash
+# Claude Code:
 test -f container/claude-code/entry.ts && echo "EXISTS" || echo "MISSING"
+
+# Open Code:
+test -f container/open-code/entry.ts && echo "EXISTS" || echo "MISSING"
 ```
 
-If `container/claude-code/entry.ts` doesn't exist, simply copy:
+If the entry.ts doesn't exist, simply copy:
 ```bash
+# Claude Code:
 cp container/claude-code/entry.template.ts container/claude-code/entry.ts
+
+# Open Code:
+cp container/open-code/entry.template.ts container/open-code/entry.ts
 ```
 Done.
 
-### 2. Diff template vs local
+### 3. Diff template vs local
 
-Read both files:
-- `container/claude-code/entry.template.ts` — the latest template (git-tracked)
-- `container/claude-code/entry.ts` — the user's local version (gitignored)
-
-Compare them and identify:
+Read both files (template and local) for the selected agent and compare:
 - **New in template** — new container plugin registrations, hook additions
 - **Custom in local** — user-added plugins, custom hooks
 - **Conflicts** — same section modified differently
 
-### 3. Merge changes
+### 4. Merge changes
 
-Apply new template additions to `container/claude-code/entry.ts` while preserving user customizations:
+Apply new template additions to entry.ts while preserving user customizations:
 
 - **New container plugins** — add plugin blocks that don't exist in local
 - **Updated imports** — add missing imports
 - **Removed features** — warn user but don't remove unless they confirm
 
-### 4. Verify
+### 5. Verify
 
 ```bash
+# Claude Code:
 pnpm exec tsc --noEmit -p apps/agent-runner/tsconfig.json
+
+# Open Code:
+pnpm exec tsc --noEmit -p apps/agent-runner-opencode/tsconfig.json
 ```
 
 TypeScript must compile without errors.
 
-### 5. Summary
+### 6. Summary
 
 Show the user what changed:
 - Added: list of new plugins/hooks
