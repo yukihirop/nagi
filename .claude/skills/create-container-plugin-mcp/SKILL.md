@@ -1,5 +1,5 @@
 ---
-name: create-plugin-mcp
+name: create-container-plugin-mcp
 description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and apps/entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
 ---
 
