@@ -23,10 +23,10 @@ export interface DiscordChannelConfig {
 export class DiscordChannel implements Channel {
   name = "discord";
 
-  private client: Client | null = null;
+  protected client: Client | null = null;
   private config: Required<DiscordChannelConfig>;
   private opts: ChannelOpts;
-  private lastMessageId = new Map<string, string>();
+  protected lastMessageId = new Map<string, string>();
 
   constructor(config: DiscordChannelConfig, opts: ChannelOpts) {
     const assistantName = config.assistantName ?? "Andy";

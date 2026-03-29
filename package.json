@@ -19,6 +19,7 @@
   "dependencies": {
     "@nagi/channel-core": "workspace:*",
     "@nagi/channel-discord": "workspace:*",
+    "@nagi/channel-discord-embed": "workspace:*",
     "@nagi/channel-slack": "workspace:*",
     "@nagi/channel-slack-block-kit": "workspace:*",
     "@nagi/config": "workspace:*",
