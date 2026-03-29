@@ -340,9 +340,7 @@ export async function run(config?: RunConfig): Promise<void> {
         model,
         mcp: buildMcpConfig(mcpServerPath, containerInput),
         // Auto-approve all tool permissions (running in container)
-        permission: {
-          "*": true,
-        } as Record<string, unknown>,
+        permission: "allow" as unknown as undefined,
       },
     });
     client = oc.client;
@@ -397,7 +395,8 @@ export async function run(config?: RunConfig): Promise<void> {
         const session = await client.session.create({
           body: {},
         });
-        sessionId = (session.data as { id: string })?.id;
+        const sessionData = session.data as Record<string, unknown>;
+        sessionId = sessionData?.id as string;
         log(`New session created: ${sessionId}`);
       }
 
