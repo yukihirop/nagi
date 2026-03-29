@@ -387,6 +387,7 @@ async function runQuery(
   costUsd?: number;
   inputTokens?: number;
   outputTokens?: number;
+  modelName?: string;
   nagiHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>>;
 }> {
   const stream = new MessageStream();
@@ -416,6 +417,7 @@ async function runQuery(
   let costUsd: number | undefined;
   let inputTokens: number | undefined;
   let outputTokens: number | undefined;
+  let modelName: string | undefined;
   let messageCount = 0;
   let resultCount = 0;
   const maxTurns = parseInt(process.env.MAX_AGENT_TURNS || "50", 10);
@@ -569,11 +571,17 @@ async function runQuery(
 
     if (message.type === "result") {
       resultCount++;
-      const rm = message as { result?: string; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
+      const rm = message as { result?: string; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number }; modelUsage?: Record<string, unknown> };
       const textResult = rm.result ?? null;
       costUsd = rm.total_cost_usd;
       inputTokens = rm.usage?.input_tokens;
       outputTokens = rm.usage?.output_tokens;
+      if (rm.modelUsage) {
+        const models = Object.keys(rm.modelUsage);
+        if (models.length > 0) {
+          modelName = `anthropic/${models[0]}`;
+        }
+      }
       log(
         `Result #${resultCount}: subtype=${message.subtype}${textResult ? ` text=${textResult.slice(0, 200)}` : ""} cost=$${costUsd?.toFixed(4) ?? "?"} tokens=${inputTokens ?? "?"}/${outputTokens ?? "?"}`,
       );
@@ -592,7 +600,7 @@ async function runQuery(
   log(
     `Query done. Messages: ${messageCount}, results: ${resultCount}, lastAssistantUuid: ${lastAssistantUuid || "none"}, closedDuringQuery: ${closedDuringQuery}`,
   );
-  return { newSessionId, lastAssistantUuid, closedDuringQuery, lastResult, costUsd, inputTokens, outputTokens, nagiHooks };
+  return { newSessionId, lastAssistantUuid, closedDuringQuery, lastResult, costUsd, inputTokens, outputTokens, modelName, nagiHooks };
 }
 
 export async function run(config?: RunConfig): Promise<void> {
@@ -684,7 +692,7 @@ export async function run(config?: RunConfig): Promise<void> {
           for (const hook of group.hooks) {
             try {
               await hook({
-                model: "claude-code",
+                model: queryResult.modelName ?? "claude-code",
                 cost: queryResult.costUsd != null ? {
                   cost: queryResult.costUsd,
                   tokens: { input: queryResult.inputTokens ?? 0, output: queryResult.outputTokens ?? 0 },
