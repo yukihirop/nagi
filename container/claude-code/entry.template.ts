@@ -15,7 +15,7 @@ try {
     createHooks: (
       chatJid: string,
       groupFolder: string,
-      hooksConfig: { postToolUse?: boolean; sessionStart?: boolean; skipTools?: string[] } | undefined,
+      hooksConfig: { postToolUse?: boolean; sessionStart?: boolean; promptComplete?: boolean; skipTools?: string[] } | undefined,
       log: (msg: string) => void,
     ) => ({
       ...(hooksConfig?.postToolUse !== false ? {
@@ -23,6 +23,9 @@ try {
       } : {}),
       ...(hooksConfig?.sessionStart !== false ? {
         SessionStart: [{ hooks: [agentHooks.createSessionStartHook(chatJid, groupFolder, log)] }],
+      } : {}),
+      ...(hooksConfig?.promptComplete !== false ? {
+        PromptComplete: [{ hooks: [agentHooks.createPromptCompleteHook(chatJid, groupFolder, log)] }],
       } : {}),
     }),
   });

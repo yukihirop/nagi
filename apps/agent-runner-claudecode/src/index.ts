@@ -384,6 +384,10 @@ async function runQuery(
   lastAssistantUuid?: string;
   closedDuringQuery: boolean;
   lastResult?: string;
+  costUsd?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  nagiHooks: Record<string, Array<{ hooks: Array<(input: Record<string, unknown>) => Promise<unknown>> }>>;
 }> {
   const stream = new MessageStream();
   stream.push(prompt);
@@ -409,6 +413,9 @@ async function runQuery(
 
   let newSessionId: string | undefined;
   let lastAssistantUuid: string | undefined;
+  let costUsd: number | undefined;
+  let inputTokens: number | undefined;
+  let outputTokens: number | undefined;
   let messageCount = 0;
   let resultCount = 0;
   const maxTurns = parseInt(process.env.MAX_AGENT_TURNS || "50", 10);
@@ -433,11 +440,19 @@ async function runQuery(
     log(`Additional directories: ${extraDirs.join(", ")}`);
   }
 
-  // Build plugin hooks
+  // Build plugin hooks — separate SDK hooks from nagi-only hooks (PromptComplete)
+  type NagiHookCallback = (input: Record<string, unknown>) => Promise<unknown>;
   const pluginHooks: Record<string, Array<{ hooks: HookCallback[] }>> = {};
+  const nagiHooks: Record<string, Array<{ hooks: NagiHookCallback[] }>> = {};
   for (const plugin of containerPlugins ?? []) {
     const hooks = plugin.createHooks(containerInput.chatJid, containerInput.groupFolder, containerInput.hooksConfig, log);
-    Object.assign(pluginHooks, hooks);
+    for (const [key, value] of Object.entries(hooks)) {
+      if (key === "PromptComplete") {
+        nagiHooks[key] = value as unknown as Array<{ hooks: NagiHookCallback[] }>;
+      } else {
+        pluginHooks[key] = value;
+      }
+    }
   }
 
   for await (const message of query({
@@ -554,12 +569,13 @@ async function runQuery(
 
     if (message.type === "result") {
       resultCount++;
-      const textResult =
-        "result" in message
-          ? (message as { result?: string }).result
-          : null;
+      const rm = message as { result?: string; total_cost_usd?: number; usage?: { input_tokens?: number; output_tokens?: number } };
+      const textResult = rm.result ?? null;
+      costUsd = rm.total_cost_usd;
+      inputTokens = rm.usage?.input_tokens;
+      outputTokens = rm.usage?.output_tokens;
       log(
-        `Result #${resultCount}: subtype=${message.subtype}${textResult ? ` text=${textResult.slice(0, 200)}` : ""}`,
+        `Result #${resultCount}: subtype=${message.subtype}${textResult ? ` text=${textResult.slice(0, 200)}` : ""} cost=$${costUsd?.toFixed(4) ?? "?"} tokens=${inputTokens ?? "?"}/${outputTokens ?? "?"}`,
       );
       // Buffer the last result with text content — only write after query completes
       // to avoid duplicate outputs when SDK emits multiple result messages
@@ -576,7 +592,7 @@ async function runQuery(
   log(
     `Query done. Messages: ${messageCount}, results: ${resultCount}, lastAssistantUuid: ${lastAssistantUuid || "none"}, closedDuringQuery: ${closedDuringQuery}`,
   );
-  return { newSessionId, lastAssistantUuid, closedDuringQuery, lastResult };
+  return { newSessionId, lastAssistantUuid, closedDuringQuery, lastResult, costUsd, inputTokens, outputTokens, nagiHooks };
 }
 
 export async function run(config?: RunConfig): Promise<void> {
@@ -659,6 +675,24 @@ export async function run(config?: RunConfig): Promise<void> {
           result: queryResult.lastResult,
           newSessionId: sessionId,
         });
+      }
+
+      // Fire PromptComplete hooks (cost reporting)
+      const promptCompleteHooks = queryResult.nagiHooks["PromptComplete"];
+      if (promptCompleteHooks) {
+        for (const group of promptCompleteHooks) {
+          for (const hook of group.hooks) {
+            try {
+              await hook({
+                model: "claude-code",
+                cost: queryResult.costUsd != null ? {
+                  cost: queryResult.costUsd,
+                  tokens: { input: queryResult.inputTokens ?? 0, output: queryResult.outputTokens ?? 0 },
+                } : null,
+              });
+            } catch { /* ignore */ }
+          }
+        }
       }
 
       if (queryResult.closedDuringQuery) {
