@@ -157,13 +157,13 @@ DISCORD_BOT_TOKEN=...
 Copy the templates to create your local entry points:
 
 ```bash
-cp -n entry.template.ts entry.ts
+cp -n apps/entry.template.ts apps/entry.ts
 cp -n container/entry.template.ts container/entry.ts
 ```
 
 Both are gitignored — they're your local configuration. The `.template.ts` files are tracked in git as references.
 
-- `entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
+- `apps/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
 - `container/entry.ts` — container-side agent config (container plugins like agent-hooks)
 
 To start nagi in development mode:
@@ -171,7 +171,7 @@ To start nagi in development mode:
 pnpm dev
 ```
 
-This runs `tsx entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
+This runs `tsx apps/entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
 
 ## 8. Register Main Group
 

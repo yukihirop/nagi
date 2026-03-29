@@ -1,6 +1,6 @@
 ---
 name: create-plugin-channel
-description: Scaffold a new channel plugin for nagi. Generates package with Channel interface implementation, factory function, tests, and entry.template.ts registration. Triggers on "create channel plugin", "new channel", "scaffold channel", "add channel plugin".
+description: Scaffold a new channel plugin for nagi. Generates package with Channel interface implementation, factory function, tests, and apps/entry.template.ts registration. Triggers on "create channel plugin", "new channel", "scaffold channel", "add channel plugin".
 ---
 
 # Create Channel Plugin
@@ -253,9 +253,9 @@ Add the new package to root `package.json` dependencies for type resolution:
 "@nagi/channel-{name}": "workspace:*"
 ```
 
-## Step 4: Add to entry.template.ts
+## Step 4: Add to apps/entry.template.ts
 
-Add a registration block to `entry.template.ts`:
+Add a registration block to `apps/entry.template.ts`:
 
 ```typescript
 // Register {Name} if configured

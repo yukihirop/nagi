@@ -1,6 +1,6 @@
 ---
 name: create-plugin-mcp
-description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
+description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and apps/entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
 ---
 
 # Create MCP Plugin
@@ -130,9 +130,9 @@ COPY plugins/mcp-{name}/tsconfig.json /app/mcp-plugins/{name}/
 RUN cd /app/mcp-plugins/{name} && npx tsc
 ```
 
-## Step 4: Add to entry.template.ts
+## Step 4: Add to apps/entry.template.ts
 
-Add a `registerMcpPlugin` block to `entry.template.ts`:
+Add a `registerMcpPlugin` block to `apps/entry.template.ts`:
 
 **If API token required:**
 ```typescript

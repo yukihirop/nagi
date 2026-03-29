@@ -9,6 +9,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["entry.ts", "entry.template.ts"],
+  "include": ["apps/entry.ts", "apps/entry.template.ts"],
   "exclude": ["node_modules"]
 }

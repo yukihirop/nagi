@@ -2,7 +2,7 @@ node_modules
 dist
 .turbo
 nanoclaw
-entry.ts
+apps/entry.ts
 container/entry.ts
 .env
 __data

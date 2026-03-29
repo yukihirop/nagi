@@ -18,22 +18,22 @@ Enable PostToolUse and SessionStart hooks that send real-time notifications to t
 
 ```bash
 test -f container/plugins/agent-hooks-claude-code/index.mjs && echo "PLUGIN_EXISTS" || echo "PLUGIN_MISSING"
-test -f entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
+test -f apps/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
 test -f container/entry.ts && echo "CONTAINER_ENTRY_EXISTS" || echo "CONTAINER_ENTRY_MISSING"
 ```
 
 If plugin is missing, something is wrong — the plugin ships with the repo.
 
-If `entry.ts` is missing, run `/setup` first.
+If `apps/entry.ts` is missing, run `/setup` first.
 
 If `container/entry.ts` is missing:
 ```bash
 cp container/entry.template.ts container/entry.ts
 ```
 
-### 2. Enable hooks in entry.ts (host side)
+### 2. Enable hooks in apps/entry.ts (host side)
 
-Read `entry.ts` and check if `registerHooksPlugin` is already called.
+Read `apps/entry.ts` and check if `registerHooksPlugin` is already called.
 
 If not present, add after the MCP plugin registrations:
 
@@ -101,7 +101,7 @@ Expected: tool execution notifications appear in the chat channel as code-format
 
 ## Configuration options
 
-In `entry.ts`, the hooks can be customized:
+In `apps/entry.ts`, the hooks can be customized:
 
 ```typescript
 orchestrator.registerHooksPlugin({
