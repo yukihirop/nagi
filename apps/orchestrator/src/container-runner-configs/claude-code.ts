@@ -15,7 +15,7 @@ export const claudeCodeConfig: AgentConfig = {
   sessionSubdir: ".claude",
   sessionContainerPath: "/home/node/.claude",
   agentRunnerPkg: "agent-runner",
-  agentRunnerDirName: "agent-runner-src",
+  agentRunnerDirName: "agent-runner-claudecode-src",
   agentType: "claude-code",
 
   initSessionDir(sessionDir: string, config: ResolvedConfig, group: RegisteredGroup): void {

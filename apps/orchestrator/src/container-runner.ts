@@ -179,6 +179,10 @@ export function buildVolumeMounts(
     agentConfig.agentRunnerDirName,
   );
   if (fs.existsSync(agentRunnerSrc)) {
+    // Clean stale files from previous agent type before copying
+    if (fs.existsSync(groupAgentRunnerDir)) {
+      fs.rmSync(groupAgentRunnerDir, { recursive: true });
+    }
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   // Copy container/{agent}/entry.ts into agent-runner source

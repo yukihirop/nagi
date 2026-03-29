@@ -54,7 +54,8 @@
     "openclaw",
     "yukihirop",
     "opencode",
-    "openrouter"
+    "openrouter",
+    "claudecode"
   ],
   "ignorePaths": [
     "node_modules",
