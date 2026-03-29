@@ -14,6 +14,12 @@ Built as a clean-room reimplementation of [NanoClaw](https://github.com/qwibitai
 
 ## Quick Start
 
+```bash
+git clone https://github.com/yukihirop/nagi.git
+cd nagi
+claude
+```
+
 Open [Claude Code](https://claude.ai/code) in this directory and run:
 
 ```
