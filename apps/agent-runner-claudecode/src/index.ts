@@ -579,7 +579,8 @@ async function runQuery(
       if (rm.modelUsage) {
         const models = Object.keys(rm.modelUsage);
         if (models.length > 0) {
-          modelName = `anthropic/${models[0]}`;
+          const planLabel = process.env.CLAUDE_CODE_OAUTH_TOKEN ? " (Max Plan)" : "";
+          modelName = `anthropic/${models[0]}${planLabel}`;
         }
       }
       log(
