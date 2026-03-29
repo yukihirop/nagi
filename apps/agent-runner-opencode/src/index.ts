@@ -376,12 +376,12 @@ export async function run(config?: RunConfig): Promise<void> {
         newSessionId: sessionId,
       });
 
-      // Fire PromptComplete hooks (cost reporting etc.)
+      // Fire PromptComplete hooks (cost/model reporting)
       const promptCompleteHooks = pluginHooks["PromptComplete"];
-      if (costInfo && promptCompleteHooks) {
+      if (promptCompleteHooks) {
         for (const group of promptCompleteHooks) {
           for (const hook of group.hooks) {
-            try { await hook({ cost: costInfo }); } catch { /* ignore */ }
+            try { await hook({ cost: costInfo, provider: providerID, model }); } catch { /* ignore */ }
           }
         }
       }
