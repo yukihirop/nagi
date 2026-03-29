@@ -49,6 +49,13 @@ export type ChatMessage = {
   thinking?: string;
 };
 
+export type ThreadSummary = {
+  index: number;
+  firstUserMessage: string;
+  messageCount: number;
+  timestamp: string;
+};
+
 export type ContainerLog = {
   type: "container";
   filename: string;

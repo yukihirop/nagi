@@ -31,7 +31,7 @@ export function NavSidebar({ collapsed, onToggle }: { collapsed: boolean; onTogg
   return (
     <nav className={`shrink-0 border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 flex flex-col py-3 overflow-y-auto transition-all ${collapsed ? "w-14" : "w-56"}`}>
       <div className={`flex items-center gap-2 px-3 mb-2 ${collapsed ? "justify-center" : ""}`}>
-        <img className={`rounded object-contain ${collapsed ? "w-8 h-8" : "w-10 h-10"}`} src="./icon.png" alt="" />
+        <img className={`rounded object-contain ${collapsed ? "w-8 h-8" : "w-10 h-10"}`} src="/icon.png" alt="" />
         {!collapsed && <span className="text-base font-semibold">Nagi</span>}
       </div>
       {TAB_GROUPS.map((group) => (

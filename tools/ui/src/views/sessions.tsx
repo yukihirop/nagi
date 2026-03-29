@@ -1,5 +1,20 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useData } from "../contexts/data-context.tsx";
+import { api } from "../api.ts";
+
+function ThreadCount({ sessionId }: { sessionId: string }) {
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    api.sessionThreads(sessionId).then((threads) => {
+      if (threads) setCount(threads.length);
+    });
+  }, [sessionId]);
+
+  if (count === null) return <span className="text-zinc-300 dark:text-zinc-600">-</span>;
+  return <>{count}</>;
+}
 
 export function Sessions() {
   const { sessions } = useData();
@@ -17,6 +32,7 @@ export function Sessions() {
             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Group</th>
             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Session ID</th>
             <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500">Started</th>
+            <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Threads</th>
             <th className="px-4 py-2 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500">Messages</th>
           </tr>
         </thead>
@@ -26,6 +42,7 @@ export function Sessions() {
               <td className="px-4 py-2"><span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950 dark:text-blue-300">{s.groupFolder}</span></td>
               <td className="px-4 py-2"><code className="text-xs">{s.sessionId.slice(0, 8)}...</code></td>
               <td className="px-4 py-2 text-zinc-500">{s.startedAt ? new Date(s.startedAt).toLocaleString() : "—"}</td>
+              <td className="px-4 py-2 text-right text-zinc-500"><ThreadCount sessionId={s.sessionId} /></td>
               <td className="px-4 py-2 text-right text-zinc-500">{s.messageCount}</td>
             </tr>
           ))}
