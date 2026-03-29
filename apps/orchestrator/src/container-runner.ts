@@ -232,16 +232,41 @@ export function buildContainerArgs(
 
   args.push("-e", `TZ=${config.timezone}`);
 
-  args.push(
-    "-e",
-    `ANTHROPIC_BASE_URL=http://${CONTAINER_HOST_GATEWAY}:${config.container.credentialProxyPort}`,
-  );
+  const isOpenCode = config.container.image.includes("opencode");
 
-  const authMode = detectAuthMode();
-  if (authMode === "api-key") {
-    args.push("-e", "ANTHROPIC_API_KEY=placeholder");
+  if (isOpenCode) {
+    // Open Code: pass provider API keys directly (no credential proxy)
+    const opencodeEnv = readEnvFile([
+      "OPENCODE_MODEL",
+      "OPENROUTER_API_KEY",
+      "GOOGLE_API_KEY",
+      "OPENAI_API_KEY",
+    ]);
+    if (opencodeEnv.OPENCODE_MODEL) {
+      args.push("-e", `OPENCODE_MODEL=${opencodeEnv.OPENCODE_MODEL}`);
+    }
+    if (opencodeEnv.OPENROUTER_API_KEY) {
+      args.push("-e", `OPENROUTER_API_KEY=${opencodeEnv.OPENROUTER_API_KEY}`);
+    }
+    if (opencodeEnv.GOOGLE_API_KEY) {
+      args.push("-e", `GOOGLE_API_KEY=${opencodeEnv.GOOGLE_API_KEY}`);
+    }
+    if (opencodeEnv.OPENAI_API_KEY) {
+      args.push("-e", `OPENAI_API_KEY=${opencodeEnv.OPENAI_API_KEY}`);
+    }
   } else {
-    args.push("-e", "CLAUDE_CODE_OAUTH_TOKEN=placeholder");
+    // Claude Code: use credential proxy
+    args.push(
+      "-e",
+      `ANTHROPIC_BASE_URL=http://${CONTAINER_HOST_GATEWAY}:${config.container.credentialProxyPort}`,
+    );
+
+    const authMode = detectAuthMode();
+    if (authMode === "api-key") {
+      args.push("-e", "ANTHROPIC_API_KEY=placeholder");
+    } else {
+      args.push("-e", "CLAUDE_CODE_OAUTH_TOKEN=placeholder");
+    }
   }
 
   const envSecrets = readEnvFile(["VERCEL_API_TOKEN", "YOUTUBE_API_KEY"]);

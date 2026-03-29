@@ -53,7 +53,8 @@
     "pkill",
     "openclaw",
     "yukihirop",
-    "opencode"
+    "opencode",
+    "openrouter"
   ],
   "ignorePaths": [
     "node_modules",
