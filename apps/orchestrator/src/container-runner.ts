@@ -160,6 +160,22 @@ export function buildVolumeMounts(
     readonly: false,
   });
 
+  // Open Code data directory (session DB, auth, logs)
+  if (isOpenCode) {
+    const openCodeDataDir = path.join(
+      config.paths.dataDir,
+      "sessions",
+      group.folder,
+      ".opencode-data",
+    );
+    fs.mkdirSync(openCodeDataDir, { recursive: true });
+    mounts.push({
+      hostPath: openCodeDataDir,
+      containerPath: "/home/node/.local/share/opencode",
+      readonly: false,
+    });
+  }
+
   // Container plugins — shared (MCP plugins)
   const sharedPluginsDir = path.join(process.cwd(), "container", "plugins");
   if (fs.existsSync(sharedPluginsDir)) {
