@@ -20,7 +20,7 @@ AskUserQuestion:
 
 ## Step 2: Generate package
 
-Create `plugins/channel-{name}/` with the following structure:
+Create `apps/plugins/channel-{name}/` with the following structure:
 
 ### package.json
 
@@ -288,7 +288,7 @@ All packages must build and tests must pass.
 
 Tell the user:
 
-1. **Implement the Channel interface** — Edit `plugins/channel-{name}/src/{name}-channel.ts`:
+1. **Implement the Channel interface** — Edit `apps/plugins/channel-{name}/src/{name}-channel.ts`:
    - `connect()` — Set up SDK client, register message handlers
    - `sendMessage()` — Send text to a JID
    - `setTyping()` — Typing indicator (no-op if unsupported)
@@ -311,5 +311,5 @@ Tell the user:
 ## Reference
 
 Existing channel plugins to study:
-- `plugins/channel-slack/` — Socket Mode, thread replies, message queueing, user name cache
-- `plugins/channel-discord/` — Gateway intents, thread creation, attachment handling, 2000-char splitting
+- `apps/plugins/channel-slack/` — Socket Mode, thread replies, message queueing, user name cache
+- `apps/plugins/channel-discord/` — Gateway intents, thread creation, attachment handling, 2000-char splitting
