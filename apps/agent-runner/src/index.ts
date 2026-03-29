@@ -566,6 +566,9 @@ async function runQuery(
       if (textResult) {
         lastResult = textResult;
       }
+      // End the stream so the SDK completes this query.
+      // Follow-up messages will be handled as new queries.
+      stream.end();
     }
   }
 
@@ -687,4 +690,10 @@ export async function run(config?: RunConfig): Promise<void> {
   }
 }
 
-run();
+// Only auto-run when executed directly (not when imported by entry.ts)
+const isDirectRun =
+  process.argv[1] &&
+  fileURLToPath(import.meta.url).endsWith(process.argv[1].replace(/.*\/dist\//, "dist/"));
+if (isDirectRun) {
+  run();
+}
