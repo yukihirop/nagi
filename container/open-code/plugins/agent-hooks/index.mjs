@@ -70,6 +70,26 @@ export function createPostToolUseHook(chatJid, groupFolder, extraSkipTools, log)
   };
 }
 
+export function createPromptCompleteHook(chatJid, groupFolder, log) {
+  return async (input) => {
+    try {
+      const cost = input?.cost;
+      if (!cost || !chatJid) return {};
+      const { cost: costValue, tokens } = cost;
+      if (costValue === 0 && tokens?.input === 0) return {};
+      const costStr = costValue > 0 ? `$${costValue.toFixed(4)}` : "N/A";
+      const tokensIn = (tokens?.input ?? 0).toLocaleString();
+      const tokensOut = (tokens?.output ?? 0).toLocaleString();
+      const text = `\u{1F4B0} \`Cost: ${costStr} | Tokens: ${tokensIn} in / ${tokensOut} out\``;
+      writeIpcMessage(chatJid, groupFolder, text);
+      log(`[hook:PromptComplete] sent: ${text}`);
+    } catch (err) {
+      log(`[hook:PromptComplete] error: ${err}`);
+    }
+    return {};
+  };
+}
+
 export function createSessionStartHook(chatJid, groupFolder, log) {
   return async (input) => {
     try {

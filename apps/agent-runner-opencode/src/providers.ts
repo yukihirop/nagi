@@ -48,6 +48,52 @@ export function extractToolInfo(part: Record<string, unknown>, providerID: strin
   };
 }
 
+// --- Cost extraction (provider-specific) ---
+
+export interface CostInfo {
+  cost: number;
+  tokens: { input: number; output: number };
+}
+
+type CostExtractor = (assistantMsgs: Array<Record<string, unknown>>) => CostInfo | null;
+
+/**
+ * Provider-specific cost extractors.
+ * Only supported providers are listed; unsupported ones return null.
+ */
+const COST_EXTRACTORS: Record<string, CostExtractor> = {
+  google: (msgs) => {
+    // Google/Gemini: info.cost, info.tokens.{input,output}
+    let cost = 0;
+    let input = 0;
+    let output = 0;
+    for (const m of msgs) {
+      const info = m.info as Record<string, unknown> | undefined;
+      cost += (info?.cost as number) ?? 0;
+      const t = info?.tokens as Record<string, number> | undefined;
+      if (t) {
+        input += t.input ?? 0;
+        output += t.output ?? 0;
+      }
+    }
+    if (cost === 0 && input === 0) return null;
+    return { cost, tokens: { input, output } };
+  },
+};
+
+/**
+ * Extract cost/token info from assistant messages.
+ * Returns null for unsupported providers.
+ */
+export function extractCostInfo(
+  assistantMsgs: Array<Record<string, unknown>>,
+  providerID: string,
+): CostInfo | null {
+  const extractor = COST_EXTRACTORS[providerID];
+  if (!extractor) return null;
+  return extractor(assistantMsgs);
+}
+
 const PROVIDER_ENV_KEYS: Record<string, string> = {
   openrouter: "OPENROUTER_API_KEY",
   google: "GOOGLE_API_KEY",

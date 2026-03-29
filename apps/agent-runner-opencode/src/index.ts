@@ -14,7 +14,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createOpencode, type OpencodeClient } from "@opencode-ai/sdk";
-import { setProviderAuth, extractToolInfo, getProviderID } from "./providers.js";
+import { setProviderAuth, extractToolInfo, getProviderID, extractCostInfo } from "./providers.js";
 
 // --- Shared protocol types (same as Claude Code agent runner) ---
 
@@ -295,6 +295,7 @@ export async function run(config?: RunConfig): Promise<void> {
 
       // Fetch messages to get the assistant's response
       let result: string | null = null;
+      let costInfo: import("./providers.js").CostInfo | null = null;
       try {
         const messages = await client.session.messages({
           path: { id: sessionId! },
@@ -359,6 +360,12 @@ export async function run(config?: RunConfig): Promise<void> {
             result = textParts[textParts.length - 1];
           }
         }
+
+        // Extract cost info (provider-specific)
+        costInfo = extractCostInfo(
+          assistantMsgs as Array<Record<string, unknown>>,
+          providerID,
+        );
       } catch (err) {
         log(`Failed to fetch messages: ${err}`);
       }
@@ -368,6 +375,16 @@ export async function run(config?: RunConfig): Promise<void> {
         result: result ?? "(no text response)",
         newSessionId: sessionId,
       });
+
+      // Fire PromptComplete hooks (cost reporting etc.)
+      const promptCompleteHooks = pluginHooks["PromptComplete"];
+      if (costInfo && promptCompleteHooks) {
+        for (const group of promptCompleteHooks) {
+          for (const hook of group.hooks) {
+            try { await hook({ cost: costInfo }); } catch { /* ignore */ }
+          }
+        }
+      }
 
       if (shouldClose()) {
         log("Close sentinel detected, exiting");
