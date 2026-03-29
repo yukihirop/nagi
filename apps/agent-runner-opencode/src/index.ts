@@ -339,6 +339,10 @@ export async function run(config?: RunConfig): Promise<void> {
       config: {
         model,
         mcp: buildMcpConfig(mcpServerPath, containerInput),
+        // Auto-approve all tool permissions (running in container)
+        permission: {
+          "*": true,
+        } as Record<string, unknown>,
       },
     });
     client = oc.client;

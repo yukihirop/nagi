@@ -117,7 +117,7 @@ Add a new try/catch block after any existing agent-hooks blocks:
 
 ```typescript
 try {
-  const pluginPath = "/app/plugins/agent-hooks-{name}/index.mjs";
+  const pluginPath = "/app/agent-plugins/agent-hooks-{name}/index.mjs";
   const agentHooks = await import(/* webpackIgnore: true */ pluginPath);
 
   plugins.push({

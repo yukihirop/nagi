@@ -4,7 +4,7 @@ import { run } from "./index.js";
 const plugins = [];
 
 try {
-  const pluginPath = "/app/plugins/agent-hooks/index.mjs";
+  const pluginPath = "/app/agent-plugins/agent-hooks/index.mjs";
   const agentHooks = await import(/* webpackIgnore: true */ pluginPath);
 
   plugins.push({

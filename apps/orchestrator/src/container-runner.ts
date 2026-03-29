@@ -174,17 +174,11 @@ export function buildVolumeMounts(
   const agentType = isOpenCode ? "open-code" : "claude-code";
   const agentPluginsDir = path.join(process.cwd(), "container", agentType, "plugins");
   if (fs.existsSync(agentPluginsDir)) {
-    // Mount each sub-plugin individually into /app/plugins/
-    for (const entry of fs.readdirSync(agentPluginsDir)) {
-      const pluginDir = path.join(agentPluginsDir, entry);
-      if (fs.statSync(pluginDir).isDirectory()) {
-        mounts.push({
-          hostPath: pluginDir,
-          containerPath: `/app/plugins/${entry}`,
-          readonly: true,
-        });
-      }
-    }
+    mounts.push({
+      hostPath: agentPluginsDir,
+      containerPath: "/app/agent-plugins",
+      readonly: true,
+    });
   }
 
   // Per-group IPC namespace

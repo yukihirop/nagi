@@ -58,7 +58,7 @@ If not present, ensure the plugin import block exists:
 
 ```typescript
 try {
-  const pluginPath = "/app/plugins/agent-hooks/index.mjs";
+  const pluginPath = "/app/agent-plugins/agent-hooks/index.mjs";
   const agentHooks = await import(/* webpackIgnore: true */ pluginPath);
 
   plugins.push({
