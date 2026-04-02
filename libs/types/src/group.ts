@@ -17,6 +17,7 @@ export type ContainerConfig = z.infer<typeof ContainerConfigSchema>;
 
 export const RegisteredGroupSchema = z.object({
   name: z.string(),
+  channel: z.string(),
   folder: z.string(),
   trigger: z.string(),
   added_at: z.string(),

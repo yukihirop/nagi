@@ -55,7 +55,12 @@
     "yukihirop",
     "opencode",
     "openrouter",
-    "claudecode"
+    "claudecode",
+    "nuxtjs",
+    "solidstart",
+    "redwoodjs",
+    "sveltekit",
+    "nextjs"
   ],
   "ignorePaths": [
     "node_modules",

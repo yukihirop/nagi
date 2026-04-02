@@ -48,6 +48,7 @@ describe("RegisteredGroupSchema", () => {
   it("parses a minimal group", () => {
     const group = {
       name: "test-group",
+      channel: "discord",
       folder: "test",
       trigger: "!test",
       added_at: "2026-01-01T00:00:00Z",
@@ -58,6 +59,7 @@ describe("RegisteredGroupSchema", () => {
   it("parses with containerConfig", () => {
     const group = {
       name: "main",
+      channel: "discord",
       folder: "main",
       trigger: "",
       added_at: "2026-01-01T00:00:00Z",
@@ -75,7 +77,7 @@ describe("RegisteredGroupSchema", () => {
 
   it("rejects missing folder", () => {
     expect(() =>
-      RegisteredGroupSchema.parse({ name: "x", trigger: "!x", added_at: "t" })
+      RegisteredGroupSchema.parse({ name: "x", channel: "discord", trigger: "!x", added_at: "t" })
     ).toThrow();
   });
 });

@@ -31,6 +31,7 @@ const OUTPUT_END_MARKER = "---NAGI_OUTPUT_END---";
 export interface ContainerInput {
   prompt: string;
   sessionId?: string;
+  channel: string;
   groupFolder: string;
   chatJid: string;
   isMain: boolean;
@@ -61,7 +62,7 @@ export function buildVolumeMounts(
 ): VolumeMount[] {
   const mounts: VolumeMount[] = [];
   const projectRoot = process.cwd();
-  const groupDir = resolveGroupFolderPath(config.paths.groupsDir, group.folder);
+  const groupDir = resolveGroupFolderPath(config.paths.groupsDir, group.channel, group.folder);
 
   if (isMain) {
     mounts.push({
@@ -108,6 +109,7 @@ export function buildVolumeMounts(
   const groupSessionsDir = path.join(
     config.paths.dataDir,
     "sessions",
+    group.channel,
     group.folder,
     agentConfig.sessionSubdir,
   );
@@ -155,7 +157,7 @@ export function buildVolumeMounts(
   }
 
   // Per-group IPC namespace
-  const groupIpcDir = resolveGroupIpcPath(config.paths.dataDir, group.folder);
+  const groupIpcDir = resolveGroupIpcPath(config.paths.dataDir, group.channel, group.folder);
   fs.mkdirSync(path.join(groupIpcDir, "messages"), { recursive: true });
   fs.mkdirSync(path.join(groupIpcDir, "tasks"), { recursive: true });
   fs.mkdirSync(path.join(groupIpcDir, "input"), { recursive: true });
@@ -175,6 +177,7 @@ export function buildVolumeMounts(
   const groupAgentRunnerDir = path.join(
     config.paths.dataDir,
     "sessions",
+    group.channel,
     group.folder,
     agentConfig.agentRunnerDirName,
   );
@@ -273,12 +276,13 @@ export async function runContainerAgent(
 ): Promise<ContainerOutput> {
   const startTime = Date.now();
 
-  const groupDir = resolveGroupFolderPath(config.paths.groupsDir, group.folder);
+  const groupDir = resolveGroupFolderPath(config.paths.groupsDir, group.channel, group.folder);
   fs.mkdirSync(groupDir, { recursive: true });
 
   const mounts = buildVolumeMounts(group, input.isMain, config, mountAllowlist);
-  const safeName = group.folder.replace(/[^a-zA-Z0-9-]/g, "-");
-  const containerName = `nagi-${safeName}-${Date.now()}`;
+  const safeChannel = group.channel.replace(/[^a-zA-Z0-9-]/g, "-");
+  const safeFolder = group.folder.replace(/[^a-zA-Z0-9-]/g, "-");
+  const containerName = `nagi-${safeChannel}-${safeFolder}-${Date.now()}`;
   const containerArgs = buildContainerArgs(mounts, containerName, config);
 
   logger.debug(
@@ -564,6 +568,7 @@ export async function runContainerAgent(
 
 export function writeTasksSnapshot(
   dataDir: string,
+  channel: string,
   groupFolder: string,
   isMain: boolean,
   tasks: Array<{
@@ -576,7 +581,7 @@ export function writeTasksSnapshot(
     next_run: string | null;
   }>,
 ): void {
-  const groupIpcDir = resolveGroupIpcPath(dataDir, groupFolder);
+  const groupIpcDir = resolveGroupIpcPath(dataDir, channel, groupFolder);
   fs.mkdirSync(groupIpcDir, { recursive: true });
 
   const filteredTasks = isMain
@@ -596,11 +601,12 @@ export interface AvailableGroup {
 
 export function writeGroupsSnapshot(
   dataDir: string,
+  channel: string,
   groupFolder: string,
   isMain: boolean,
   groups: AvailableGroup[],
 ): void {
-  const groupIpcDir = resolveGroupIpcPath(dataDir, groupFolder);
+  const groupIpcDir = resolveGroupIpcPath(dataDir, channel, groupFolder);
   fs.mkdirSync(groupIpcDir, { recursive: true });
 
   const visibleGroups = isMain ? groups : [];

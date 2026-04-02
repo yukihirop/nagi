@@ -91,12 +91,14 @@ function createSchema(db: Database.Database): void {
     CREATE TABLE IF NOT EXISTS registered_groups (
       jid TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      folder TEXT NOT NULL UNIQUE,
+      channel TEXT NOT NULL DEFAULT '',
+      folder TEXT NOT NULL,
       trigger_pattern TEXT NOT NULL,
       added_at TEXT NOT NULL,
       container_config TEXT,
       requires_trigger INTEGER DEFAULT 1,
-      is_main INTEGER DEFAULT 0
+      is_main INTEGER DEFAULT 0,
+      UNIQUE(channel, folder)
     );
   `);
 }
@@ -148,6 +150,41 @@ function runMigrations(db: Database.Database): void {
           SELECT group_folder, 'unknown', session_id FROM sessions;
         DROP TABLE sessions;
         ALTER TABLE sessions_new RENAME TO sessions;
+      `);
+    }
+  } catch {
+    /* already migrated or fresh DB */
+  }
+
+  // Migrate registered_groups: add channel column and backfill from JID prefix
+  try {
+    const hasChannel = db
+      .prepare("SELECT COUNT(*) as cnt FROM pragma_table_info('registered_groups') WHERE name = 'channel'")
+      .get() as { cnt: number };
+    if (hasChannel.cnt === 0) {
+      db.exec(`ALTER TABLE registered_groups ADD COLUMN channel TEXT DEFAULT ''`);
+      db.exec(`UPDATE registered_groups SET channel = 'slack' WHERE jid LIKE 'slack:%'`);
+      db.exec(`UPDATE registered_groups SET channel = 'discord' WHERE jid LIKE 'dc:%'`);
+      db.exec(`UPDATE registered_groups SET channel = 'whatsapp' WHERE jid LIKE '%@g.us' OR jid LIKE '%@s.whatsapp.net'`);
+      db.exec(`UPDATE registered_groups SET channel = 'telegram' WHERE jid LIKE 'tg:%'`);
+      // Drop old UNIQUE(folder) and add UNIQUE(channel, folder)
+      // SQLite requires table recreation for constraint changes
+      db.exec(`
+        CREATE TABLE registered_groups_new (
+          jid TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          channel TEXT NOT NULL DEFAULT '',
+          folder TEXT NOT NULL,
+          trigger_pattern TEXT NOT NULL,
+          added_at TEXT NOT NULL,
+          container_config TEXT,
+          requires_trigger INTEGER DEFAULT 1,
+          is_main INTEGER DEFAULT 0,
+          UNIQUE(channel, folder)
+        );
+        INSERT INTO registered_groups_new SELECT jid, name, channel, folder, trigger_pattern, added_at, container_config, requires_trigger, is_main FROM registered_groups;
+        DROP TABLE registered_groups;
+        ALTER TABLE registered_groups_new RENAME TO registered_groups;
       `);
     }
   } catch {

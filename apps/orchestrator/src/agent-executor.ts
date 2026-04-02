@@ -48,12 +48,14 @@ export async function runAgent(
   const isMain = group.isMain === true;
   const prompt = formatMessages(messages, config.timezone);
   const agentType = resolveAgentConfig(config.container.image).agentType;
-  const sessionId = state.getSession(group.folder, agentType);
+  const groupKey = `${group.channel}/${group.folder}`;
+  const sessionId = state.getSession(groupKey, agentType);
 
   // Write snapshots for container to read
   const allTasks = db.tasks.getAll();
   writeTasksSnapshot(
     config.paths.dataDir,
+    group.channel,
     group.folder,
     isMain,
     allTasks.map((t) => ({
@@ -77,6 +79,7 @@ export async function runAgent(
     }));
     writeGroupsSnapshot(
       config.paths.dataDir,
+      group.channel,
       group.folder,
       true,
       availableGroups,
@@ -89,6 +92,7 @@ export async function runAgent(
       {
         prompt,
         sessionId,
+        channel: group.channel,
         groupFolder: group.folder,
         chatJid: groupJid,
         isMain,
@@ -98,11 +102,11 @@ export async function runAgent(
       },
       config,
       (proc: ChildProcess, containerName: string) => {
-        queue.registerProcess(groupJid, proc, containerName, group.folder);
+        queue.registerProcess(groupJid, proc, containerName, group.channel, group.folder);
       },
       async (streamedOutput: ContainerOutput) => {
         if (streamedOutput.newSessionId) {
-          state.updateSession(db, group.folder, agentType, streamedOutput.newSessionId);
+          state.updateSession(db, groupKey, agentType, streamedOutput.newSessionId);
         }
         if (streamedOutput.result) {
           const text = formatOutbound(streamedOutput.result);
@@ -123,7 +127,7 @@ export async function runAgent(
     );
 
     if (output.newSessionId) {
-      state.updateSession(db, group.folder, agentType, output.newSessionId);
+      state.updateSession(db, groupKey, agentType, output.newSessionId);
     }
 
     return output.status === "error" ? "error" : "success";

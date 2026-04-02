@@ -123,7 +123,7 @@ export class Orchestrator {
   }
 
   /**
-   * Copy group template files (e.g. CLAUDE.md) from groups/ to __data/groups/.
+   * Copy group template files (e.g. CLAUDE.md) from groups/{channel}/{folder}/ to __data/groups/{channel}/{folder}/.
    * Only copies files that don't already exist in the runtime directory
    * to preserve user customizations.
    */
@@ -133,19 +133,25 @@ export class Orchestrator {
 
     if (!fs.existsSync(templateDir)) return;
 
-    for (const groupFolder of fs.readdirSync(templateDir)) {
-      const srcDir = path.join(templateDir, groupFolder);
-      if (!fs.statSync(srcDir).isDirectory()) continue;
+    // Scan 2 levels: groups/{channel}/{folder}/
+    for (const channel of fs.readdirSync(templateDir)) {
+      const channelDir = path.join(templateDir, channel);
+      if (!fs.statSync(channelDir).isDirectory()) continue;
 
-      const dstDir = path.join(runtimeDir, groupFolder);
-      fs.mkdirSync(dstDir, { recursive: true });
+      for (const groupFolder of fs.readdirSync(channelDir)) {
+        const srcDir = path.join(channelDir, groupFolder);
+        if (!fs.statSync(srcDir).isDirectory()) continue;
 
-      for (const file of fs.readdirSync(srcDir)) {
-        const srcFile = path.join(srcDir, file);
-        const dstFile = path.join(dstDir, file);
-        if (fs.statSync(srcFile).isFile() && !fs.existsSync(dstFile)) {
-          fs.copyFileSync(srcFile, dstFile);
-          logger.info({ file: `${groupFolder}/${file}` }, "Group template synced");
+        const dstDir = path.join(runtimeDir, channel, groupFolder);
+        fs.mkdirSync(dstDir, { recursive: true });
+
+        for (const file of fs.readdirSync(srcDir)) {
+          const srcFile = path.join(srcDir, file);
+          const dstFile = path.join(dstDir, file);
+          if (fs.statSync(srcFile).isFile() && !fs.existsSync(dstFile)) {
+            fs.copyFileSync(srcFile, dstFile);
+            logger.info({ file: `${channel}/${groupFolder}/${file}` }, "Group template synced");
+          }
         }
       }
     }
@@ -245,6 +251,7 @@ export class Orchestrator {
           this.state.registerGroup(this.db, jid, group);
           const groupDir = resolveGroupFolderPath(
             this.config.paths.groupsDir,
+            group.channel,
             group.folder,
           );
           fs.mkdirSync(groupDir, { recursive: true });
@@ -266,6 +273,7 @@ export class Orchestrator {
           }));
         },
         writeGroupsSnapshot: (
+          channel: string,
           groupFolder: string,
           isMain: boolean,
           availableGroups: Array<{ jid: string; name: string; folder?: string }>,
@@ -273,6 +281,7 @@ export class Orchestrator {
         ) => {
           writeGroupsSnapshot(
             this.config.paths.dataDir,
+            channel,
             groupFolder,
             isMain,
             availableGroups as AvailableGroup[],

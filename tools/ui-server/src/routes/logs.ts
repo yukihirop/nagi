@@ -47,29 +47,36 @@ export function handleLogs(
 ): LogEntry[] {
   const logs: LogEntry[] = [];
 
-  // Container logs
+  // Container logs - scan 2 levels: groups/{channel}/{folder}/logs/
   if (!filter || filter === "container") {
     const groupsDir = path.join(dataDir, "groups");
     if (fs.existsSync(groupsDir)) {
-      const groupFolders = fs.readdirSync(groupsDir).filter((f) => {
+      const channelDirs = fs.readdirSync(groupsDir).filter((f) => {
         try { return fs.statSync(path.join(groupsDir, f)).isDirectory(); } catch { return false; }
       });
 
-      for (const groupFolder of groupFolders) {
-        const logsDir = path.join(groupsDir, groupFolder, "logs");
-        if (!fs.existsSync(logsDir)) continue;
+      for (const channel of channelDirs) {
+        const channelDir = path.join(groupsDir, channel);
+        const folderDirs = fs.readdirSync(channelDir).filter((f) => {
+          try { return fs.statSync(path.join(channelDir, f)).isDirectory(); } catch { return false; }
+        });
 
-        const logFiles = fs.readdirSync(logsDir)
-          .filter((f) => f.startsWith("container-") && f.endsWith(".json"))
-          .sort()
-          .reverse();
+        for (const folder of folderDirs) {
+          const logsDir = path.join(channelDir, folder, "logs");
+          if (!fs.existsSync(logsDir)) continue;
 
-        for (const logFile of logFiles) {
-          try {
-            const raw = fs.readFileSync(path.join(logsDir, logFile), "utf-8");
-            logs.push(parseContainerLog(logFile, raw));
-          } catch {
-            // skip
+          const logFiles = fs.readdirSync(logsDir)
+            .filter((f) => f.startsWith("container-") && f.endsWith(".json"))
+            .sort()
+            .reverse();
+
+          for (const logFile of logFiles) {
+            try {
+              const raw = fs.readFileSync(path.join(logsDir, logFile), "utf-8");
+              logs.push(parseContainerLog(logFile, raw));
+            } catch {
+              // skip
+            }
           }
         }
       }

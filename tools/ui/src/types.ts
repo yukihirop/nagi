@@ -1,5 +1,6 @@
 export type GroupInfo = {
   name: string;
+  channel: string;
   folder: string;
   trigger: string;
   added_at: string;

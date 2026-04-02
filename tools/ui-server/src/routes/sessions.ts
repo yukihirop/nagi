@@ -35,7 +35,8 @@ export function handleSessions(dataDir: string): SessionInfo[] {
 
   const sessions: SessionInfo[] = [];
 
-  const groupFolders = fs.readdirSync(sessionsDir).filter((f) => {
+  // Scan 2 levels: sessions/{channel}/{folder}/
+  const channelDirs = fs.readdirSync(sessionsDir).filter((f) => {
     try {
       return fs.statSync(path.join(sessionsDir, f)).isDirectory();
     } catch {
@@ -43,47 +44,61 @@ export function handleSessions(dataDir: string): SessionInfo[] {
     }
   });
 
-  for (const groupFolder of groupFolders) {
-    const metaDir = path.join(sessionsDir, groupFolder, ".claude", "sessions");
-    if (!fs.existsSync(metaDir)) continue;
-
-    const metaFiles = fs.readdirSync(metaDir).filter((f) => f.endsWith(".json"));
-    for (const metaFile of metaFiles) {
+  for (const channel of channelDirs) {
+    const channelDir = path.join(sessionsDir, channel);
+    const folderDirs = fs.readdirSync(channelDir).filter((f) => {
       try {
-        const raw = fs.readFileSync(path.join(metaDir, metaFile), "utf-8");
-        const meta = JSON.parse(raw) as { sessionId?: string; startedAt?: number };
-        if (meta.sessionId) {
-          const jsonlPath = path.join(
-            sessionsDir, groupFolder, ".claude", "projects", "-workspace-group", `${meta.sessionId}.jsonl`,
-          );
-          let messageCount = 0;
-          try {
-            if (fs.existsSync(jsonlPath)) {
-              const content = fs.readFileSync(jsonlPath, "utf-8");
-              for (const line of content.split("\n")) {
-                if (!line.trim()) continue;
-                try {
-                  const entry = JSON.parse(line) as { type?: string; message?: { content?: unknown } };
-                  if (entry.type === "user") {
-                    // Skip tool_result user entries
-                    if (!Array.isArray(entry.message?.content)) messageCount++;
-                  } else if (entry.type === "assistant") {
-                    const c = entry.message?.content;
-                    if (Array.isArray(c) && c.some((b: { type?: string }) => b.type === "text")) messageCount++;
-                  }
-                } catch { /* skip */ }
-              }
-            }
-          } catch { /* skip */ }
-          sessions.push({
-            groupFolder,
-            sessionId: meta.sessionId,
-            startedAt: meta.startedAt ?? 0,
-            messageCount,
-          });
-        }
+        return fs.statSync(path.join(channelDir, f)).isDirectory();
       } catch {
-        // skip invalid files
+        return false;
+      }
+    });
+
+    for (const folder of folderDirs) {
+      const groupFolder = `${channel}/${folder}`;
+      // Scan jsonl files directly in .claude/projects/-workspace-group/
+      const projectDir = path.join(channelDir, folder, ".claude", "projects", "-workspace-group");
+      if (!fs.existsSync(projectDir)) continue;
+
+      const jsonlFiles = fs.readdirSync(projectDir).filter((f) => f.endsWith(".jsonl"));
+      for (const jsonlFile of jsonlFiles) {
+        try {
+          const sessionId = jsonlFile.replace(".jsonl", "");
+          const jsonlPath = path.join(projectDir, jsonlFile);
+          const content = fs.readFileSync(jsonlPath, "utf-8");
+          const lines = content.split("\n").filter((l) => l.trim());
+
+          let messageCount = 0;
+          let startedAt = 0;
+
+          for (const line of lines) {
+            try {
+              const entry = JSON.parse(line) as { type?: string; timestamp?: string; message?: { content?: unknown } };
+              // Get startedAt from first entry
+              if (startedAt === 0 && entry.timestamp) {
+                startedAt = new Date(entry.timestamp).getTime();
+              }
+              if (entry.type === "user") {
+                // Skip tool_result user entries
+                if (!Array.isArray(entry.message?.content)) messageCount++;
+              } else if (entry.type === "assistant") {
+                const c = entry.message?.content;
+                if (Array.isArray(c) && c.some((b: { type?: string }) => b.type === "text")) messageCount++;
+              }
+            } catch { /* skip */ }
+          }
+
+          if (messageCount > 0) {
+            sessions.push({
+              groupFolder,
+              sessionId,
+              startedAt,
+              messageCount,
+            });
+          }
+        } catch {
+          // skip invalid files
+        }
       }
     }
   }
@@ -152,7 +167,9 @@ export async function handleSessionMessages(
   if (!fs.existsSync(sessionsDir)) return [];
 
   let jsonlPath: string | null = null;
-  const groupFolders = fs.readdirSync(sessionsDir).filter((f) => {
+
+  // Scan 2 levels: sessions/{channel}/{folder}/
+  const channelDirs = fs.readdirSync(sessionsDir).filter((f) => {
     try {
       return fs.statSync(path.join(sessionsDir, f)).isDirectory();
     } catch {
@@ -160,18 +177,29 @@ export async function handleSessionMessages(
     }
   });
 
-  for (const groupFolder of groupFolders) {
-    const candidate = path.join(
-      sessionsDir,
-      groupFolder,
-      ".claude",
-      "projects",
-      "-workspace-group",
-      `${sessionId}.jsonl`,
-    );
-    if (fs.existsSync(candidate)) {
-      jsonlPath = candidate;
-      break;
+  outer: for (const channel of channelDirs) {
+    const channelDir = path.join(sessionsDir, channel);
+    const folderDirs = fs.readdirSync(channelDir).filter((f) => {
+      try {
+        return fs.statSync(path.join(channelDir, f)).isDirectory();
+      } catch {
+        return false;
+      }
+    });
+
+    for (const folder of folderDirs) {
+      const candidate = path.join(
+        channelDir,
+        folder,
+        ".claude",
+        "projects",
+        "-workspace-group",
+        `${sessionId}.jsonl`,
+      );
+      if (fs.existsSync(candidate)) {
+        jsonlPath = candidate;
+        break outer;
+      }
     }
   }
 

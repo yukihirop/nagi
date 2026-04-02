@@ -7,6 +7,7 @@ function createMockDeps(): IpcDeps {
     registeredGroups: vi.fn().mockReturnValue({
       "dc:123": {
         name: "Test",
+        channel: "discord",
         folder: "main",
         trigger: "!test",
         added_at: "2026-01-01T00:00:00Z",
@@ -14,6 +15,7 @@ function createMockDeps(): IpcDeps {
       },
       "dc:456": {
         name: "Other",
+        channel: "discord",
         folder: "other",
         trigger: "!other",
         added_at: "2026-01-01T00:00:00Z",
@@ -68,6 +70,7 @@ describe("processTaskIpc", () => {
           schedule_value: "0 9 * * *",
           targetJid: "dc:123",
         },
+        "discord",
         "main",
         true,
         deps,
@@ -94,6 +97,7 @@ describe("processTaskIpc", () => {
           schedule_value: "0 9 * * *",
           targetJid: "dc:123", // main's JID
         },
+        "discord",
         "other",
         false,
         deps,
@@ -113,6 +117,7 @@ describe("processTaskIpc", () => {
           schedule_value: "invalid cron",
           targetJid: "dc:123",
         },
+        "discord",
         "main",
         true,
         deps,
@@ -128,6 +133,7 @@ describe("processTaskIpc", () => {
     it("pauses task from authorized group", async () => {
       await processTaskIpc(
         { type: "pause_task", taskId: "task-1" },
+        "discord",
         "main",
         true,
         deps,
@@ -144,6 +150,7 @@ describe("processTaskIpc", () => {
     it("blocks unauthorized pause", async () => {
       await processTaskIpc(
         { type: "pause_task", taskId: "task-1" },
+        "discord",
         "other",
         false,
         deps,
@@ -159,6 +166,7 @@ describe("processTaskIpc", () => {
     it("deletes task from authorized group", async () => {
       await processTaskIpc(
         { type: "cancel_task", taskId: "task-1" },
+        "discord",
         "main",
         true,
         deps,
@@ -180,6 +188,7 @@ describe("processTaskIpc", () => {
           folder: "newgroup",
           trigger: "!new",
         },
+        "discord",
         "main",
         true,
         deps,
@@ -206,6 +215,7 @@ describe("processTaskIpc", () => {
           folder: "hack",
           trigger: "!hack",
         },
+        "discord",
         "other",
         false,
         deps,
@@ -225,6 +235,7 @@ describe("processTaskIpc", () => {
           folder: "../etc",
           trigger: "!bad",
         },
+        "discord",
         "main",
         true,
         deps,
@@ -240,6 +251,7 @@ describe("processTaskIpc", () => {
     it("syncs groups from main", async () => {
       await processTaskIpc(
         { type: "refresh_groups" },
+        "discord",
         "main",
         true,
         deps,
@@ -254,6 +266,7 @@ describe("processTaskIpc", () => {
     it("blocks refresh from non-main", async () => {
       await processTaskIpc(
         { type: "refresh_groups" },
+        "discord",
         "other",
         false,
         deps,

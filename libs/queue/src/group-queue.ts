@@ -28,6 +28,7 @@ interface GroupState {
   pendingTasks: QueuedTask[];
   process: ChildProcess | null;
   containerName: string | null;
+  groupChannel: string | null;
   groupFolder: string | null;
   retryCount: number;
 }
@@ -59,6 +60,7 @@ export class GroupQueue {
         pendingTasks: [],
         process: null,
         containerName: null,
+        groupChannel: null,
         groupFolder: null,
         retryCount: 0,
       };
@@ -147,11 +149,13 @@ export class GroupQueue {
     groupJid: string,
     proc: ChildProcess,
     containerName: string,
+    groupChannel?: string,
     groupFolder?: string,
   ): void {
     const state = this.getGroup(groupJid);
     state.process = proc;
     state.containerName = containerName;
+    if (groupChannel) state.groupChannel = groupChannel;
     if (groupFolder) state.groupFolder = groupFolder;
   }
 
@@ -165,13 +169,14 @@ export class GroupQueue {
 
   sendMessage(groupJid: string, text: string): boolean {
     const state = this.getGroup(groupJid);
-    if (!state.active || !state.groupFolder || state.isTaskContainer)
+    if (!state.active || !state.groupChannel || !state.groupFolder || state.isTaskContainer)
       return false;
     state.idleWaiting = false;
 
     const inputDir = path.join(
       this.dataDir,
       "ipc",
+      state.groupChannel,
       state.groupFolder,
       "input",
     );
@@ -190,11 +195,12 @@ export class GroupQueue {
 
   closeStdin(groupJid: string): void {
     const state = this.getGroup(groupJid);
-    if (!state.active || !state.groupFolder) return;
+    if (!state.active || !state.groupChannel || !state.groupFolder) return;
 
     const inputDir = path.join(
       this.dataDir,
       "ipc",
+      state.groupChannel,
       state.groupFolder,
       "input",
     );
@@ -238,6 +244,7 @@ export class GroupQueue {
       state.active = false;
       state.process = null;
       state.containerName = null;
+      state.groupChannel = null;
       state.groupFolder = null;
       this.activeCount--;
       this.drainGroup(groupJid);
@@ -267,6 +274,7 @@ export class GroupQueue {
       state.runningTaskId = null;
       state.process = null;
       state.containerName = null;
+      state.groupChannel = null;
       state.groupFolder = null;
       this.activeCount--;
       this.drainGroup(groupJid);

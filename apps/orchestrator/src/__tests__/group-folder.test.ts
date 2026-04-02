@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidGroupFolder, resolveGroupFolderPath } from "../group-folder.js";
+import { isValidGroupFolder, isValidChannel, resolveGroupFolderPath } from "../group-folder.js";
 
 describe("isValidGroupFolder", () => {
   it("accepts valid folder names", () => {
@@ -24,13 +24,34 @@ describe("isValidGroupFolder", () => {
   });
 });
 
+describe("isValidChannel", () => {
+  it("accepts valid channel names", () => {
+    expect(isValidChannel("slack")).toBe(true);
+    expect(isValidChannel("discord")).toBe(true);
+    expect(isValidChannel("whatsapp")).toBe(true);
+    expect(isValidChannel("telegram")).toBe(true);
+  });
+
+  it("rejects invalid channel names", () => {
+    expect(isValidChannel("")).toBe(false);
+    expect(isValidChannel("..")).toBe(false);
+    expect(isValidChannel("foo/bar")).toBe(false);
+    expect(isValidChannel(" spaces ")).toBe(false);
+    expect(isValidChannel("Uppercase")).toBe(false);
+  });
+});
+
 describe("resolveGroupFolderPath", () => {
-  it("resolves valid folder to full path", () => {
-    const result = resolveGroupFolderPath("/tmp/groups", "test");
-    expect(result).toBe("/tmp/groups/test");
+  it("resolves valid channel and folder to full path", () => {
+    const result = resolveGroupFolderPath("/tmp/groups", "slack", "test");
+    expect(result).toBe("/tmp/groups/slack/test");
   });
 
   it("throws for invalid folder", () => {
-    expect(() => resolveGroupFolderPath("/tmp/groups", "..")).toThrow();
+    expect(() => resolveGroupFolderPath("/tmp/groups", "slack", "..")).toThrow();
+  });
+
+  it("throws for invalid channel", () => {
+    expect(() => resolveGroupFolderPath("/tmp/groups", "..", "test")).toThrow();
   });
 });

@@ -40,6 +40,7 @@ describe("AppState", () => {
 
     state.registerGroup(db, "dc:123", {
       name: "Test",
+      channel: "discord",
       folder: "test",
       trigger: "!test",
       added_at: "2026-01-01T00:00:00Z",

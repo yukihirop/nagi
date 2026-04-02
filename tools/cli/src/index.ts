@@ -213,7 +213,8 @@ async function main(): Promise<void> {
   // Get session (detect agent type from container image)
   const imageName = config.container.image.split(":")[0];
   const agentType = imageName.endsWith("-opencode") ? "open-code" : "claude-code";
-  const sessionId = args.sessionId || db.sessions.get(group.folder, agentType);
+  const groupKey = `${group.channel}/${group.folder}`;
+  const sessionId = args.sessionId || db.sessions.get(groupKey, agentType);
 
   db.close();
 

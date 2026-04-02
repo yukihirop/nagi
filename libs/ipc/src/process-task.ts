@@ -26,6 +26,7 @@ export interface IpcDeps {
   syncGroups: (force: boolean) => Promise<void>;
   getAvailableGroups: () => Array<{ jid: string; name: string; folder?: string }>;
   writeGroupsSnapshot: (
+    channel: string,
     groupFolder: string,
     isMain: boolean,
     availableGroups: Array<{ jid: string; name: string; folder?: string }>,
@@ -53,11 +54,13 @@ export async function processTaskIpc(
     targetJid?: string;
     jid?: string;
     name?: string;
+    channel?: string;
     folder?: string;
     trigger?: string;
     requiresTrigger?: boolean;
     containerConfig?: RegisteredGroup["containerConfig"];
   },
+  sourceChannel: string,
   sourceGroup: string,
   isMain: boolean,
   deps: IpcDeps,
@@ -293,12 +296,13 @@ export async function processTaskIpc(
     case "refresh_groups":
       if (isMain) {
         logger.info(
-          { sourceGroup },
+          { sourceChannel, sourceGroup },
           "Group metadata refresh requested via IPC",
         );
         await deps.syncGroups(true);
         const availableGroups = deps.getAvailableGroups();
         deps.writeGroupsSnapshot(
+          sourceChannel,
           sourceGroup,
           true,
           availableGroups,
@@ -306,7 +310,7 @@ export async function processTaskIpc(
         );
       } else {
         logger.warn(
-          { sourceGroup },
+          { sourceChannel, sourceGroup },
           "Unauthorized refresh_groups attempt blocked",
         );
       }
@@ -330,6 +334,7 @@ export async function processTaskIpc(
         }
         deps.registerGroup(data.jid, {
           name: data.name,
+          channel: data.channel ?? "",
           folder: data.folder,
           trigger: data.trigger,
           added_at: new Date().toISOString(),

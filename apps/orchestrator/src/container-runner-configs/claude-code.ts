@@ -27,9 +27,9 @@ export const claudeCodeConfig: AgentConfig = {
         CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
       },
     };
-    // Load group settings.json if it exists (e.g. groups/main/settings.json)
+    // Load group settings.json if it exists (e.g. groups/slack/main/settings.json)
     const rootDir = path.resolve(config.paths.dataDir, "..");
-    const groupSettingsFile = path.join(rootDir, "groups", group.folder, "settings.json");
+    const groupSettingsFile = path.join(rootDir, "groups", group.channel, group.folder, "settings.json");
     if (fs.existsSync(groupSettingsFile)) {
       try {
         const groupSettings = JSON.parse(fs.readFileSync(groupSettingsFile, "utf-8")) as Record<string, unknown>;

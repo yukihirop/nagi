@@ -12,6 +12,7 @@ function createMockDeps(): IpcDeps {
     registeredGroups: vi.fn().mockReturnValue({
       "dc:123": {
         name: "Main",
+        channel: "discord",
         folder: "main",
         trigger: "!test",
         added_at: "2026-01-01T00:00:00Z",
@@ -84,8 +85,8 @@ describe("IpcWatcher", () => {
       deps,
     });
 
-    // Write a message file
-    const msgDir = path.join(tmpDir, "ipc", "main", "messages");
+    // Write a message file to the 2-level directory structure: ipc/{channel}/{folder}/messages
+    const msgDir = path.join(tmpDir, "ipc", "discord", "main", "messages");
     fs.mkdirSync(msgDir, { recursive: true });
     fs.writeFileSync(
       path.join(msgDir, "test.json"),

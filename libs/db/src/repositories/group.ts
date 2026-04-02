@@ -4,6 +4,7 @@ import type { RegisteredGroup } from "@nagi/types";
 interface GroupRow {
   jid: string;
   name: string;
+  channel: string;
   folder: string;
   trigger_pattern: string;
   added_at: string;
@@ -16,6 +17,7 @@ function rowToGroup(row: GroupRow): RegisteredGroup & { jid: string } {
   return {
     jid: row.jid,
     name: row.name,
+    channel: row.channel,
     folder: row.folder,
     trigger: row.trigger_pattern,
     added_at: row.added_at,
@@ -42,12 +44,13 @@ export class GroupRepository {
   set(jid: string, group: RegisteredGroup): void {
     this.db
       .prepare(
-        `INSERT OR REPLACE INTO registered_groups (jid, name, folder, trigger_pattern, added_at, container_config, requires_trigger, is_main)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT OR REPLACE INTO registered_groups (jid, name, channel, folder, trigger_pattern, added_at, container_config, requires_trigger, is_main)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         jid,
         group.name,
+        group.channel,
         group.folder,
         group.trigger,
         group.added_at,
@@ -72,6 +75,7 @@ export class GroupRepository {
       const group = rowToGroup(row);
       result[row.jid] = {
         name: group.name,
+        channel: group.channel,
         folder: group.folder,
         trigger: group.trigger,
         added_at: group.added_at,
