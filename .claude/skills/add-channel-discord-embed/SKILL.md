@@ -15,7 +15,7 @@ Discord must already be configured. If not, set up the Discord bot first.
 
 ### 1. Check current state
 
-Read `apps/entry.ts` and check which Discord import is used:
+Read `deploy/default/host/entry.ts` and check which Discord import is used:
 
 ```typescript
 // Plain text (current default)
@@ -29,7 +29,7 @@ If already using `@nagi/channel-discord-embed`, tell the user it's already enabl
 
 ### 2. Switch import
 
-In `apps/entry.ts`, replace the Discord import:
+In `deploy/default/host/entry.ts`, replace the Discord import:
 
 ```typescript
 // Before
@@ -41,7 +41,7 @@ const { createDiscordFactory } = await import("@nagi/channel-discord-embed");
 
 No other changes needed — the factory function, config, and registration are identical.
 
-**Note:** Do NOT change `apps/entry.template.ts`. The template should keep the default `@nagi/channel-discord`. Embed is a local customization in `apps/entry.ts` only.
+**Note:** Do NOT change `deploy/templates/host/entry.template.ts`. The template should keep the default `@nagi/channel-discord`. Embed is a local customization in `deploy/default/host/entry.ts` only.
 
 ### 3. Verify
 
@@ -66,7 +66,7 @@ Tell user:
 
 ## Reverting to plain text
 
-To switch back, reverse the import in `apps/entry.ts`:
+To switch back, reverse the import in `deploy/default/host/entry.ts`:
 
 ```typescript
 const { createDiscordFactory } = await import("@nagi/channel-discord");

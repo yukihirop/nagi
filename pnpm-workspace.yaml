@@ -1,6 +1,6 @@
 packages:
-  - "apps/*"
+  - "host/*"
   - "libs/*"
   - "tools/*"
-  - "apps/plugins/*"
+  - "host/plugins/*"
   - "container/plugins/*"

@@ -18,7 +18,7 @@ Slack must already be configured. If not, run `/add-channel-slack` first.
 
 ### 1. Check current state
 
-Read `apps/entry.ts` and check which Slack import is used:
+Read `deploy/default/host/entry.ts` and check which Slack import is used:
 
 ```typescript
 // Plain text (current default)
@@ -32,7 +32,7 @@ If already using `@nagi/channel-slack-block-kit`, tell the user it's already ena
 
 ### 2. Switch import
 
-In `apps/entry.ts`, replace the Slack import:
+In `deploy/default/host/entry.ts`, replace the Slack import:
 
 ```typescript
 // Before
@@ -44,7 +44,7 @@ const { createSlackFactory } = await import("@nagi/channel-slack-block-kit");
 
 No other changes needed — the factory function, config, and registration are identical.
 
-**Note:** Do NOT change `apps/entry.template.ts`. The template should keep the default `@nagi/channel-slack`. Block Kit is a local customization in `apps/entry.ts` only.
+**Note:** Do NOT change `deploy/templates/host/entry.template.ts`. The template should keep the default `@nagi/channel-slack`. Block Kit is a local customization in `deploy/default/host/entry.ts` only.
 
 ### 3. Verify
 
@@ -71,7 +71,7 @@ Tell user:
 
 ## Reverting to plain text
 
-To switch back to plain text, reverse the import in `apps/entry.ts`:
+To switch back to plain text, reverse the import in `deploy/default/host/entry.ts`:
 
 ```typescript
 const { createSlackFactory } = await import("@nagi/channel-slack");

@@ -28,9 +28,9 @@ pnpm add @nagi/channel-discord --filter nagi
 pnpm build
 ```
 
-### Check apps/entry.ts has Discord registration
+### Check deploy/default/host/entry.ts has Discord registration
 
-Read `apps/entry.ts` and verify it contains `createDiscordFactory`. If not, add the Discord registration block from `apps/entry.template.ts`.
+Read `deploy/default/host/entry.ts` and verify it contains `createDiscordFactory`. If not, add the Discord registration block from `deploy/templates/host/entry.template.ts`.
 
 ## Phase 2: Create Discord Bot
 

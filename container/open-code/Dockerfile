@@ -55,14 +55,14 @@ RUN curl -fsSL https://opencode.ai/install | bash \
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY apps/agent-runner-opencode/package*.json ./
+COPY host/agent-runner-opencode/package*.json ./
 
 # Install dependencies
 RUN npm install
 
 # Copy source code
-COPY apps/agent-runner-opencode/src/ ./src/
-COPY apps/agent-runner-opencode/tsconfig.json ./
+COPY host/agent-runner-opencode/src/ ./src/
+COPY host/agent-runner-opencode/tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build

@@ -5,7 +5,7 @@
   "packageManager": "pnpm@9.15.4",
   "scripts": {
     "build": "turbo build",
-    "dev": "tsx apps/entry.ts",
+    "dev": "tsx deploy/default/host/entry.ts",
     "nagi": "tsx tools/cli/src/index.ts",
     "lint": "turbo lint",
     "spell": "cspell \"**/*.{ts,md}\" --no-progress",

@@ -33,9 +33,9 @@ If not running, start Docker.
 
 Rebuilds based on:
 - `container/claude-code/Dockerfile`
-- `apps/agent-runner-claudecode/src/`
+- `host/agent-runner-claudecode/src/`
 - `container/plugins/`
-- `container/claude-code/entry.template.ts`
+- `deploy/templates/container/claude-code/entry.template.ts`
 
 **Open Code:**
 ```bash
@@ -44,7 +44,7 @@ Rebuilds based on:
 
 Rebuilds based on:
 - `container/open-code/Dockerfile`
-- `apps/agent-runner-opencode/src/`
+- `host/agent-runner-opencode/src/`
 - `container/plugins/`
 
 ### 4. Verify

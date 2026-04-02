@@ -25,13 +25,13 @@ launchctl list | grep com.nagi && echo "INSTALLED" || echo "NOT_INSTALLED"
 
 If already installed, AskUserQuestion: reinstall/update or skip?
 
-### Check apps/entry.ts exists
+### Check deploy/default/host/entry.ts exists
 
 ```bash
-test -f apps/entry.ts && echo "EXISTS" || echo "MISSING"
+test -f deploy/default/host/entry.ts && echo "EXISTS" || echo "MISSING"
 ```
 
-If missing, tell the user to run `/update-entry` first.
+If missing, tell the user to run `/deploy` first.
 
 ## Step 1: Detect paths
 
@@ -61,7 +61,7 @@ Update `launchd/com.nagi.plist` with the detected paths:
     <array>
         <string>NODE_PATH</string>
         <string>TSX_PATH</string>
-        <string>PROJECT_ROOT/apps/entry.ts</string>
+        <string>PROJECT_ROOT/deploy/default/host/entry.ts</string>
     </array>
     <key>WorkingDirectory</key>
     <string>PROJECT_ROOT</string>
@@ -86,7 +86,7 @@ Update `launchd/com.nagi.plist` with the detected paths:
 
 Replace all placeholders with actual paths.
 
-**Important:** `ProgramArguments` uses `node tsx/dist/cli.mjs apps/entry.ts` — not `node_modules/.bin/tsx` (that's a shell script, not executable by node directly).
+**Important:** `ProgramArguments` uses `node tsx/dist/cli.mjs deploy/default/host/entry.ts` — not `node_modules/.bin/tsx` (that's a shell script, not executable by node directly).
 
 ## Step 3: Create logs directory
 
@@ -122,7 +122,7 @@ If PID is `-` (not running):
 1. Check error log: `cat __data/logs/nagi.error.log`
 2. Common issues:
    - Node path wrong → re-run step 1
-   - `apps/entry.ts` missing → run `/update-entry`
+   - `deploy/default/host/entry.ts` missing → run `/deploy`
    - Port conflict (credential proxy) → check if another nagi/nanoclaw is running
    - Docker not running → start Docker first
 
@@ -160,7 +160,7 @@ launchctl list | grep com.nagi
 ### Service keeps restarting (KeepAlive loop)
 
 Check `__data/logs/nagi.error.log` for the crash reason. Common:
-- Port already in use → another instance running. Kill it: `pkill -f "tsx apps/entry.ts"`
+- Port already in use → another instance running. Kill it: `pkill -f "tsx deploy/default/host/entry.ts"`
 - Missing `.env` → create `.env` with required tokens
 - Docker not running → service starts but containers fail
 
@@ -170,7 +170,7 @@ macOS may block launchd agents. Go to System Preferences → Privacy & Security 
 
 ### Updating after code changes
 
-After `pnpm build` or editing `apps/entry.ts`:
+After `pnpm build` or editing `deploy/default/host/entry.ts`:
 ```bash
 launchctl kickstart -k gui/$(id -u)/com.nagi
 ```

@@ -152,26 +152,22 @@ Add to `.env`:
 DISCORD_BOT_TOKEN=...
 ```
 
-## 7. Create Entry Points
+## 7. Deploy Entry Points
 
-Copy the templates to create your local entry points:
+Run `/deploy` and select **All** to generate local entry points from templates:
 
-```bash
-cp -n apps/entry.template.ts apps/entry.ts
-cp -n container/claude-code/entry.template.ts container/claude-code/entry.ts
-```
+- `deploy/default/host/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
+- `deploy/default/container/claude-code/entry.ts` — container-side agent config (container plugins like agent-hooks)
+- `deploy/default/container/open-code/entry.ts` — open-code container config
 
-All are gitignored — they're your local configuration. The `.template.ts` files are tracked in git as references.
-
-- `apps/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
-- `container/claude-code/entry.ts` — container-side agent config (container plugins like agent-hooks)
+All are gitignored — they're your local configuration. The `.template.ts` files in `deploy/templates/` are tracked in git as references.
 
 To start nagi in development mode:
 ```bash
 pnpm dev
 ```
 
-This runs `tsx apps/entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
+This runs `tsx deploy/default/host/entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
 
 ## 8. Register Main Group
 

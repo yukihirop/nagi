@@ -13,16 +13,16 @@ importers:
         version: link:libs/channel-core
       '@nagi/channel-discord':
         specifier: workspace:*
-        version: link:apps/plugins/channel-discord
+        version: link:host/plugins/channel-discord
       '@nagi/channel-discord-embed':
         specifier: workspace:*
-        version: link:apps/plugins/channel-discord-embed
+        version: link:host/plugins/channel-discord-embed
       '@nagi/channel-slack':
         specifier: workspace:*
-        version: link:apps/plugins/channel-slack
+        version: link:host/plugins/channel-slack
       '@nagi/channel-slack-block-kit':
         specifier: workspace:*
-        version: link:apps/plugins/channel-slack-block-kit
+        version: link:host/plugins/channel-slack-block-kit
       '@nagi/config':
         specifier: workspace:*
         version: link:libs/config
@@ -31,7 +31,7 @@ importers:
         version: link:libs/logger
       '@nagi/orchestrator':
         specifier: workspace:*
-        version: link:apps/orchestrator
+        version: link:host/orchestrator
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
@@ -52,7 +52,39 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
-  apps/agent-runner-claudecode:
+  container/plugins/mcp-ollama:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.12.1
+        version: 1.28.0(zod@4.3.6)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  container/plugins/mcp-vercel:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.12.1
+        version: 1.28.0(zod@4.3.6)
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.19.15
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+
+  host/agent-runner-claudecode:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.2.76
@@ -77,7 +109,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/agent-runner-opencode:
+  host/agent-runner-opencode:
     dependencies:
       '@modelcontextprotocol/sdk':
         specifier: ^1.12.1
@@ -102,7 +134,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/credential-proxy:
+  host/credential-proxy:
     dependencies:
       '@nagi/config':
         specifier: workspace:*
@@ -124,7 +156,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/orchestrator:
+  host/orchestrator:
     dependencies:
       '@nagi/auth':
         specifier: workspace:*
@@ -173,7 +205,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/plugins/channel-discord:
+  host/plugins/channel-discord:
     dependencies:
       '@nagi/channel-core':
         specifier: workspace:*
@@ -195,7 +227,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/plugins/channel-discord-embed:
+  host/plugins/channel-discord-embed:
     dependencies:
       '@nagi/channel-core':
         specifier: workspace:*
@@ -217,7 +249,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/plugins/channel-slack:
+  host/plugins/channel-slack:
     dependencies:
       '@nagi/channel-core':
         specifier: workspace:*
@@ -242,7 +274,7 @@ importers:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
 
-  apps/plugins/channel-slack-block-kit:
+  host/plugins/channel-slack-block-kit:
     dependencies:
       '@nagi/channel-core':
         specifier: workspace:*
@@ -266,38 +298,6 @@ importers:
       vitest:
         specifier: ^3.1.4
         version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
-
-  container/plugins/mcp-ollama:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.12.1
-        version: 1.28.0(zod@4.3.6)
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.0
-        version: 22.19.15
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
-
-  container/plugins/mcp-vercel:
-    dependencies:
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.12.1
-        version: 1.28.0(zod@4.3.6)
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@types/node':
-        specifier: ^22.10.0
-        version: 22.19.15
-      typescript:
-        specifier: ^5.7.0
-        version: 5.9.3
 
   libs/auth:
     dependencies:

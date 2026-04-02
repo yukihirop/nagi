@@ -17,11 +17,11 @@ Enable PostToolUse and SessionStart hooks for Open Code containers that send rea
 ### 1. Check prerequisites
 
 ```bash
-test -f apps/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
-test -f container/open-code/entry.template.ts && echo "TEMPLATE_EXISTS" || echo "TEMPLATE_MISSING"
+test -f deploy/default/host/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
+test -f deploy/templates/container/open-code/entry.template.ts && echo "TEMPLATE_EXISTS" || echo "TEMPLATE_MISSING"
 ```
 
-If `apps/entry.ts` is missing, run `/setup` first.
+If `deploy/default/host/entry.ts` is missing, run `/setup` first.
 
 ### 2. Create agent-hooks plugin for Open Code
 
@@ -36,9 +36,9 @@ mkdir -p container/open-code/plugins/agent-hooks
 cp container/claude-code/plugins/agent-hooks/index.mjs container/open-code/plugins/agent-hooks/index.mjs
 ```
 
-### 3. Enable hooks in apps/entry.ts (host side)
+### 3. Enable hooks in deploy/default/host/entry.ts (host side)
 
-Read `apps/entry.ts` and check if `registerHooksPlugin` is already called.
+Read `deploy/default/host/entry.ts` and check if `registerHooksPlugin` is already called.
 
 If not present, add after the MCP plugin registrations:
 
@@ -50,9 +50,9 @@ orchestrator.registerHooksPlugin({
 });
 ```
 
-### 4. Enable hooks in container/open-code/entry.template.ts (container side)
+### 4. Enable hooks in deploy/templates/container/open-code/entry.template.ts (container side)
 
-Read `container/open-code/entry.template.ts` and check if the `agent-hooks` plugin is loaded.
+Read `deploy/templates/container/open-code/entry.template.ts` and check if the `agent-hooks` plugin is loaded.
 
 If not present, ensure the plugin import block exists:
 
@@ -85,10 +85,10 @@ try {
 ### 5. Sync local entry.ts
 
 ```bash
-cp container/open-code/entry.template.ts container/open-code/entry.ts
+cp deploy/templates/container/open-code/entry.template.ts deploy/default/container/open-code/entry.ts
 ```
 
-Or run `/update-container-entry` and select Open Code.
+Or run `/deploy` and select Open Code.
 
 ### 6. Rebuild and restart
 

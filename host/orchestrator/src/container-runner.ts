@@ -170,7 +170,7 @@ export function buildVolumeMounts(
   // Per-group agent-runner source
   const agentRunnerSrc = path.join(
     projectRoot,
-    "apps",
+    "host",
     agentConfig.agentRunnerPkg,
     "src",
   );
@@ -189,7 +189,7 @@ export function buildVolumeMounts(
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   // Copy container/{agent}/entry.ts into agent-runner source
-  const containerEntryPath = path.join(process.cwd(), "container", agentConfig.agentType, "entry.ts");
+  const containerEntryPath = path.join(process.cwd(), "deploy", "default", "container", agentConfig.agentType, "entry.ts");
   if (fs.existsSync(containerEntryPath)) {
     fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
   }

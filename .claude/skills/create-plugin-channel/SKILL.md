@@ -1,6 +1,6 @@
 ---
 name: create-plugin-channel
-description: Scaffold a new channel plugin for nagi. Generates package with Channel interface implementation, factory function, tests, and apps/entry.template.ts registration. Triggers on "create channel plugin", "new channel", "scaffold channel", "add channel plugin".
+description: Scaffold a new channel plugin for nagi. Generates package with Channel interface implementation, factory function, tests, and deploy/templates/host/entry.template.ts registration. Triggers on "create channel plugin", "new channel", "scaffold channel", "add channel plugin".
 ---
 
 # Create Channel Plugin
@@ -20,7 +20,7 @@ AskUserQuestion:
 
 ## Step 2: Generate package
 
-Create `apps/plugins/channel-{name}/` with the following structure:
+Create `host/plugins/channel-{name}/` with the following structure:
 
 ### package.json
 
@@ -253,9 +253,9 @@ Add the new package to root `package.json` dependencies for type resolution:
 "@nagi/channel-{name}": "workspace:*"
 ```
 
-## Step 4: Add to apps/entry.template.ts
+## Step 4: Add to deploy/templates/host/entry.template.ts
 
-Add a registration block to `apps/entry.template.ts`:
+Add a registration block to `deploy/templates/host/entry.template.ts`:
 
 ```typescript
 // Register {Name} if configured
@@ -288,13 +288,13 @@ All packages must build and tests must pass.
 
 Tell the user:
 
-1. **Implement the Channel interface** — Edit `apps/plugins/channel-{name}/src/{name}-channel.ts`:
+1. **Implement the Channel interface** — Edit `host/plugins/channel-{name}/src/{name}-channel.ts`:
    - `connect()` — Set up SDK client, register message handlers
    - `sendMessage()` — Send text to a JID
    - `setTyping()` — Typing indicator (no-op if unsupported)
    - `syncGroups()` — Group metadata discovery (optional)
 2. **Add SDK dependency** — `pnpm --filter @nagi/channel-{name} add {sdk-package}`
-3. **Sync entry.ts** — Run `/update-entry`
+3. **Sync entry.ts** — Run `/deploy` and select Host
 4. **Add credentials** — Add token to `.env`
 5. **Test** — `pnpm --filter @nagi/channel-{name} test`
 6. **Restart** — Run `/nagi-restart`
@@ -311,5 +311,5 @@ Tell the user:
 ## Reference
 
 Existing channel plugins to study:
-- `apps/plugins/channel-slack/` — Socket Mode, thread replies, message queueing, user name cache
-- `apps/plugins/channel-discord/` — Gateway intents, thread creation, attachment handling, 2000-char splitting
+- `host/plugins/channel-slack/` — Socket Mode, thread replies, message queueing, user name cache
+- `host/plugins/channel-discord/` — Gateway intents, thread creation, attachment handling, 2000-char splitting

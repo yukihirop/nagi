@@ -2,9 +2,8 @@ node_modules
 dist
 .turbo
 nanoclaw
-apps/entry.ts
-container/claude-code/entry.ts
-container/open-code/entry.ts
+deploy/*/
+!deploy/templates/
 .env
 __data
 openclaw

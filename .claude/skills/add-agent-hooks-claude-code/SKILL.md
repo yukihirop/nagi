@@ -18,22 +18,22 @@ Enable PostToolUse and SessionStart hooks that send real-time notifications to t
 
 ```bash
 test -f container/claude-code/plugins/agent-hooks/index.mjs && echo "PLUGIN_EXISTS" || echo "PLUGIN_MISSING"
-test -f apps/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
-test -f container/claude-code/entry.ts && echo "CONTAINER_ENTRY_EXISTS" || echo "CONTAINER_ENTRY_MISSING"
+test -f deploy/default/host/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
+test -f deploy/default/container/claude-code/entry.ts && echo "CONTAINER_ENTRY_EXISTS" || echo "CONTAINER_ENTRY_MISSING"
 ```
 
 If plugin is missing, something is wrong — the plugin ships with the repo.
 
-If `apps/entry.ts` is missing, run `/setup` first.
+If `deploy/default/host/entry.ts` is missing, run `/setup` first.
 
-If `container/claude-code/entry.ts` is missing:
+If `deploy/default/container/claude-code/entry.ts` is missing:
 ```bash
-cp container/claude-code/entry.template.ts container/claude-code/entry.ts
+cp deploy/templates/container/claude-code/entry.template.ts deploy/default/container/claude-code/entry.ts
 ```
 
-### 2. Enable hooks in apps/entry.ts (host side)
+### 2. Enable hooks in deploy/default/host/entry.ts (host side)
 
-Read `apps/entry.ts` and check if `registerHooksPlugin` is already called.
+Read `deploy/default/host/entry.ts` and check if `registerHooksPlugin` is already called.
 
 If not present, add after the MCP plugin registrations:
 
@@ -45,9 +45,9 @@ orchestrator.registerHooksPlugin({
 });
 ```
 
-### 3. Enable hooks in container/claude-code/entry.ts (container side)
+### 3. Enable hooks in deploy/default/container/claude-code/entry.ts (container side)
 
-Read `container/claude-code/entry.ts` and check if the `agent-hooks` plugin is loaded.
+Read `deploy/default/container/claude-code/entry.ts` and check if the `agent-hooks` plugin is loaded.
 
 If not present, ensure the plugin import block exists:
 
@@ -101,7 +101,7 @@ Expected: tool execution notifications appear in the chat channel as code-format
 
 ## Configuration options
 
-In `apps/entry.ts`, the hooks can be customized:
+In `deploy/default/host/entry.ts`, the hooks can be customized:
 
 ```typescript
 orchestrator.registerHooksPlugin({

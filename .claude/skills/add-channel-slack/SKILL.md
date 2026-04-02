@@ -28,9 +28,9 @@ pnpm add @nagi/channel-slack --filter nagi
 pnpm build
 ```
 
-### Check apps/entry.ts has Slack registration
+### Check deploy/default/host/entry.ts has Slack registration
 
-Read `apps/entry.ts` and verify it contains `createSlackFactory`. If not, add the Slack registration block from `apps/entry.template.ts`.
+Read `deploy/default/host/entry.ts` and verify it contains `createSlackFactory`. If not, add the Slack registration block from `deploy/templates/host/entry.template.ts`.
 
 ## Phase 2: Create Slack App
 

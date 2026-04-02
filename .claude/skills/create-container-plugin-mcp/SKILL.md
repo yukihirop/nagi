@@ -1,6 +1,6 @@
 ---
 name: create-container-plugin-mcp
-description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and apps/entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
+description: Scaffold a new MCP plugin for nagi agent containers. Generates package, Dockerfile entry, and deploy/templates/host/entry.template.ts registration. Triggers on "create mcp plugin", "new mcp plugin", "add mcp", "scaffold mcp".
 ---
 
 # Create MCP Plugin
@@ -135,9 +135,9 @@ COPY container/plugins/mcp-{name}/tsconfig.json /app/mcp-plugins/{name}/
 RUN cd /app/mcp-plugins/{name} && npx tsc
 ```
 
-## Step 4: Add to apps/entry.template.ts
+## Step 4: Add to deploy/templates/host/entry.template.ts
 
-Add a `registerMcpPlugin` block to `apps/entry.template.ts`:
+Add a `registerMcpPlugin` block to `deploy/templates/host/entry.template.ts`:
 
 **If API token required:**
 ```typescript
@@ -172,7 +172,7 @@ Tell the user:
 
 1. **Implement tools** — Edit `container/plugins/mcp-{name}/src/index.ts` to add real MCP tools
 2. **Rebuild Docker image** — `./container/claude-code/build.sh` and/or `./container/open-code/build.sh`
-3. **Sync entry.ts** — Run `/update-entry` to add the plugin registration to your local entry.ts
+3. **Sync entry.ts** — Run `/deploy` and select Host to add the plugin registration to your local entry.ts
 4. **If API token needed** — Add `{ENV_VAR}=...` to `.env`
 5. **Restart nagi** — Run `/nagi-restart`
 6. **Test** — Send a message in Slack and ask the agent to use the new tools

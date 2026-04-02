@@ -5,7 +5,7 @@
 ```mermaid
 graph TB
     subgraph Host["Host (macOS / Linux)"]
-        Entry["apps/entry.ts"]
+        Entry["deploy/default/host/entry.ts"]
         Orch["Orchestrator"]
         Proxy["Credential Proxy<br/>:3002"]
         DB["SQLite DB"]
@@ -73,7 +73,7 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    Entry["apps/entry.ts"] --> Orchestrator
+    Entry["deploy/default/host/entry.ts"] --> Orchestrator
     Entry --> ChannelSlack["channel-slack"]
     Entry --> ChannelDiscord["channel-discord"]
 
@@ -112,8 +112,8 @@ graph TD
 Channel plugins run on the host and connect to messaging platforms. They implement the `Channel` interface from `@nagi/channel-core`.
 
 ```
-apps/entry.ts → registry.register("slack", createSlackFactory({ ... }))
-              → Orchestrator connects all registered channels on start
+deploy/default/host/entry.ts → registry.register("slack", createSlackFactory({ ... }))
+                             → Orchestrator connects all registered channels on start
 ```
 
 ### MCP Plugins (Container-side)
@@ -121,7 +121,7 @@ apps/entry.ts → registry.register("slack", createSlackFactory({ ... }))
 MCP plugins run inside Docker containers as stdio MCP servers. They provide tools to the Claude Agent SDK.
 
 ```
-apps/entry.ts → orchestrator.registerMcpPlugin("ollama", { entryPoint: "..." })
+deploy/default/host/entry.ts → orchestrator.registerMcpPlugin("ollama", { entryPoint: "..." })
          → ContainerInput.mcpPlugins passed to agent-runner via stdin
          → agent-runner dynamically registers them as mcpServers
 ```
@@ -130,6 +130,8 @@ apps/entry.ts → orchestrator.registerMcpPlugin("ollama", { entryPoint: "..." }
 
 | Directory | Purpose | Git |
 |---|---|---|
+| `deploy/templates/` | Entry point templates | Tracked |
+| `deploy/default/` | Local entry points (generated) | Ignored |
 | `groups/` | Group templates (CLAUDE.md) | Tracked |
 | `__data/store/` | SQLite database | Ignored |
 | `__data/groups/` | Runtime group data | Ignored |
