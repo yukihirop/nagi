@@ -60,7 +60,8 @@
     "solidstart",
     "redwoodjs",
     "sveltekit",
-    "nextjs"
+    "nextjs",
+    "zundamon"
   ],
   "ignorePaths": [
     "node_modules",

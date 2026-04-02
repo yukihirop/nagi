@@ -7,3 +7,4 @@ deploy/*/
 .env
 __data
 openclaw
+mugi-claw

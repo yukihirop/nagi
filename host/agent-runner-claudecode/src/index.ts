@@ -423,11 +423,34 @@ async function runQuery(
   let resultCount = 0;
   const maxTurns = parseInt(process.env.MAX_AGENT_TURNS || "50", 10);
 
+  // Load group-level prompt files (*.md except CLAUDE.md which SDK loads automatically)
+  const groupDir = "/workspace/group";
+  const groupPromptParts: string[] = [];
+  if (fs.existsSync(groupDir)) {
+    for (const file of fs.readdirSync(groupDir).sort()) {
+      if (file.endsWith(".md") && file !== "CLAUDE.md") {
+        const filePath = path.join(groupDir, file);
+        if (fs.statSync(filePath).isFile()) {
+          groupPromptParts.push(fs.readFileSync(filePath, "utf-8").trim());
+        }
+      }
+    }
+  }
+  if (groupPromptParts.length > 0) {
+    log(`Loaded ${groupPromptParts.length} group prompt file(s)`);
+  }
+
+  // Load global CLAUDE.md for non-main groups
   const globalClaudeMdPath = "/workspace/global/CLAUDE.md";
   let globalClaudeMd: string | undefined;
   if (!containerInput.isMain && fs.existsSync(globalClaudeMdPath)) {
     globalClaudeMd = fs.readFileSync(globalClaudeMdPath, "utf-8");
   }
+
+  // Combine all prompt parts
+  const appendParts = [...groupPromptParts];
+  if (globalClaudeMd) appendParts.push(globalClaudeMd);
+  const appendPrompt = appendParts.length > 0 ? appendParts.join("\n\n") : undefined;
 
   const extraDirs: string[] = [];
   const extraBase = "/workspace/extra";
@@ -465,11 +488,11 @@ async function runQuery(
       additionalDirectories: extraDirs.length > 0 ? extraDirs : undefined,
       resume: sessionId,
       resumeSessionAt: resumeAt,
-      systemPrompt: globalClaudeMd
+      systemPrompt: appendPrompt
         ? {
             type: "preset" as const,
             preset: "claude_code" as const,
-            append: globalClaudeMd,
+            append: appendPrompt,
           }
         : undefined,
       allowedTools: [
