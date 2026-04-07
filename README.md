@@ -10,7 +10,16 @@
 
 AI assistant that runs Claude Agent SDK in Docker containers and communicates through messaging channels (Slack, Discord, etc.).
 
+Slack or Discord にメッセージを送ると、Docker コンテナ内で Claude がコードを書いたりブラウザを操作したりしてくれる — 個人用の AI エージェント基盤です。
+
 Built as a clean-room reimplementation of [NanoClaw](https://github.com/qwibitai/nanoclaw) with a Turborepo monorepo architecture, plugin system, and DI-based design.
+
+## Prerequisites
+
+- [Docker](https://www.docker.com/) (required — agents run in containers)
+- [Node.js](https://nodejs.org/) >= 22
+- [pnpm](https://pnpm.io/) >= 9
+- [Claude Code](https://claude.ai/code) (setup is driven by Claude Code skills)
 
 ## Quick Start
 
