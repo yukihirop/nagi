@@ -28,7 +28,7 @@ export class SlackBlockKitChannel extends SlackChannel {
     return this.postBlocks(jid, text, blocks);
   }
 
-  private async postBlocks(
+  protected async postBlocks(
     jid: string,
     fallbackText: string,
     blocks: import("@slack/types").KnownBlock[],

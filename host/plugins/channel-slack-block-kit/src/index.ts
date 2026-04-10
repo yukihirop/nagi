@@ -3,3 +3,8 @@ export {
   createSlackFactory,
 } from "./slack-block-kit-channel.js";
 export type { SlackChannelConfig } from "./slack-block-kit-channel.js";
+export {
+  getToolColor,
+  formatToolNotification,
+  formatMarkdownToBlockKit,
+} from "./block-kit-formatter.js";

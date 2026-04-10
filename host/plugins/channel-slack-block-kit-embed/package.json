@@ -1,0 +1,31 @@
+{
+  "name": "@nagi/channel-slack-block-kit-embed",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@nagi/channel-core": "workspace:*",
+    "@nagi/channel-slack": "workspace:*",
+    "@nagi/channel-slack-block-kit": "workspace:*",
+    "@nagi/logger": "workspace:*",
+    "@slack/bolt": "^4.6.0",
+    "@slack/types": "^2.20.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.1.4"
+  }
+}

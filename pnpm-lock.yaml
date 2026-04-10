@@ -23,6 +23,9 @@ importers:
       '@nagi/channel-slack-block-kit':
         specifier: workspace:*
         version: link:host/plugins/channel-slack-block-kit
+      '@nagi/channel-slack-block-kit-embed':
+        specifier: workspace:*
+        version: link:host/plugins/channel-slack-block-kit-embed
       '@nagi/config':
         specifier: workspace:*
         version: link:libs/config
@@ -282,6 +285,34 @@ importers:
       '@nagi/channel-slack':
         specifier: workspace:*
         version: link:../channel-slack
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../../libs/logger
+      '@slack/bolt':
+        specifier: ^4.6.0
+        version: 4.6.0(@types/express@5.0.6)
+      '@slack/types':
+        specifier: ^2.20.1
+        version: 2.20.1
+    devDependencies:
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  host/plugins/channel-slack-block-kit-embed:
+    dependencies:
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:../../../libs/channel-core
+      '@nagi/channel-slack':
+        specifier: workspace:*
+        version: link:../channel-slack
+      '@nagi/channel-slack-block-kit':
+        specifier: workspace:*
+        version: link:../channel-slack-block-kit
       '@nagi/logger':
         specifier: workspace:*
         version: link:../../../libs/logger

@@ -22,6 +22,7 @@
     "@nagi/channel-discord-embed": "workspace:*",
     "@nagi/channel-slack": "workspace:*",
     "@nagi/channel-slack-block-kit": "workspace:*",
+    "@nagi/channel-slack-block-kit-embed": "workspace:*",
     "@nagi/config": "workspace:*",
     "@nagi/logger": "workspace:*",
     "@nagi/orchestrator": "workspace:*"

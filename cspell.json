@@ -61,7 +61,8 @@
     "redwoodjs",
     "sveltekit",
     "nextjs",
-    "zundamon"
+    "zundamon",
+    "blurple"
   ],
   "ignorePaths": [
     "node_modules",
