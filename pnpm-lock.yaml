@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@nagi/channel-asana':
+        specifier: workspace:*
+        version: link:host/plugins/channel-asana
       '@nagi/channel-core':
         specifier: workspace:*
         version: link:libs/channel-core
@@ -201,6 +204,25 @@ importers:
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.4
+        version: 3.2.4(@types/debug@4.1.13)(@types/node@22.19.15)(jiti@2.6.1)(jsdom@29.0.1)(lightningcss@1.32.0)(tsx@4.21.0)(yaml@2.8.3)
+
+  host/plugins/channel-asana:
+    dependencies:
+      '@nagi/channel-core':
+        specifier: workspace:*
+        version: link:../../../libs/channel-core
+      '@nagi/logger':
+        specifier: workspace:*
+        version: link:../../../libs/logger
+      '@nagi/types':
+        specifier: workspace:*
+        version: link:../../../libs/types
+    devDependencies:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3

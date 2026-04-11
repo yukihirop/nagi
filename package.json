@@ -17,6 +17,7 @@
     "ui:dev": "pnpm --filter @nagi/ui --filter @nagi/ui-server dev"
   },
   "dependencies": {
+    "@nagi/channel-asana": "workspace:*",
     "@nagi/channel-core": "workspace:*",
     "@nagi/channel-discord": "workspace:*",
     "@nagi/channel-discord-embed": "workspace:*",

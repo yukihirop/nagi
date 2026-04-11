@@ -62,7 +62,11 @@
     "sveltekit",
     "nextjs",
     "zundamon",
-    "blurple"
+    "blurple",
+    "asana",
+    "gids",
+    "watchlist",
+    "tanuki"
   ],
   "ignorePaths": [
     "node_modules",

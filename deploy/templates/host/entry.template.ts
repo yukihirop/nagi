@@ -40,6 +40,38 @@ if (discordEnv.DISCORD_BOT_TOKEN) {
   logger.info("Discord channel registered");
 }
 
+// Register Asana if configured
+const asanaEnv = readEnvFile([
+  "ASANA_PAT",
+  "ASANA_USER_GID",
+  "ASANA_PROJECT_GIDS",
+  "ASANA_POLL_INTERVAL_MS",
+]);
+if (asanaEnv.ASANA_PAT && asanaEnv.ASANA_PROJECT_GIDS) {
+  const { createAsanaFactory } = await import("@nagi/channel-asana");
+  const projectGids = asanaEnv.ASANA_PROJECT_GIDS.split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const pollIntervalMs = asanaEnv.ASANA_POLL_INTERVAL_MS
+    ? Number(asanaEnv.ASANA_POLL_INTERVAL_MS)
+    : undefined;
+  registry.register(
+    "asana",
+    createAsanaFactory({
+      personalAccessToken: asanaEnv.ASANA_PAT,
+      userGid: asanaEnv.ASANA_USER_GID || undefined,
+      projectGids,
+      assistantName: config.assistantName,
+      triggerPattern: config.triggerPattern,
+      pollIntervalMs,
+    }),
+  );
+  logger.info(
+    { projects: projectGids.length },
+    "Asana channel registered",
+  );
+}
+
 const orchestrator = new Orchestrator(config, registry);
 
 // Register MCP plugins (available inside agent containers)

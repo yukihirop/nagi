@@ -8,9 +8,9 @@
   <em>面倒な作業やノイズを静かに消し去り、日常に波風の立たない「凪」のような平穏をもたらす。<br/>表立って主張するのではなく、裏で動いて平和を保ってくれる相棒。</em>
 </p>
 
-AI assistant that runs Claude Agent SDK in Docker containers and communicates through messaging channels (Slack, Discord, etc.).
+AI assistant that runs Claude Agent SDK in Docker containers and communicates through messaging channels (Slack, Discord, Asana, etc.).
 
-Slack or Discord にメッセージを送ると、Docker コンテナ内で Claude がコードを書いたりブラウザを操作したりしてくれる — 個人用の AI エージェント基盤です。
+Slack, Discord, Asana のいずれかにメッセージを送ると、Docker コンテナ内で Claude がコードを書いたりブラウザを操作したりしてくれる — 個人用の AI エージェント基盤です。
 
 Built as a clean-room reimplementation of [NanoClaw](https://github.com/qwibitai/nanoclaw) with a Turborepo monorepo architecture, plugin system, and DI-based design.
 
@@ -34,6 +34,14 @@ Open [Claude Code](https://claude.ai/code) in this directory and run:
 ```
 /setup
 ```
+
+## Channels
+
+Nagi responds to `@ai` (or your configured assistant name) in:
+
+- **Slack** — Socket Mode, no public URL needed. `/add-channel-slack`
+- **Discord** — Gateway intents with a bot token. `/add-channel-discord`
+- **Asana** — Polls task comments for `@ai` triggers, replies on an auto-created subtask so the parent task stays clean. Also grounds each reply with the task's name, description and comment history as context. `/add-channel-asana`
 
 ## CLI
 
