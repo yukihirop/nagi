@@ -156,6 +156,37 @@ export function buildVolumeMounts(
     });
   }
 
+  // Context mounts — developer-managed additional directories.
+  // Placed at deploy/default/container/context/{name}/ on host and exposed at
+  // /workspace/extra/{name}/ inside the container. The Claude Code agent-runner
+  // picks these up automatically via /workspace/extra scanning and passes them
+  // as additionalDirectories to the SDK. CLAUDE.md in each dir is auto-appended
+  // to the system prompt because CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1.
+  const contextBase = path.join(
+    process.cwd(),
+    "deploy",
+    "default",
+    "container",
+    "context",
+  );
+  if (fs.existsSync(contextBase)) {
+    for (const entry of fs.readdirSync(contextBase)) {
+      const hostPath = path.join(contextBase, entry);
+      let entryStat: fs.Stats;
+      try {
+        entryStat = fs.statSync(hostPath);
+      } catch {
+        continue;
+      }
+      if (!entryStat.isDirectory()) continue;
+      mounts.push({
+        hostPath,
+        containerPath: `/workspace/extra/${entry}`,
+        readonly: true,
+      });
+    }
+  }
+
   // Per-group IPC namespace
   const groupIpcDir = resolveGroupIpcPath(config.paths.dataDir, group.channel, group.folder);
   fs.mkdirSync(path.join(groupIpcDir, "messages"), { recursive: true });

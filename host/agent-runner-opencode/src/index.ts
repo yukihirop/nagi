@@ -215,6 +215,69 @@ export async function run(config?: RunConfig): Promise<void> {
   const model = process.env.OPENCODE_MODEL || "anthropic/claude-sonnet-4-20250514";
   const providerID = getProviderID(model);
 
+  // Load group-level persona / instructions from /workspace/group.
+  // The container entrypoint runs with cwd=/app, so opencode's native
+  // AGENTS.md project-root discovery does NOT pick up /workspace/group/AGENTS.md
+  // automatically. We pass CLAUDE.md and AGENTS.md explicitly via `instructions`
+  // so the group persona (zundamon tone, workspace description, etc.) is
+  // always loaded regardless of cwd.
+  const groupInstructions: string[] = [];
+  const groupBase = "/workspace/group";
+  for (const candidate of ["CLAUDE.md", "AGENTS.md"]) {
+    const filePath = path.join(groupBase, candidate);
+    try {
+      if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        groupInstructions.push(filePath);
+      }
+    } catch {
+      /* skip unreadable entries */
+    }
+  }
+  if (groupInstructions.length > 0) {
+    log(
+      `Loaded ${groupInstructions.length} group instruction file(s): ${groupInstructions.join(", ")}`,
+    );
+  }
+
+  // Load extra context directories (mirrors Claude Code runner's extraDirs).
+  // Each subdirectory under /workspace/extra — typically mounted from
+  // deploy/default/container/context/{name}/ on the host — is scanned for
+  // CLAUDE.md and AGENTS.md. Those files are passed to Open Code's
+  // `instructions` config so they're appended to the system prompt. Combined
+  // with the existing permission="allow" (which grants external_directory),
+  // the agent can also Read/Grep other files inside these directories.
+  const extraInstructions: string[] = [];
+  const extraBase = "/workspace/extra";
+  if (fs.existsSync(extraBase)) {
+    for (const entry of fs.readdirSync(extraBase)) {
+      const dirPath = path.join(extraBase, entry);
+      try {
+        if (!fs.statSync(dirPath).isDirectory()) continue;
+      } catch {
+        continue;
+      }
+      for (const candidate of ["CLAUDE.md", "AGENTS.md"]) {
+        const filePath = path.join(dirPath, candidate);
+        try {
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            extraInstructions.push(filePath);
+          }
+        } catch {
+          /* skip unreadable entries */
+        }
+      }
+    }
+  }
+  if (extraInstructions.length > 0) {
+    log(
+      `Loaded ${extraInstructions.length} extra instruction file(s): ${extraInstructions.join(", ")}`,
+    );
+  }
+
+  // Group instructions come first so persona establishes the baseline; extra
+  // context files are appended afterwards as supplemental reference material.
+  const allInstructions = [...groupInstructions, ...extraInstructions];
+
   // Start Open Code server + client
   log(`Starting Open Code server (model: ${model})...`);
 
@@ -226,6 +289,9 @@ export async function run(config?: RunConfig): Promise<void> {
       config: {
         model,
         mcp: buildMcpConfig(mcpServerPath, containerInput),
+        ...(allInstructions.length > 0
+          ? { instructions: allInstructions }
+          : {}),
         // @ts-expect-error Open Code SDK types don't expose "allow" permission, but the server accepts it
         permission: "allow",
       },

@@ -32,4 +32,5 @@ You are Nagi, an AI assistant running inside a container. You communicate with u
 - `/workspace/group/` — Your working directory (persistent across sessions)
 - `/workspace/project/` — Project source code (read-only, main only)
 - `/workspace/global/` — Shared memory (read-only for non-main)
+- `/workspace/extra/` — Additional context directories mounted read-only from the host (reference repositories, external documents, etc.). **セッション開始時に `ls /workspace/extra/` で一覧を確認し、ユーザーの質問に関連しそうなサブディレクトリがあれば積極的に Read / Glob / Grep で参照すること。** サブディレクトリ直下の `CLAUDE.md` / `AGENTS.md` は既にシステムプロンプトに読み込まれている場合があります。
 - `/workspace/ipc/` — IPC communication with host
