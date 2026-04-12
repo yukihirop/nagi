@@ -423,12 +423,14 @@ async function runQuery(
   let resultCount = 0;
   const maxTurns = parseInt(process.env.MAX_AGENT_TURNS || "50", 10);
 
-  // Load group-level prompt files (*.md except CLAUDE.md which SDK loads automatically)
+  // Load group-level prompt files (*.md except CLAUDE.md and AGENTS.md)
+  // CLAUDE.md is loaded by the SDK automatically.
+  // AGENTS.md is reserved for the Open Code runner to avoid conflicting persona instructions.
   const groupDir = "/workspace/group";
   const groupPromptParts: string[] = [];
   if (fs.existsSync(groupDir)) {
     for (const file of fs.readdirSync(groupDir).sort()) {
-      if (file.endsWith(".md") && file !== "CLAUDE.md") {
+      if (file.endsWith(".md") && file !== "CLAUDE.md" && file !== "AGENTS.md") {
         const filePath = path.join(groupDir, file);
         if (fs.statSync(filePath).isFile()) {
           groupPromptParts.push(fs.readFileSync(filePath, "utf-8").trim());

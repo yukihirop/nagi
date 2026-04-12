@@ -218,12 +218,13 @@ export async function run(config?: RunConfig): Promise<void> {
   // Load group-level persona / instructions from /workspace/group.
   // The container entrypoint runs with cwd=/app, so opencode's native
   // AGENTS.md project-root discovery does NOT pick up /workspace/group/AGENTS.md
-  // automatically. We pass CLAUDE.md and AGENTS.md explicitly via `instructions`
-  // so the group persona (zundamon tone, workspace description, etc.) is
-  // always loaded regardless of cwd.
+  // automatically. We pass AGENTS.md explicitly via `instructions`
+  // so the group persona is always loaded regardless of cwd.
+  // Note: Only AGENTS.md is loaded for Open Code; CLAUDE.md is reserved for
+  // the Claude Code runner to avoid conflicting persona instructions.
   const groupInstructions: string[] = [];
   const groupBase = "/workspace/group";
-  for (const candidate of ["CLAUDE.md", "AGENTS.md"]) {
+  for (const candidate of ["AGENTS.md"]) {
     const filePath = path.join(groupBase, candidate);
     try {
       if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {

@@ -123,17 +123,18 @@ export class Orchestrator {
   }
 
   /**
-   * Copy group template files (e.g. CLAUDE.md) from groups/{channel}/{folder}/ to __data/groups/{channel}/{folder}/.
+   * Copy group template files (e.g. CLAUDE.md) from deploy/default/groups/{channel}/{folder}/
+   * to __data/groups/{channel}/{folder}/.
    * Only copies files that don't already exist in the runtime directory
    * to preserve user customizations.
    */
   private syncGroupTemplates(): void {
-    const templateDir = path.join(process.cwd(), "groups");
+    const templateDir = path.join(process.cwd(), "deploy", "default", "groups");
     const runtimeDir = this.config.paths.groupsDir;
 
     if (!fs.existsSync(templateDir)) return;
 
-    // Scan 2 levels: groups/{channel}/{folder}/
+    // Scan 2 levels: deploy/default/groups/{channel}/{folder}/
     for (const channel of fs.readdirSync(templateDir)) {
       const channelDir = path.join(templateDir, channel);
       if (!fs.statSync(channelDir).isDirectory()) continue;

@@ -154,7 +154,7 @@ db.groups.set('slack:CHANNEL_ID', {
 });
 db.close();
 
-fs.mkdirSync('groups/slack_channel-name', { recursive: true });
+fs.mkdirSync('__data/groups/slack_channel-name', { recursive: true });
 console.log('Group registered');
 "
 ```

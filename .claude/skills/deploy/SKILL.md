@@ -1,13 +1,15 @@
 ---
 name: deploy
-description: Sync deploy/default/ entry files with deploy/templates/. Covers host and container (claude-code, open-code) entry points. Triggers on "deploy", "sync deploy", "update entry", "sync entry", "update container entry", "sync container entry".
+description: Sync deploy/default/ with deploy/templates/. Covers host/container entry files and group prompt defaults (CLAUDE.md etc.). Triggers on "deploy", "sync deploy", "update entry", "sync entry", "update container entry", "sync container entry", "sync group templates".
 ---
 
 # Deploy
 
-Sync `deploy/default/` (local, gitignored) with `deploy/templates/` (git-tracked). Preserves user customizations while incorporating new features from templates.
+Sync `deploy/default/` (user-editable) with `deploy/templates/` (pristine, git-tracked). Preserves user customizations while incorporating new features from templates.
 
-## Entry points
+## Targets
+
+### Entry points
 
 | Target | Template | Local |
 |--------|----------|-------|
@@ -15,16 +17,25 @@ Sync `deploy/default/` (local, gitignored) with `deploy/templates/` (git-tracked
 | Claude Code | `deploy/templates/container/claude-code/entry.template.ts` | `deploy/default/container/claude-code/entry.ts` |
 | Open Code | `deploy/templates/container/open-code/entry.template.ts` | `deploy/default/container/open-code/entry.ts` |
 
+### Group prompts
+
+| Target | Template | Local |
+|--------|----------|-------|
+| Groups | `deploy/templates/groups/{channel}/{group}/*.md` | `deploy/default/groups/{channel}/{group}/*.md` |
+
+Group prompt files (`CLAUDE.md`, `AGENTS.md`, and any others) are plain markdown with no placeholder substitution. Templates act as the pristine baseline; `deploy/default/groups/` is the copy the user edits freely.
+
 ## Steps
 
 ### 1. Choose target
 
-AskUserQuestion: Which entry point(s) to sync?
+AskUserQuestion: Which target(s) to sync?
 
-- **All** — sync all three entry points
-- **Host** — host orchestrator only
-- **Claude Code** — claude-code container only
-- **Open Code** — open-code container only
+- **All** — sync everything below
+- **Host** — host orchestrator entry only
+- **Claude Code** — claude-code container entry only
+- **Open Code** — open-code container entry only
+- **Groups** — group prompt defaults only
 
 ### 2. Check current state
 
@@ -53,6 +64,27 @@ cp deploy/templates/container/open-code/index.d.ts deploy/default/container/open
 
 If the file was missing and copied fresh, skip to verification for that target.
 
+#### Groups target
+
+For group prompt defaults, walk every file under `deploy/templates/groups/`:
+
+```bash
+for f in $(find deploy/templates/groups -type f); do
+  local="deploy/default/groups/${f#deploy/templates/groups/}"
+  if [ ! -f "$local" ]; then
+    mkdir -p "$(dirname "$local")"
+    cp "$f" "$local"
+    echo "NEW: $local"
+  elif ! diff -q "$f" "$local" > /dev/null 2>&1; then
+    echo "CHANGED: $local (differs from template)"
+  else
+    echo "OK: $local"
+  fi
+done
+```
+
+For **CHANGED** files, use `AskUserQuestion` per file: "Overwrite with template", "Keep local", or "Show diff". Never overwrite without asking — `deploy/default/groups/` is the user's editable layer.
+
 ### 3. Diff template vs local
 
 For each selected target, read both the template and local file. Compare and identify:
@@ -71,6 +103,9 @@ For each selected target, read both the template and local file. Compare and ide
 - Container plugin imports (`import(pluginPath)`)
 - Plugin push blocks (`plugins.push`)
 - Hook factory wiring (`createHooks`)
+
+#### Groups-specific notes
+Group prompt files have no placeholder substitution — a straight diff between template and local is the whole story. Skip steps 4 and 5 for the Groups target (no merge logic, no tsc).
 
 ### 4. Merge changes
 

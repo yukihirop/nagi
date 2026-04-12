@@ -130,11 +130,12 @@ deploy/default/host/entry.ts → orchestrator.registerMcpPlugin("ollama", { entr
 
 | Directory | Purpose | Git |
 |---|---|---|
-| `deploy/templates/` | Entry point templates | Tracked |
-| `deploy/default/` | Local entry points (generated) | Ignored |
-| `groups/` | Group templates (CLAUDE.md) | Tracked |
+| `deploy/templates/` | Entry point and group prompt templates (pristine) | Tracked |
+| `deploy/templates/groups/` | Group prompt templates (CLAUDE.md, AGENTS.md) | Tracked |
+| `deploy/default/` | Local materialized entry points and group prompts | Ignored |
+| `deploy/default/groups/` | User-editable group prompt defaults | Ignored |
 | `__data/store/` | SQLite database | Ignored |
-| `__data/groups/` | Runtime group data | Ignored |
+| `__data/groups/` | Runtime group data (mounted into containers, preserves local edits) | Ignored |
 | `__data/sessions/` | Claude sessions per group | Ignored |
 | `__data/ipc/` | Container IPC files | Ignored |
 | `__data/logs/` | Service logs | Ignored |

@@ -69,7 +69,8 @@
     "tanuki",
     "autoresearch",
     "Andrej",
-    "Karpathy"
+    "Karpathy",
+    "elif"
   ],
   "ignorePaths": [
     "node_modules",
