@@ -37,10 +37,10 @@ If no image, build it:
 ### 3. Restart nagi
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.nagi
+launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 sleep 3
-launchctl list | grep com.nagi
-tail -5 __data/logs/nagi.log
+launchctl list | grep com.nagi.{ASSISTANT_NAME}
+tail -5 __data/{ASSISTANT_NAME}/logs/nagi.log
 ```
 
 ### 4. Test

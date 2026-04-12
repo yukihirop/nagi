@@ -36,8 +36,9 @@ describe("loadConfig", () => {
 
   it("generates paths from projectRoot", () => {
     const config = loadConfig({ projectRoot: "/my/project" });
-    expect(config.paths.groupsDir).toBe("/my/project/__data/groups");
-    expect(config.paths.dataDir).toBe("/my/project/__data");
+    expect(config.paths.deployDir).toBe("/my/project/deploy/Andy");
+    expect(config.paths.dataDir).toBe("/my/project/__data/Andy");
+    expect(config.paths.groupsDir).toBe("/my/project/__data/Andy/groups");
   });
 
   it("generates triggerPattern from assistantName", () => {

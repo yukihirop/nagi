@@ -9,15 +9,25 @@ This skill configures Slack for nagi — token setup, group registration, and ve
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.
 
+## Phase 0: Determine ASSISTANT_NAME
+
+```bash
+ls -d deploy/*/ 2>/dev/null | grep -v templates | sed 's|deploy/||;s|/||'
+```
+
+AskUserQuestion: **どのアシスタントに Slack を追加しますか？** — 検出された各名前をオプションとして表示する。
+
+Use the selected name as `{ASSISTANT_NAME}` throughout. The .env file is at `deploy/{ASSISTANT_NAME}/.env`.
+
 ## Phase 1: Pre-flight
 
 ### Check if already configured
 
 ```bash
-grep -c "SLACK_BOT_TOKEN" .env 2>/dev/null || echo "0"
+grep -c "SLACK_BOT_TOKEN" deploy/{ASSISTANT_NAME}/.env 2>/dev/null || echo "0"
 ```
 
-If tokens already exist in `.env`, ask user: keep existing tokens or reconfigure?
+If tokens already exist in `deploy/{ASSISTANT_NAME}/.env`, ask user: keep existing tokens or reconfigure?
 
 ### Check plugin is available
 
@@ -28,9 +38,9 @@ pnpm add @nagi/channel-slack --filter nagi
 pnpm build
 ```
 
-### Check deploy/default/host/entry.ts has Slack registration
+### Check deploy/{ASSISTANT_NAME}/host/entry.ts has Slack registration
 
-Read `deploy/default/host/entry.ts` and verify it contains `createSlackFactory`. If not, add the Slack registration block from `deploy/templates/host/entry.template.ts`.
+Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and verify it contains `createSlackFactory`. If not, add the Slack registration block from `deploy/templates/host/entry.template.ts`.
 
 ## Phase 2: Create Slack App
 
@@ -84,7 +94,7 @@ settings:
 
 ### Configure .env
 
-Add to `.env` (create if needed):
+Add to `deploy/{ASSISTANT_NAME}/.env`:
 
 ```
 SLACK_BOT_TOKEN=xoxb-...
@@ -117,7 +127,7 @@ npx tsx -e "
 import { createDatabase } from '@nagi/db';
 import fs from 'fs';
 
-const db = createDatabase({ path: '__data/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('slack:CHANNEL_ID', {
   name: 'Main',
   folder: 'main',
@@ -128,7 +138,7 @@ db.groups.set('slack:CHANNEL_ID', {
 });
 db.close();
 
-fs.mkdirSync('__data/groups/main', { recursive: true });
+fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/main', { recursive: true });
 console.log('Main group registered');
 "
 ```
@@ -144,7 +154,7 @@ npx tsx -e "
 import { createDatabase } from '@nagi/db';
 import fs from 'fs';
 
-const db = createDatabase({ path: '__data/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('slack:CHANNEL_ID', {
   name: 'Channel Name',
   folder: 'slack_channel-name',
@@ -154,7 +164,7 @@ db.groups.set('slack:CHANNEL_ID', {
 });
 db.close();
 
-fs.mkdirSync('__data/groups/slack_channel-name', { recursive: true });
+fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/slack_channel-name', { recursive: true });
 console.log('Group registered');
 "
 ```
@@ -189,14 +199,14 @@ Tell user:
    ```bash
    npx tsx -e "
    import { createDatabase } from '@nagi/db';
-   const db = createDatabase({ path: '__data/store/messages.db' });
+   const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
    console.log(JSON.stringify(db.groups.getAll(), null, 2));
    db.close();
    "
    ```
 3. **Docker running?** — `docker info`
 4. **Container image built?** — `docker images nagi-agent`
-5. **Check container logs:** `ls __data/groups/main/logs/`
+5. **Check container logs:** `ls __data/{ASSISTANT_NAME}/groups/main/logs/`
 
 ## Troubleshooting
 
@@ -212,7 +222,7 @@ Tell user:
 1. Go to **OAuth & Permissions** → add missing scope
 2. **Reinstall the app** (scope changes require reinstallation)
 3. Copy the new Bot Token (it changes on reinstall)
-4. Update `.env` and restart
+4. Update `deploy/{ASSISTANT_NAME}/.env` and restart
 
 ### Getting channel ID
 

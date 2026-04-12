@@ -242,7 +242,7 @@ export async function run(config?: RunConfig): Promise<void> {
 
   // Load extra context directories (mirrors Claude Code runner's extraDirs).
   // Each subdirectory under /workspace/extra — typically mounted from
-  // deploy/default/container/context/{name}/ on the host — is scanned for
+  // deploy/{name}/container/context/{name}/ on the host — is scanned for
   // CLAUDE.md and AGENTS.md. Those files are passed to Open Code's
   // `instructions` config so they're appended to the system prompt. Combined
   // with the existing permission="allow" (which grants external_directory),

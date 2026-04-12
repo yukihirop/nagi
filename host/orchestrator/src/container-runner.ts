@@ -157,15 +157,13 @@ export function buildVolumeMounts(
   }
 
   // Context mounts — developer-managed additional directories.
-  // Placed at deploy/default/container/context/{name}/ on host and exposed at
+  // Placed at deploy/{name}/container/context/{name}/ on host and exposed at
   // /workspace/extra/{name}/ inside the container. The Claude Code agent-runner
   // picks these up automatically via /workspace/extra scanning and passes them
   // as additionalDirectories to the SDK. CLAUDE.md in each dir is auto-appended
   // to the system prompt because CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD=1.
   const contextBase = path.join(
-    process.cwd(),
-    "deploy",
-    "default",
+    config.paths.deployDir,
     "container",
     "context",
   );
@@ -220,7 +218,7 @@ export function buildVolumeMounts(
     fs.cpSync(agentRunnerSrc, groupAgentRunnerDir, { recursive: true });
   }
   // Copy container/{agent}/entry.ts into agent-runner source
-  const containerEntryPath = path.join(process.cwd(), "deploy", "default", "container", agentConfig.agentType, "entry.ts");
+  const containerEntryPath = path.join(config.paths.deployDir, "container", agentConfig.agentType, "entry.ts");
   if (fs.existsSync(containerEntryPath)) {
     fs.copyFileSync(containerEntryPath, path.join(groupAgentRunnerDir, "entry.ts"));
   }

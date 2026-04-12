@@ -44,7 +44,7 @@ ollama pull llama3.2
 
 ## Phase 2: Configure entry.ts
 
-Verify `deploy/default/host/entry.ts` contains the Ollama MCP plugin registration. If not, add this block after the orchestrator creation:
+Verify `deploy/{ASSISTANT_NAME}/host/entry.ts` contains the Ollama MCP plugin registration. If not, add this block after the orchestrator creation:
 
 ```typescript
 orchestrator.registerMcpPlugin("ollama", {
@@ -54,7 +54,7 @@ orchestrator.registerMcpPlugin("ollama", {
 
 No API token needed — Ollama runs locally. The container reaches the host via `host.docker.internal:11434`.
 
-If `deploy/default/host/entry.ts` is outdated, compare with `deploy/templates/host/entry.template.ts` and update accordingly.
+If `deploy/{ASSISTANT_NAME}/host/entry.ts` is outdated, compare with `deploy/templates/host/entry.template.ts` and update accordingly.
 
 ### Custom Ollama host (optional)
 
@@ -108,7 +108,7 @@ Once configured, container agents have access to:
 
 ### Agent doesn't see Ollama tools
 
-1. Check `deploy/default/host/entry.ts` has `registerMcpPlugin("ollama", ...)`
+1. Check `deploy/{ASSISTANT_NAME}/host/entry.ts` has `registerMcpPlugin("ollama", ...)`
 2. Check Docker image was rebuilt: `./container/claude-code/build.sh`
 3. Restart nagi
 

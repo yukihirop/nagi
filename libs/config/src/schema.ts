@@ -35,6 +35,7 @@ export const NagiConfigSchema = z.object({
       ipcPoll: 1000,
     }),
   paths: z.object({
+    deployDir: z.string(),
     groupsDir: z.string(),
     dataDir: z.string(),
     mountAllowlistPath: z.string(),

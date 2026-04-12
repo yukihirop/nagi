@@ -27,12 +27,9 @@ export const claudeCodeConfig: AgentConfig = {
         CLAUDE_CODE_DISABLE_AUTO_MEMORY: "0",
       },
     };
-    // Load group settings.json if it exists (e.g. deploy/default/groups/slack/main/settings.json)
-    const rootDir = path.resolve(config.paths.dataDir, "..");
+    // Load group settings.json if it exists (e.g. deploy/{name}/groups/slack/main/settings.json)
     const groupSettingsFile = path.join(
-      rootDir,
-      "deploy",
-      "default",
+      config.paths.deployDir,
       "groups",
       group.channel,
       group.folder,

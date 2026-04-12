@@ -9,15 +9,25 @@ This skill configures Discord for nagi — bot creation, token setup, group regi
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.
 
+## Phase 0: Determine ASSISTANT_NAME
+
+```bash
+ls -d deploy/*/ 2>/dev/null | grep -v templates | sed 's|deploy/||;s|/||'
+```
+
+AskUserQuestion: **どのアシスタントに Discord を追加しますか？** — 検出された各名前をオプションとして表示する。
+
+Use the selected name as `{ASSISTANT_NAME}` throughout. The .env file is at `deploy/{ASSISTANT_NAME}/.env`.
+
 ## Phase 1: Pre-flight
 
 ### Check if already configured
 
 ```bash
-grep -c "DISCORD_BOT_TOKEN" .env 2>/dev/null || echo "0"
+grep -c "DISCORD_BOT_TOKEN" deploy/{ASSISTANT_NAME}/.env 2>/dev/null || echo "0"
 ```
 
-If token already exists in `.env`, ask user: keep existing token or reconfigure?
+If token already exists in `deploy/{ASSISTANT_NAME}/.env`, ask user: keep existing token or reconfigure?
 
 ### Check plugin is available
 
@@ -28,9 +38,9 @@ pnpm add @nagi/channel-discord --filter nagi
 pnpm build
 ```
 
-### Check deploy/default/host/entry.ts has Discord registration
+### Check deploy/{ASSISTANT_NAME}/host/entry.ts has Discord registration
 
-Read `deploy/default/host/entry.ts` and verify it contains `createDiscordFactory`. If not, add the Discord registration block from `deploy/templates/host/entry.template.ts`.
+Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and verify it contains `createDiscordFactory`. If not, add the Discord registration block from `deploy/templates/host/entry.template.ts`.
 
 ## Phase 2: Create Discord Bot
 
@@ -55,7 +65,7 @@ AskUserQuestion: Do you already have a Discord bot configured?
 
 ### Configure .env
 
-Add to `.env`:
+Add to `deploy/{ASSISTANT_NAME}/.env`:
 
 ```
 DISCORD_BOT_TOKEN=...
@@ -80,7 +90,7 @@ npx tsx -e "
 import { createDatabase } from '@nagi/db';
 import fs from 'fs';
 
-const db = createDatabase({ path: '__data/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('dc:CHANNEL_ID', {
   name: 'Discord Main',
   folder: 'discord_main',
@@ -91,7 +101,7 @@ db.groups.set('dc:CHANNEL_ID', {
 });
 db.close();
 
-fs.mkdirSync('__data/groups/discord_main', { recursive: true });
+fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/discord_main', { recursive: true });
 console.log('Discord group registered');
 "
 ```

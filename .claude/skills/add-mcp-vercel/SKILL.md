@@ -19,9 +19,9 @@ grep -c "VERCEL_API_TOKEN" .env 2>/dev/null || echo "0"
 
 If token exists, ask user: keep existing or reconfigure?
 
-### Check deploy/default/host/entry.ts has Vercel registration
+### Check deploy/{ASSISTANT_NAME}/host/entry.ts has Vercel registration
 
-Read `deploy/default/host/entry.ts` and verify it contains `registerMcpPlugin("vercel"`. If not, add it.
+Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and verify it contains `registerMcpPlugin("vercel"`. If not, add it.
 
 ## Phase 2: Get API Token
 
@@ -45,7 +45,7 @@ VERCEL_API_TOKEN=...
 
 ## Phase 3: Configure entry.ts
 
-Verify `deploy/default/host/entry.ts` contains the Vercel MCP plugin registration. If not, add this block after the orchestrator creation:
+Verify `deploy/{ASSISTANT_NAME}/host/entry.ts` contains the Vercel MCP plugin registration. If not, add this block after the orchestrator creation:
 
 ```typescript
 const vercelEnv = readEnvFile(["VERCEL_API_TOKEN"]);
@@ -58,7 +58,7 @@ if (vercelEnv.VERCEL_API_TOKEN) {
 }
 ```
 
-If `deploy/default/host/entry.ts` is outdated, compare with `deploy/templates/host/entry.template.ts` and update accordingly.
+If `deploy/{ASSISTANT_NAME}/host/entry.ts` is outdated, compare with `deploy/templates/host/entry.template.ts` and update accordingly.
 
 ## Phase 4: Rebuild & Verify
 
@@ -99,11 +99,11 @@ Once configured, container agents have access to:
 
 ### "VERCEL_API_TOKEN is not set"
 
-The token must be in `.env` at the project root AND registered in `deploy/default/host/entry.ts` via `registerMcpPlugin` with `env: { VERCEL_API_TOKEN: ... }`.
+The token must be in `.env` at the project root AND registered in `deploy/{ASSISTANT_NAME}/host/entry.ts` via `registerMcpPlugin` with `env: { VERCEL_API_TOKEN: ... }`.
 
 ### Agent doesn't see Vercel tools
 
-1. Check `deploy/default/host/entry.ts` has `registerMcpPlugin("vercel", ...)`
+1. Check `deploy/{ASSISTANT_NAME}/host/entry.ts` has `registerMcpPlugin("vercel", ...)`
 2. Check Docker image was rebuilt after adding the plugin: `./container/claude-code/build.sh`
 3. Restart nagi after changes
 

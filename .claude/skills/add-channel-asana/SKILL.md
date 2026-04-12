@@ -21,15 +21,25 @@ To keep parent tasks clean, nagi's responses land on an auto-created **subtask**
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.
 
+## Phase 0: Determine ASSISTANT_NAME
+
+```bash
+ls -d deploy/*/ 2>/dev/null | grep -v templates | sed 's|deploy/||;s|/||'
+```
+
+AskUserQuestion: **どのアシスタントに Asana を追加しますか？** — 検出された各名前をオプションとして表示する。
+
+Use the selected name as `{ASSISTANT_NAME}` throughout. The .env file is at `deploy/{ASSISTANT_NAME}/.env`.
+
 ## Phase 1: Pre-flight
 
 ### Check if already configured
 
 ```bash
-grep -c "ASANA_PAT" .env 2>/dev/null || echo "0"
+grep -c "ASANA_PAT" deploy/{ASSISTANT_NAME}/.env 2>/dev/null || echo "0"
 ```
 
-If `ASANA_PAT` already exists in `.env`, ask the user: keep existing configuration or reconfigure?
+If `ASANA_PAT` already exists in `deploy/{ASSISTANT_NAME}/.env`, ask the user: keep existing configuration or reconfigure?
 
 ### Check plugin is available
 
@@ -40,9 +50,9 @@ pnpm add @nagi/channel-asana --filter nagi
 pnpm build
 ```
 
-### Check deploy/default/host/entry.ts has Asana registration
+### Check deploy/{ASSISTANT_NAME}/host/entry.ts has Asana registration
 
-Read `deploy/default/host/entry.ts` and verify it contains `createAsanaFactory`. If not, run `/deploy` to sync from `deploy/templates/host/entry.template.ts`.
+Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and verify it contains `createAsanaFactory`. If not, run `/deploy` to sync from `deploy/templates/host/entry.template.ts`.
 
 ## Phase 2: Create Personal Access Token
 
@@ -59,7 +69,7 @@ The PAT inherits the permissions of your Asana user, so the bot will act as you 
 
 ### Configure .env (token only — project gids added later)
 
-Add to `.env`:
+Add to `deploy/{ASSISTANT_NAME}/.env`:
 
 ```
 ASANA_PAT=1/1234567890:abcdef...
@@ -76,7 +86,7 @@ curl -s -H "Authorization: Bearer $(grep '^ASANA_PAT=' .env | cut -d= -f2)" \
   https://app.asana.com/api/1.0/users/me | jq -r '.data | "\(.gid)\t\(.name)"'
 ```
 
-Add to `.env` (optional):
+Add to `deploy/{ASSISTANT_NAME}/.env` (optional):
 
 ```
 ASANA_USER_GID=1234567890123456
@@ -102,7 +112,7 @@ curl -s -H "Authorization: Bearer $(grep '^ASANA_PAT=' .env | cut -d= -f2)" \
 
 Alternative — copy gid from the URL: open a project in Asana and the URL looks like `https://app.asana.com/0/1234567890/...`. The first long number is the project gid.
 
-Add to `.env`:
+Add to `deploy/{ASSISTANT_NAME}/.env`:
 
 ```
 ASANA_PROJECT_GIDS=1111111111111111,2222222222222222
@@ -129,7 +139,7 @@ npx tsx -e "
 import { createDatabase } from '@nagi/db';
 import fs from 'fs';
 
-const db = createDatabase({ path: '__data/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('asana:PROJECT_GID', {
   name: 'Asana Project',
   folder: 'asana_project',
@@ -140,7 +150,7 @@ db.groups.set('asana:PROJECT_GID', {
 });
 db.close();
 
-fs.mkdirSync('__data/groups/asana_project', { recursive: true });
+fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/asana_project', { recursive: true });
 console.log('Asana group registered');
 "
 ```
@@ -159,7 +169,7 @@ If nagi is running under launchd:
 # via skill
 /nagi-restart
 # or directly
-launchctl kickstart -k gui/$(id -u)/com.nagi.service
+launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 ```
 
 Otherwise:
@@ -193,12 +203,12 @@ Tell the user:
 
 ### If no response, check:
 
-1. **Is `Asana channel registered` in the logs?** — If not, `.env` keys are missing or wrong; check `ASANA_PAT` and `ASANA_PROJECT_GIDS` are both set
+1. **Is `Asana channel registered` in the logs?** — If not, `deploy/{ASSISTANT_NAME}/.env` keys are missing or wrong; check `ASANA_PAT` and `ASANA_PROJECT_GIDS` are both set
 2. **Is `Asana channel connected` in the logs?** — If not, the PAT is invalid; regenerate it at https://app.asana.com/0/my-apps
 3. **Is the project gid correct?** — Re-run the project discovery curl command
 4. **Is the group registered?** — Check the DB directly:
    ```bash
-   sqlite3 __data/store/messages.db "SELECT jid, name, channel, folder, is_main, requires_trigger FROM registered_groups WHERE jid LIKE 'asana:%';"
+   sqlite3 __data/{ASSISTANT_NAME}/store/messages.db "SELECT jid, name, channel, folder, is_main, requires_trigger FROM registered_groups WHERE jid LIKE 'asana:%';"
    ```
 5. **Does the comment body actually contain the trigger?** — The body (after HTML stripping) must match the regex derived from `ASSISTANT_NAME`. For `ASSISTANT_NAME=ai` that is `/^@ai\b/i`. Whitespace or other text *before* `@ai` will prevent matching — the trigger must be at the start of a line.
 6. **Did you wait long enough?** — Polling is every 60s by default; the first poll only sees task comments whose parent task was modified after the service started.
@@ -207,7 +217,7 @@ Tell the user:
 
 ### `Failed to resolve Asana user` in logs
 
-The PAT is invalid, expired, or not authorized for the workspace. Regenerate at https://app.asana.com/0/my-apps and update `.env`.
+The PAT is invalid, expired, or not authorized for the workspace. Regenerate at https://app.asana.com/0/my-apps and update `deploy/{ASSISTANT_NAME}/.env`.
 
 ### Polling works but no triggers fire
 

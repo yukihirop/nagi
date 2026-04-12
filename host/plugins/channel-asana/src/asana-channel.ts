@@ -671,7 +671,7 @@ export class AsanaChannel implements Channel {
       firstLine.length > maxLen
         ? `${firstLine.slice(0, maxLen - 1)}…`
         : firstLine;
-    return `ai ▸ ${truncated || "conversation"}`;
+    return `${this.config.assistantName} ▸ ${truncated || "conversation"}`;
   }
 
   private addWatchedSubtask(projectGid: string, subtaskGid: string): void {

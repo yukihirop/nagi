@@ -1,11 +1,11 @@
 ---
 name: update-group-prompt
-description: Interactively update an existing group prompt file (CLAUDE.md, AGENTS.md, IDENTITY.md etc.) under deploy/default/groups/{channel}/{group}/. Asks the user at every step and previews a diff before saving. Triggers on "update group prompt", "edit group prompt", "modify claude.md", "edit identity", "update soul", "update instructions".
+description: Interactively update an existing group prompt file (CLAUDE.md, AGENTS.md, IDENTITY.md etc.) under deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/. Asks the user at every step and previews a diff before saving. Triggers on "update group prompt", "edit group prompt", "modify claude.md", "edit identity", "update soul", "update instructions".
 ---
 
 # Update Group Prompt
 
-Interactively modify an existing prompt file in a group's `deploy/default/groups/{channel}/{group}/` directory. Use this after `create-group-prompt` when you want to refine tone, add rules, rename things, or rewrite a section — without replacing the whole file.
+Interactively modify an existing prompt file in a group's `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/` directory. Use this after `create-group-prompt` when you want to refine tone, add rules, rename things, or rewrite a section — without replacing the whole file.
 
 If the target file does not exist yet, tell the user to run `create-group-prompt` instead.
 
@@ -13,10 +13,10 @@ If the target file does not exist yet, tell the user to run `create-group-prompt
 
 ## Step 1: Select the group
 
-List existing groups under `deploy/default/groups/`:
+List existing groups under `deploy/{ASSISTANT_NAME}/groups/`:
 
 ```bash
-find deploy/default/groups -type d -mindepth 2 -maxdepth 2 2>/dev/null | sed 's|deploy/default/groups/||' | sort
+find deploy/{ASSISTANT_NAME}/groups -type d -mindepth 2 -maxdepth 2 2>/dev/null | sed 's|deploy/{ASSISTANT_NAME}/groups/||' | sort
 ```
 
 If the result is empty, tell the user there are no groups to edit and suggest running `/deploy` (Groups target) to materialize templates first.
@@ -29,7 +29,7 @@ Present each existing `{channel}/{group}` as an option. If only one group exists
 List markdown files in the selected group directory:
 
 ```bash
-ls -1 deploy/default/groups/{channel}/{group}/*.md 2>/dev/null
+ls -1 deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/*.md 2>/dev/null
 ```
 
 AskUserQuestion: **どのファイルを更新しますか？**
@@ -45,7 +45,7 @@ If no `*.md` files exist in the group, tell the user to run `create-group-prompt
 
 ## Step 3: Read the current file
 
-Use the `Read` tool on `deploy/default/groups/{channel}/{group}/{filename}` to load the current content. You will need this for both modes below (to generate diffs and to apply edits intelligently).
+Use the `Read` tool on `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}` to load the current content. You will need this for both modes below (to generate diffs and to apply edits intelligently).
 
 ## Step 4: Choose the edit mode
 
@@ -81,8 +81,8 @@ Accept a free-form multiline block. Prepare to append it to the file with a lead
 Show the user a **unified diff** of the proposed change. Keep it compact — only the hunks that actually change, with a few lines of context. Do not dump the whole file.
 
 ```
---- deploy/default/groups/{channel}/{group}/{filename} (current)
-+++ deploy/default/groups/{channel}/{group}/{filename} (proposed)
+--- deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename} (current)
++++ deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename} (proposed)
 @@ ... @@
  unchanged context line
 -removed line
@@ -99,29 +99,29 @@ AskUserQuestion: **この変更を保存しますか？**
 
 ## Step 7: Write the file
 
-Apply the edit using the `Edit` tool on `deploy/default/groups/{channel}/{group}/{filename}`. For Append mode, use `Edit` with the last few lines of the file as `old_string` and those lines plus the new content as `new_string`, so the edit remains precise.
+Apply the edit using the `Edit` tool on `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}`. For Append mode, use `Edit` with the last few lines of the file as `old_string` and those lines plus the new content as `new_string`, so the edit remains precise.
 
 Confirm the write succeeded. If the edit failed (e.g. `old_string` not unique), report the error and offer to retry via Step 4.
 
 ## Step 8: Sync to runtime
 
-AskUserQuestion: **`__data/groups/` に今すぐ同期しますか？**（デフォルト: はい）
+AskUserQuestion: **`__data/{ASSISTANT_NAME}/groups/` に今すぐ同期しますか？**（デフォルト: はい）
 
-- **はい** — 更新ファイルを `__data/groups/{channel}/{group}/{filename}` にコピー:
+- **はい** — 更新ファイルを `__data/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}` にコピー:
   ```bash
-  mkdir -p "__data/groups/{channel}/{group}"
-  cp "deploy/default/groups/{channel}/{group}/{filename}" "__data/groups/{channel}/{group}/{filename}"
+  mkdir -p "__data/{ASSISTANT_NAME}/groups/{channel}/{group}"
+  cp "deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}" "__data/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}"
   ```
 - **いいえ** — `/update-groups` で後から同期できることを案内
 
-Be aware: overwriting `__data/groups/{channel}/{group}/{filename}` will discard any edits the user made directly in the runtime directory. If the runtime file differs from the deploy/default version *before* this skill's edit, warn the user and let them pick Yes / No / Show diff.
+Be aware: overwriting `__data/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}` will discard any edits the user made directly in the runtime directory. If the runtime file differs from the deploy/{ASSISTANT_NAME} version *before* this skill's edit, warn the user and let them pick Yes / No / Show diff.
 
 ## Step 9: Restart nagi if it is running
 
 Check whether nagi is currently running under launchd:
 
 ```bash
-launchctl list 2>/dev/null | grep -q com.nagi && echo RUNNING || echo STOPPED
+launchctl list 2>/dev/null | grep -q com.nagi.{ASSISTANT_NAME} && echo RUNNING || echo STOPPED
 ```
 
 - If **STOPPED**: skip this step (changes will apply on next start).
@@ -143,7 +143,7 @@ Report what was done in a single compact block:
 ## Rules
 
 - **Always preview before saving.** Never apply an edit without showing the user a diff and getting confirmation.
-- **Always edit `deploy/default/groups/`**, never `deploy/templates/groups/` (that layer is the pristine upstream baseline) and never `__data/groups/` directly (except via Step 8's explicit sync).
+- **Always edit `deploy/{ASSISTANT_NAME}/groups/`**, never `deploy/templates/groups/` (that layer is the pristine upstream baseline) and never `__data/{ASSISTANT_NAME}/groups/` directly (except via Step 8's explicit sync).
 - **Ask, don't guess.** If the user's instruction is ambiguous, follow up with another AskUserQuestion rather than making your best guess and saving it.
 - **One file per invocation.** If the user wants to edit multiple files, complete one cycle first, then ask if they want to run the skill again.
 - **Fail loudly.** If any step fails (file not found, edit conflict, cp failure), stop and report the exact error — do not silently proceed.

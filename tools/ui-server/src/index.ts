@@ -23,7 +23,8 @@ function findProjectRoot(): string {
 
 function parseArgs(args: string[]) {
   let port = 3001;
-  let dataDir = path.join(findProjectRoot(), "__data");
+  const assistantName = process.env.ASSISTANT_NAME || "Andy";
+  let dataDir = path.join(findProjectRoot(), "__data", assistantName);
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--port" && args[i + 1]) {

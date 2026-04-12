@@ -5,7 +5,7 @@ description: Sync a single entry.ts with its template. Interactively choose host
 
 # Update Entry
 
-Sync a single `deploy/default/` entry file with its `deploy/templates/` template. Preserves user customizations while incorporating new features.
+Sync a single `deploy/{ASSISTANT_NAME}/` entry file with its `deploy/templates/` template. Preserves user customizations while incorporating new features.
 
 ## Steps
 
@@ -13,23 +13,23 @@ Sync a single `deploy/default/` entry file with its `deploy/templates/` template
 
 AskUserQuestion: Which entry point to update?
 
-- **Host** — orchestrator config (`deploy/default/host/entry.ts`)
+- **Host** — orchestrator config (`deploy/{ASSISTANT_NAME}/host/entry.ts`)
 - **Container** — agent container config
 
 ### 2. If Container, choose agent
 
 AskUserQuestion: Which agent?
 
-- **Claude Code** — `deploy/default/container/claude-code/entry.ts`
-- **Open Code** — `deploy/default/container/open-code/entry.ts`
+- **Claude Code** — `deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts`
+- **Open Code** — `deploy/{ASSISTANT_NAME}/container/open-code/entry.ts`
 
 ### 3. Resolve paths
 
 | Target | Template | Local |
 |--------|----------|-------|
-| Host | `deploy/templates/host/entry.template.ts` | `deploy/default/host/entry.ts` |
-| Claude Code | `deploy/templates/container/claude-code/entry.template.ts` | `deploy/default/container/claude-code/entry.ts` |
-| Open Code | `deploy/templates/container/open-code/entry.template.ts` | `deploy/default/container/open-code/entry.ts` |
+| Host | `deploy/templates/host/entry.template.ts` | `deploy/{ASSISTANT_NAME}/host/entry.ts` |
+| Claude Code | `deploy/templates/container/claude-code/entry.template.ts` | `deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts` |
+| Open Code | `deploy/templates/container/open-code/entry.template.ts` | `deploy/{ASSISTANT_NAME}/container/open-code/entry.ts` |
 
 ### 4. Check current state
 
@@ -47,7 +47,7 @@ cp <template_path> <local_path>
 For container targets, also copy the type stub for IDE resolution:
 
 ```bash
-cp deploy/templates/container/<agent>/index.d.ts deploy/default/container/<agent>/index.d.ts
+cp deploy/templates/container/<agent>/index.d.ts deploy/{ASSISTANT_NAME}/container/<agent>/index.d.ts
 ```
 
 If copied fresh, skip to verification.

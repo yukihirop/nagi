@@ -1,11 +1,11 @@
 ---
 name: deploy
-description: Sync deploy/default/ with deploy/templates/. Covers host/container entry files, group prompt defaults, and launchd plist. Triggers on "deploy", "sync deploy", "update entry", "sync entry", "update container entry", "sync container entry", "sync group templates", "sync launchd".
+description: Sync deploy/{ASSISTANT_NAME}/ with deploy/templates/. Covers host/container entry files, group prompt defaults, and launchd plist. Triggers on "deploy", "sync deploy", "update entry", "sync entry", "update container entry", "sync container entry", "sync group templates", "sync launchd".
 ---
 
 # Deploy
 
-Sync `deploy/default/` (user-editable) with `deploy/templates/` (pristine, git-tracked). Preserves user customizations while incorporating new features from templates.
+Sync `deploy/{ASSISTANT_NAME}/` (user-editable) with `deploy/templates/` (pristine, git-tracked). Preserves user customizations while incorporating new features from templates.
 
 ## Targets
 
@@ -13,27 +13,37 @@ Sync `deploy/default/` (user-editable) with `deploy/templates/` (pristine, git-t
 
 | Target | Template | Local |
 |--------|----------|-------|
-| Host | `deploy/templates/host/entry.template.ts` | `deploy/default/host/entry.ts` |
-| Claude Code | `deploy/templates/container/claude-code/entry.template.ts` | `deploy/default/container/claude-code/entry.ts` |
-| Open Code | `deploy/templates/container/open-code/entry.template.ts` | `deploy/default/container/open-code/entry.ts` |
+| Host | `deploy/templates/host/entry.template.ts` | `deploy/{ASSISTANT_NAME}/host/entry.ts` |
+| Claude Code | `deploy/templates/container/claude-code/entry.template.ts` | `deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts` |
+| Open Code | `deploy/templates/container/open-code/entry.template.ts` | `deploy/{ASSISTANT_NAME}/container/open-code/entry.ts` |
 
 ### Group prompts
 
 | Target | Template | Local |
 |--------|----------|-------|
-| Groups | `deploy/templates/groups/{channel}/{group}/*.md` | `deploy/default/groups/{channel}/{group}/*.md` |
+| Groups | `deploy/templates/groups/{channel}/{group}/*.md` | `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/*.md` |
 
-Group prompt files (`CLAUDE.md`, `AGENTS.md`, and any others) are plain markdown with no placeholder substitution. Templates act as the pristine baseline; `deploy/default/groups/` is the copy the user edits freely.
+Group prompt files (`CLAUDE.md`, `AGENTS.md`, and any others) are plain markdown with no placeholder substitution. Templates act as the pristine baseline; `deploy/{ASSISTANT_NAME}/groups/` is the copy the user edits freely.
 
 ### Launchd
 
 | Target | Template | Local |
 |--------|----------|-------|
-| Launchd | `deploy/templates/launchd/com.nagi.plist` | `deploy/default/launchd/com.nagi.plist` |
+| Launchd | `deploy/templates/launchd/com.nagi.plist` | `deploy/{ASSISTANT_NAME}/launchd/com.nagi.plist` |
 
 The launchd plist uses `{{PLACEHOLDER}}` substitution for machine-specific paths (`{{NODE_PATH}}`, `{{TSX_PATH}}`, `{{PROJECT_ROOT}}`, `{{NODE_BIN_DIR}}`, `{{HOME}}`). Materialization requires path detection — see `/setup-launchd` for the full logic.
 
 ## Steps
+
+### 0. Determine ASSISTANT_NAME
+
+```bash
+ls -d deploy/*/ 2>/dev/null | grep -v templates | sed 's|deploy/||;s|/||'
+```
+
+AskUserQuestion: **どのアシスタントにデプロイしますか？** — 検出された各名前をオプションとして表示する。ディレクトリが存在しない場合は Other で新しい名前を入力させ、`mkdir -p deploy/{ASSISTANT_NAME}` で作成する。
+
+Use the selected name as `{ASSISTANT_NAME}` throughout the remaining steps.
 
 ### 1. Choose target
 
@@ -46,29 +56,53 @@ AskUserQuestion: Which target(s) to sync?
 - **Groups** — group prompt defaults only
 - **Launchd** — launchd plist（パス検出とプレースホルダー置換が必要）
 
+### 1.5. Initialize data directory and .env
+
+新規アシスタントの場合、データディレクトリと .env を初期化する。既存なら何もしない。
+
+```bash
+# データディレクトリ（DB・ログ・セッション等）
+mkdir -p __data/{ASSISTANT_NAME}/store
+mkdir -p __data/{ASSISTANT_NAME}/logs
+mkdir -p __data/{ASSISTANT_NAME}/groups
+mkdir -p __data/{ASSISTANT_NAME}/sessions
+mkdir -p __data/{ASSISTANT_NAME}/ipc
+```
+
+DB が存在しない場合、orchestrator が初回起動時に自動作成するので手動作成は不要。
+
+```bash
+# .env テンプレートコピー（存在しない場合のみ）
+if [ ! -f deploy/{ASSISTANT_NAME}/.env ]; then
+  cp deploy/templates/.env.example deploy/{ASSISTANT_NAME}/.env
+  sed -i '' "s/ASSISTANT_NAME=ai/ASSISTANT_NAME={ASSISTANT_NAME}/" deploy/{ASSISTANT_NAME}/.env
+  echo ".env created — トークンを設定してください: deploy/{ASSISTANT_NAME}/.env"
+fi
+```
+
 ### 2. Check current state
 
 For each selected target, check if the local file exists:
 
 ```bash
-test -f deploy/default/host/entry.ts && echo "HOST_EXISTS" || echo "HOST_MISSING"
-test -f deploy/default/container/claude-code/entry.ts && echo "CC_EXISTS" || echo "CC_MISSING"
-test -f deploy/default/container/open-code/entry.ts && echo "OC_EXISTS" || echo "OC_MISSING"
+test -f deploy/{ASSISTANT_NAME}/host/entry.ts && echo "HOST_EXISTS" || echo "HOST_MISSING"
+test -f deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts && echo "CC_EXISTS" || echo "CC_MISSING"
+test -f deploy/{ASSISTANT_NAME}/container/open-code/entry.ts && echo "OC_EXISTS" || echo "OC_MISSING"
 ```
 
 If a local file is missing, create the directory and copy from template:
 
 ```bash
-mkdir -p deploy/default/host
-cp deploy/templates/host/entry.template.ts deploy/default/host/entry.ts
+mkdir -p deploy/{ASSISTANT_NAME}/host
+cp deploy/templates/host/entry.template.ts deploy/{ASSISTANT_NAME}/host/entry.ts
 
-mkdir -p deploy/default/container/claude-code
-cp deploy/templates/container/claude-code/entry.template.ts deploy/default/container/claude-code/entry.ts
-cp deploy/templates/container/claude-code/index.d.ts deploy/default/container/claude-code/index.d.ts
+mkdir -p deploy/{ASSISTANT_NAME}/container/claude-code
+cp deploy/templates/container/claude-code/entry.template.ts deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts
+cp deploy/templates/container/claude-code/index.d.ts deploy/{ASSISTANT_NAME}/container/claude-code/index.d.ts
 
-mkdir -p deploy/default/container/open-code
-cp deploy/templates/container/open-code/entry.template.ts deploy/default/container/open-code/entry.ts
-cp deploy/templates/container/open-code/index.d.ts deploy/default/container/open-code/index.d.ts
+mkdir -p deploy/{ASSISTANT_NAME}/container/open-code
+cp deploy/templates/container/open-code/entry.template.ts deploy/{ASSISTANT_NAME}/container/open-code/entry.ts
+cp deploy/templates/container/open-code/index.d.ts deploy/{ASSISTANT_NAME}/container/open-code/index.d.ts
 ```
 
 If the file was missing and copied fresh, skip to verification for that target.
@@ -79,7 +113,7 @@ For group prompt defaults, walk every file under `deploy/templates/groups/`:
 
 ```bash
 for f in $(find deploy/templates/groups -type f); do
-  local="deploy/default/groups/${f#deploy/templates/groups/}"
+  local="deploy/{ASSISTANT_NAME}/groups/${f#deploy/templates/groups/}"
   if [ ! -f "$local" ]; then
     mkdir -p "$(dirname "$local")"
     cp "$f" "$local"
@@ -92,7 +126,7 @@ for f in $(find deploy/templates/groups -type f); do
 done
 ```
 
-For **CHANGED** files, use `AskUserQuestion` per file: "Overwrite with template", "Keep local", or "Show diff". Never overwrite without asking — `deploy/default/groups/` is the user's editable layer.
+For **CHANGED** files, use `AskUserQuestion` per file: "Overwrite with template", "Keep local", or "Show diff". Never overwrite without asking — `deploy/{ASSISTANT_NAME}/groups/` is the user's editable layer.
 
 #### Launchd target
 
@@ -105,13 +139,13 @@ PROJECT_ROOT=$(pwd)
 NODE_BIN_DIR=$(dirname $NODE_PATH)
 ```
 
-Then read `deploy/templates/launchd/com.nagi.plist`, substitute `{{NODE_PATH}}`, `{{TSX_PATH}}`, `{{PROJECT_ROOT}}`, `{{NODE_BIN_DIR}}`, `{{HOME}}` with the detected values, and write to `deploy/default/launchd/com.nagi.plist`.
+Then read `deploy/templates/launchd/com.nagi.plist`, substitute `{{NODE_PATH}}`, `{{TSX_PATH}}`, `{{PROJECT_ROOT}}`, `{{NODE_BIN_DIR}}`, `{{HOME}}` with the detected values, and write to `deploy/{ASSISTANT_NAME}/launchd/com.nagi.plist`.
 
 If the local file already exists, show the user a diff of the XML structure changes and ask before overwriting.
 
 Validate with:
 ```bash
-plutil -lint deploy/default/launchd/com.nagi.plist
+plutil -lint deploy/{ASSISTANT_NAME}/launchd/com.nagi.plist
 ```
 
 Skip steps 3–5 for the Launchd target (no merge logic, no tsc).

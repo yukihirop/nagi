@@ -1,6 +1,6 @@
 ---
 name: create-group-prompt
-description: Create prompt files (IDENTITY.md, SOUL.md, INSTRUCTIONS.md etc.) in deploy/default/groups/{channel}/{group}/. Writes directly to the user-editable default layer (skipping templates). Interactive setup for agent personality and behavior. Triggers on "create group prompt", "add group prompt", "create prompt", "add identity", "add soul".
+description: Create prompt files (IDENTITY.md, SOUL.md, INSTRUCTIONS.md etc.) in deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/. Writes directly to the user-editable default layer (skipping templates). Interactive setup for agent personality and behavior. Triggers on "create group prompt", "add group prompt", "create prompt", "add identity", "add soul".
 ---
 
 # Create Group Prompt Files
@@ -14,7 +14,7 @@ Create additional prompt files for a group. These files are automatically loaded
 First, list available groups:
 
 ```bash
-find deploy/default/groups/ -type d -mindepth 2 -maxdepth 2 | sort
+find deploy/{ASSISTANT_NAME}/groups/ -type d -mindepth 2 -maxdepth 2 | sort
 ```
 
 AskUserQuestion: Which channel and group?
@@ -31,7 +31,7 @@ If the user picks "Other", ask for the channel name and group name separately.
 List what's already in the selected group directory:
 
 ```bash
-ls -la deploy/default/groups/{channel}/{group}/
+ls -la deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/
 ```
 
 Show the user what files already exist. Explain that `CLAUDE.md` is loaded by the SDK automatically, and any other `*.md` files are loaded into systemPrompt.append.
@@ -112,7 +112,7 @@ AskUserQuestion: What is the purpose of this file and what should it contain?
 
 ## Step 5: Write the files
 
-For each file, write to `deploy/default/groups/{channel}/{group}/{filename}`:
+For each file, write to `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}`:
 
 ```
 # {Title}
@@ -132,8 +132,8 @@ AskUserQuestion: Sync to runtime now?
 
 If yes, for each new file:
 ```bash
-mkdir -p "__data/groups/{channel}/{group}"
-cp "deploy/default/groups/{channel}/{group}/{filename}" "__data/groups/{channel}/{group}/{filename}"
+mkdir -p "__data/{ASSISTANT_NAME}/groups/{channel}/{group}"
+cp "deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}" "__data/{ASSISTANT_NAME}/groups/{channel}/{group}/{filename}"
 ```
 
 ## Step 7: Summary

@@ -47,7 +47,7 @@ export function handleLogs(
 ): LogEntry[] {
   const logs: LogEntry[] = [];
 
-  // Container logs - scan 2 levels: __data/groups/{channel}/{folder}/logs/
+  // Container logs - scan 2 levels: __data/{name}/groups/{channel}/{folder}/logs/
   if (!filter || filter === "container") {
     const groupsDir = path.join(dataDir, "groups");
     if (fs.existsSync(groupsDir)) {

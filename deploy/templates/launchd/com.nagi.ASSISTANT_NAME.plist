@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.nagi</string>
+    <string>com.nagi.{{ASSISTANT_NAME}}</string>
     <key>ProgramArguments</key>
     <array>
         <string>{{NODE_PATH}}</string>
         <string>{{TSX_PATH}}</string>
-        <string>{{PROJECT_ROOT}}/deploy/default/host/entry.ts</string>
+        <string>{{PROJECT_ROOT}}/deploy/{{ASSISTANT_NAME}}/host/entry.ts</string>
     </array>
     <key>WorkingDirectory</key>
     <string>{{PROJECT_ROOT}}</string>
@@ -24,8 +24,8 @@
         <string>{{HOME}}</string>
     </dict>
     <key>StandardOutPath</key>
-    <string>{{PROJECT_ROOT}}/__data/logs/nagi.log</string>
+    <string>{{PROJECT_ROOT}}/__data/{{ASSISTANT_NAME}}/logs/nagi-{{ASSISTANT_NAME}}.log</string>
     <key>StandardErrorPath</key>
-    <string>{{PROJECT_ROOT}}/__data/logs/nagi.error.log</string>
+    <string>{{PROJECT_ROOT}}/__data/{{ASSISTANT_NAME}}/logs/nagi-{{ASSISTANT_NAME}}.error.log</string>
 </dict>
 </plist>

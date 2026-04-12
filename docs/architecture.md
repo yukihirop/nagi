@@ -5,7 +5,7 @@
 ```mermaid
 graph TB
     subgraph Host["Host (macOS / Linux)"]
-        Entry["deploy/default/host/entry.ts"]
+        Entry["deploy/{ASSISTANT_NAME}/host/entry.ts"]
         Orch["Orchestrator"]
         Proxy["Credential Proxy<br/>:3002"]
         DB["SQLite DB"]
@@ -73,7 +73,7 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    Entry["deploy/default/host/entry.ts"] --> Orchestrator
+    Entry["deploy/{ASSISTANT_NAME}/host/entry.ts"] --> Orchestrator
     Entry --> ChannelSlack["channel-slack"]
     Entry --> ChannelDiscord["channel-discord"]
 
@@ -112,7 +112,7 @@ graph TD
 Channel plugins run on the host and connect to messaging platforms. They implement the `Channel` interface from `@nagi/channel-core`.
 
 ```
-deploy/default/host/entry.ts → registry.register("slack", createSlackFactory({ ... }))
+deploy/{ASSISTANT_NAME}/host/entry.ts → registry.register("slack", createSlackFactory({ ... }))
                              → Orchestrator connects all registered channels on start
 ```
 
@@ -121,7 +121,7 @@ deploy/default/host/entry.ts → registry.register("slack", createSlackFactory({
 MCP plugins run inside Docker containers as stdio MCP servers. They provide tools to the Claude Agent SDK.
 
 ```
-deploy/default/host/entry.ts → orchestrator.registerMcpPlugin("ollama", { entryPoint: "..." })
+deploy/{ASSISTANT_NAME}/host/entry.ts → orchestrator.registerMcpPlugin("ollama", { entryPoint: "..." })
          → ContainerInput.mcpPlugins passed to agent-runner via stdin
          → agent-runner dynamically registers them as mcpServers
 ```
@@ -132,10 +132,10 @@ deploy/default/host/entry.ts → orchestrator.registerMcpPlugin("ollama", { entr
 |---|---|---|
 | `deploy/templates/` | Entry point and group prompt templates (pristine) | Tracked |
 | `deploy/templates/groups/` | Group prompt templates (CLAUDE.md, AGENTS.md) | Tracked |
-| `deploy/default/` | Local materialized entry points and group prompts | Ignored |
-| `deploy/default/groups/` | User-editable group prompt defaults | Ignored |
-| `__data/store/` | SQLite database | Ignored |
-| `__data/groups/` | Runtime group data (mounted into containers, preserves local edits) | Ignored |
-| `__data/sessions/` | Claude sessions per group | Ignored |
-| `__data/ipc/` | Container IPC files | Ignored |
-| `__data/logs/` | Service logs | Ignored |
+| `deploy/{ASSISTANT_NAME}/` | Local materialized entry points and group prompts | Ignored |
+| `deploy/{ASSISTANT_NAME}/groups/` | User-editable group prompt defaults | Ignored |
+| `__data/{ASSISTANT_NAME}/store/` | SQLite database | Ignored |
+| `__data/{ASSISTANT_NAME}/groups/` | Runtime group data (mounted into containers, preserves local edits) | Ignored |
+| `__data/{ASSISTANT_NAME}/sessions/` | Claude sessions per group | Ignored |
+| `__data/{ASSISTANT_NAME}/ipc/` | Container IPC files | Ignored |
+| `__data/{ASSISTANT_NAME}/logs/` | Service logs | Ignored |

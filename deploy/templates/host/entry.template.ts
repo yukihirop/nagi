@@ -1,16 +1,21 @@
+import path from "node:path";
 import { loadConfig, readEnvFile } from "@nagi/config";
 import { createLogger, setupGlobalErrorHandlers } from "@nagi/logger";
 import { ChannelRegistry } from "@nagi/channel-core";
 import { Orchestrator } from "@nagi/orchestrator";
 
+// Derive deploy directory from this file's location (deploy/{name}/host/entry.ts)
+const deployDir = path.resolve(import.meta.dirname, "..");
+const envPath = path.join(deployDir, ".env");
+
 const logger = createLogger({ name: "nagi" });
 setupGlobalErrorHandlers(logger);
 
-const config = loadConfig();
+const config = loadConfig({ envPath });
 const registry = new ChannelRegistry();
 
 // Register Slack if configured
-const slackEnv = readEnvFile(["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"]);
+const slackEnv = readEnvFile(["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"], envPath);
 if (slackEnv.SLACK_BOT_TOKEN && slackEnv.SLACK_APP_TOKEN) {
   const { createSlackFactory } = await import("@nagi/channel-slack");
   registry.register(
@@ -26,7 +31,7 @@ if (slackEnv.SLACK_BOT_TOKEN && slackEnv.SLACK_APP_TOKEN) {
 }
 
 // Register Discord if configured
-const discordEnv = readEnvFile(["DISCORD_BOT_TOKEN"]);
+const discordEnv = readEnvFile(["DISCORD_BOT_TOKEN"], envPath);
 if (discordEnv.DISCORD_BOT_TOKEN) {
   const { createDiscordFactory } = await import("@nagi/channel-discord");
   registry.register(
@@ -41,12 +46,15 @@ if (discordEnv.DISCORD_BOT_TOKEN) {
 }
 
 // Register Asana if configured
-const asanaEnv = readEnvFile([
-  "ASANA_PAT",
-  "ASANA_USER_GID",
-  "ASANA_PROJECT_GIDS",
-  "ASANA_POLL_INTERVAL_MS",
-]);
+const asanaEnv = readEnvFile(
+  [
+    "ASANA_PAT",
+    "ASANA_USER_GID",
+    "ASANA_PROJECT_GIDS",
+    "ASANA_POLL_INTERVAL_MS",
+  ],
+  envPath,
+);
 if (asanaEnv.ASANA_PAT && asanaEnv.ASANA_PROJECT_GIDS) {
   const { createAsanaFactory } = await import("@nagi/channel-asana");
   const projectGids = asanaEnv.ASANA_PROJECT_GIDS.split(",")
@@ -80,7 +88,7 @@ orchestrator.registerMcpPlugin("ollama", {
   entryPoint: "/app/mcp-plugins/ollama/dist/index.js",
 });
 
-const vercelEnv = readEnvFile(["VERCEL_API_TOKEN"]);
+const vercelEnv = readEnvFile(["VERCEL_API_TOKEN"], envPath);
 if (vercelEnv.VERCEL_API_TOKEN) {
   orchestrator.registerMcpPlugin("vercel", {
     entryPoint: "/app/mcp-plugins/vercel/dist/index.js",

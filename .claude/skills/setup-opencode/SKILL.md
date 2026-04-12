@@ -128,7 +128,7 @@ docker images nagi-agent-opencode --format "{{.Repository}}:{{.Tag}} {{.Size}} {
 launchctl kickstart -k gui/$(id -u)/com.nagi
 sleep 3
 launchctl list | grep com.nagi
-tail -5 __data/logs/nagi.log
+tail -5 __data/{ASSISTANT_NAME}/logs/nagi.log
 ```
 
 ## Step 8: Test
@@ -139,7 +139,7 @@ Tell user:
 >
 > Check logs if no response:
 > ```bash
-> tail -20 __data/logs/nagi.log
+> tail -20 __data/{ASSISTANT_NAME}/logs/nagi.log
 > ```
 
 ## Switching back to Claude Code
@@ -163,7 +163,7 @@ Then restart nagi.
 ### Container fails to start
 - Check Docker is running: `docker info`
 - Rebuild image: `./container/open-code/build.sh`
-- Check logs: `tail -20 __data/logs/nagi.error.log`
+- Check logs: `tail -20 __data/{ASSISTANT_NAME}/logs/nagi.error.log`
 
 ### No response from agent
 - Verify API key is correct

@@ -17,11 +17,11 @@ Enable PostToolUse and SessionStart hooks for Open Code containers that send rea
 ### 1. Check prerequisites
 
 ```bash
-test -f deploy/default/host/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
+test -f deploy/{ASSISTANT_NAME}/host/entry.ts && echo "ENTRY_EXISTS" || echo "ENTRY_MISSING"
 test -f deploy/templates/container/open-code/entry.template.ts && echo "TEMPLATE_EXISTS" || echo "TEMPLATE_MISSING"
 ```
 
-If `deploy/default/host/entry.ts` is missing, run `/setup` first.
+If `deploy/{ASSISTANT_NAME}/host/entry.ts` is missing, run `/setup` first.
 
 ### 2. Create agent-hooks plugin for Open Code
 
@@ -36,9 +36,9 @@ mkdir -p container/open-code/plugins/agent-hooks
 cp container/claude-code/plugins/agent-hooks/index.mjs container/open-code/plugins/agent-hooks/index.mjs
 ```
 
-### 3. Enable hooks in deploy/default/host/entry.ts (host side)
+### 3. Enable hooks in deploy/{ASSISTANT_NAME}/host/entry.ts (host side)
 
-Read `deploy/default/host/entry.ts` and check if `registerHooksPlugin` is already called.
+Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and check if `registerHooksPlugin` is already called.
 
 If not present, add after the MCP plugin registrations:
 
@@ -85,7 +85,7 @@ try {
 ### 5. Sync local entry.ts
 
 ```bash
-cp deploy/templates/container/open-code/entry.template.ts deploy/default/container/open-code/entry.ts
+cp deploy/templates/container/open-code/entry.template.ts deploy/{ASSISTANT_NAME}/container/open-code/entry.ts
 ```
 
 Or run `/deploy` and select Open Code.
@@ -94,9 +94,9 @@ Or run `/deploy` and select Open Code.
 
 ```bash
 ./container/open-code/build.sh
-launchctl kickstart -k gui/$(id -u)/com.nagi
+launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 sleep 2
-launchctl list | grep com.nagi
+launchctl list | grep com.nagi.{ASSISTANT_NAME}
 ```
 
 ### 7. Test

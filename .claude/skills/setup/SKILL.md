@@ -156,9 +156,9 @@ DISCORD_BOT_TOKEN=...
 
 Run `/deploy` and select **All** to generate local entry points from templates:
 
-- `deploy/default/host/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
-- `deploy/default/container/claude-code/entry.ts` — container-side agent config (container plugins like agent-hooks)
-- `deploy/default/container/open-code/entry.ts` — open-code container config
+- `deploy/{ASSISTANT_NAME}/host/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
+- `deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts` — container-side agent config (container plugins like agent-hooks)
+- `deploy/{ASSISTANT_NAME}/container/open-code/entry.ts` — open-code container config
 
 All are gitignored — they're your local configuration. The `.template.ts` files in `deploy/templates/` are tracked in git as references.
 
@@ -167,7 +167,7 @@ To start nagi in development mode:
 pnpm dev
 ```
 
-This runs `tsx deploy/default/host/entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
+This runs `tsx deploy/{ASSISTANT_NAME}/host/entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
 
 ## 8. Register Main Group
 
@@ -188,7 +188,7 @@ Then register the main group in the database. Create a quick script or use the D
 # Example: register a Slack channel as main
 node -e "
 const { createDatabase } = require('@nagi/db');
-const db = createDatabase({ path: '__data/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('slack:C_YOUR_CHANNEL_ID', {
   name: 'Main',
   folder: 'main',
@@ -204,7 +204,7 @@ console.log('Main group registered');
 
 Create the group directory:
 ```bash
-mkdir -p __data/groups/main
+mkdir -p __data/{ASSISTANT_NAME}/groups/main
 ```
 
 ## 9. Dashboard UI (Optional)
@@ -239,6 +239,6 @@ Expected behavior:
 
 **No response to messages:** Check group is registered in DB. Check trigger pattern matches. Main group doesn't need trigger prefix.
 
-**Container fails:** Check `__data/groups/main/logs/container-*.log` for details. Ensure Docker image `nagi-agent:latest` is built.
+**Container fails:** Check `__data/{ASSISTANT_NAME}/groups/main/logs/container-*.log` for details. Ensure Docker image `nagi-agent:latest` is built.
 
 **"SLACK_BOT_TOKEN not set":** Tokens must be in `.env` at the project root, not in environment variables.

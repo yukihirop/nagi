@@ -35,15 +35,16 @@ export const openCodeConfig: AgentConfig = {
     ];
   },
 
-  buildEnvArgs(): string[] {
+  buildEnvArgs(config: ResolvedConfig): string[] {
     const args: string[] = [];
+    const envPath = path.join(config.paths.deployDir, ".env");
     const opencodeEnv = readEnvFile([
       "OPENCODE_MODEL",
       "OPENROUTER_API_KEY",
       "GOOGLE_API_KEY",
       "OPENAI_API_KEY",
       "ANTHROPIC_API_KEY",
-    ]);
+    ], envPath);
 
     const model = opencodeEnv.OPENCODE_MODEL || "anthropic/claude-sonnet-4-20250514";
     args.push("-e", `OPENCODE_MODEL=${model}`);

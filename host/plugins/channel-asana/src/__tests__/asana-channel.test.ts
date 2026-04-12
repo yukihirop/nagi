@@ -292,7 +292,7 @@ describe("AsanaChannel — polling filters", () => {
     // A subtask should have been created under task-1 with the body in its name.
     expect(fake.createSubtask).toHaveBeenCalledOnce();
     expect(state.createdSubtasks).toEqual([
-      { parent: "task-1", name: "ai ▸ please look at this" },
+      { parent: "task-1", name: "Andy ▸ please look at this" },
     ]);
 
     // A pointer comment should have been posted on the parent task as

@@ -5,6 +5,7 @@ import { readEnvFile } from "./env.js";
 
 export interface LoadConfigOverrides {
   projectRoot?: string;
+  envPath?: string;
   assistantName?: string;
   assistantHasOwnNumber?: boolean;
   timezone?: string;
@@ -32,16 +33,19 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
   const homeDir = os.homedir();
 
   // Read from .env file (not loaded into process.env)
-  const envFile = readEnvFile([
-    "ASSISTANT_NAME",
-    "ASSISTANT_HAS_OWN_NUMBER",
-    "CONTAINER_IMAGE",
-    "CONTAINER_TIMEOUT",
-    "CONTAINER_MAX_OUTPUT_SIZE",
-    "IDLE_TIMEOUT",
-    "MAX_CONCURRENT_CONTAINERS",
-    "CREDENTIAL_PROXY_PORT",
-  ]);
+  const envFile = readEnvFile(
+    [
+      "ASSISTANT_NAME",
+      "ASSISTANT_HAS_OWN_NUMBER",
+      "CONTAINER_IMAGE",
+      "CONTAINER_TIMEOUT",
+      "CONTAINER_MAX_OUTPUT_SIZE",
+      "IDLE_TIMEOUT",
+      "MAX_CONCURRENT_CONTAINERS",
+      "CREDENTIAL_PROXY_PORT",
+    ],
+    overrides?.envPath,
+  );
 
   const raw = {
     assistantName:
@@ -76,8 +80,9 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
       ipcPoll: overrides?.intervals?.ipcPoll,
     },
     paths: {
-      groupsDir: path.join(projectRoot, "__data", "groups"),
-      dataDir: path.join(projectRoot, "__data"),
+      deployDir: "", // placeholder — set after parse from assistantName
+      groupsDir: "", // placeholder — set after parse from assistantName
+      dataDir: "", // placeholder — set after parse from assistantName
       mountAllowlistPath: path.join(
         homeDir,
         ".config",
@@ -94,6 +99,11 @@ export function loadConfig(overrides?: LoadConfigOverrides): ResolvedConfig {
   };
 
   const config = NagiConfigSchema.parse(raw);
+
+  // Resolve paths from assistantName
+  config.paths.deployDir = path.join(projectRoot, "deploy", config.assistantName);
+  config.paths.dataDir = path.join(projectRoot, "__data", config.assistantName);
+  config.paths.groupsDir = path.join(config.paths.dataDir, "groups");
 
   return {
     ...config,
