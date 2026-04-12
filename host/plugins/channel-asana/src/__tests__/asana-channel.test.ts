@@ -1,4 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ChannelOpts } from "@nagi/channel-core";
 import { AsanaChannel, createAsanaFactory } from "../index.js";
 import type {
@@ -625,6 +629,154 @@ describe("AsanaChannel — polling filters", () => {
 
     expect(fake.getUsersMe).toHaveBeenCalled();
     expect(channel.isConnected()).toBe(true);
+    await channel.disconnect();
+  });
+});
+
+describe("AsanaChannel — poll state persistence", () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "asana-state-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it("saves state after pollProject", async () => {
+    const state = emptyState();
+    state.tasksByProject.set("proj-1", []);
+    const fake = buildFakeClient(state);
+    const opts = makeOpts({ "asana:proj-1": { folder: "main", channel: "asana" } });
+    const channel = new AsanaChannel(
+      { ...baseConfig, stateDir: tmpDir, clientFactory: () => fake as never },
+      opts,
+    );
+    await channel.connect();
+    await (channel as unknown as { pollOnce: () => Promise<void> }).pollOnce();
+
+    const stateFile = path.join(tmpDir, "asana-poll-state.json");
+    expect(fs.existsSync(stateFile)).toBe(true);
+    const saved = JSON.parse(fs.readFileSync(stateFile, "utf-8"));
+    expect(saved.lastPollTs).toHaveProperty("proj-1");
+    expect(typeof saved.connectedAt).toBe("string");
+
+    await channel.disconnect();
+  });
+
+  it("restores state on connect including lastStoryTs", async () => {
+    const savedTs = "2026-01-01T00:00:00.000Z";
+    const storyTs = "2026-01-01T00:05:00.000Z";
+    fs.writeFileSync(
+      path.join(tmpDir, "asana-poll-state.json"),
+      JSON.stringify({
+        lastPollTs: { "proj-1": savedTs },
+        connectedAt: "2025-12-31T00:00:00.000Z",
+        lastStoryTs: { "task-42": storyTs },
+      }),
+    );
+
+    const state = emptyState();
+    const fake = buildFakeClient(state);
+    const channel = new AsanaChannel(
+      { ...baseConfig, stateDir: tmpDir, clientFactory: () => fake as never },
+      makeOpts(),
+    );
+    await channel.connect();
+
+    const lastPollTs = (channel as unknown as { lastPollTs: Map<string, string> }).lastPollTs;
+    expect(lastPollTs.get("proj-1")).toBe(savedTs);
+
+    const lastStoryTs = (channel as unknown as { lastStoryTs: Map<string, string> }).lastStoryTs;
+    expect(lastStoryTs.get("task-42")).toBe(storyTs);
+
+    const connectedAt = (channel as unknown as { connectedAt: string }).connectedAt;
+    expect(connectedAt).toBe(savedTs);
+
+    await channel.disconnect();
+  });
+
+  it("sets connectedAt to min of restored lastPollTs", async () => {
+    const earlier = "2026-01-01T00:00:00.000Z";
+    const later = "2026-01-02T00:00:00.000Z";
+    fs.writeFileSync(
+      path.join(tmpDir, "asana-poll-state.json"),
+      JSON.stringify({
+        lastPollTs: { "proj-1": later, "proj-2": earlier },
+        connectedAt: "2025-12-31T00:00:00.000Z",
+      }),
+    );
+
+    const state = emptyState();
+    const fake = buildFakeClient(state);
+    const channel = new AsanaChannel(
+      {
+        ...baseConfig,
+        projectGids: ["proj-1", "proj-2"],
+        stateDir: tmpDir,
+        clientFactory: () => fake as never,
+      },
+      makeOpts(),
+    );
+    await channel.connect();
+
+    const connectedAt = (channel as unknown as { connectedAt: string }).connectedAt;
+    expect(connectedAt).toBe(earlier);
+
+    await channel.disconnect();
+  });
+
+  it("falls back to now when state file is missing", async () => {
+    const state = emptyState();
+    const fake = buildFakeClient(state);
+    const before = new Date().toISOString();
+    const channel = new AsanaChannel(
+      { ...baseConfig, stateDir: tmpDir, clientFactory: () => fake as never },
+      makeOpts(),
+    );
+    await channel.connect();
+
+    const connectedAt = (channel as unknown as { connectedAt: string }).connectedAt;
+    expect(connectedAt >= before).toBe(true);
+
+    await channel.disconnect();
+  });
+
+  it("falls back to now when state file is corrupt", async () => {
+    fs.writeFileSync(path.join(tmpDir, "asana-poll-state.json"), "not-json{{{");
+
+    const state = emptyState();
+    const fake = buildFakeClient(state);
+    const before = new Date().toISOString();
+    const channel = new AsanaChannel(
+      { ...baseConfig, stateDir: tmpDir, clientFactory: () => fake as never },
+      makeOpts(),
+    );
+    await channel.connect();
+
+    const connectedAt = (channel as unknown as { connectedAt: string }).connectedAt;
+    expect(connectedAt >= before).toBe(true);
+
+    await channel.disconnect();
+  });
+
+  it("does not write state when stateDir is undefined", async () => {
+    const state = emptyState();
+    state.tasksByProject.set("proj-1", []);
+    const fake = buildFakeClient(state);
+    const opts = makeOpts({ "asana:proj-1": { folder: "main", channel: "asana" } });
+    const channel = new AsanaChannel(
+      { ...baseConfig, clientFactory: () => fake as never },
+      opts,
+    );
+    await channel.connect();
+    await (channel as unknown as { pollOnce: () => Promise<void> }).pollOnce();
+
+    // No state file should be created anywhere
+    const stateFile = path.join(tmpDir, "asana-poll-state.json");
+    expect(fs.existsSync(stateFile)).toBe(false);
+
     await channel.disconnect();
   });
 });

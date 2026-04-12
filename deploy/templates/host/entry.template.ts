@@ -64,6 +64,7 @@ if (asanaEnv.ASANA_PAT && asanaEnv.ASANA_PROJECT_GIDS) {
       assistantName: config.assistantName,
       triggerPattern: config.triggerPattern,
       pollIntervalMs,
+      stateDir: config.paths.dataDir,
     }),
   );
   logger.info(

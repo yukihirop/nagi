@@ -1,3 +1,6 @@
+import fs from "node:fs";
+import path from "node:path";
+
 import type {
   Channel,
   ChannelFactory,
@@ -16,6 +19,7 @@ const logger = createLogger({ name: "channel-asana" });
 
 const DEFAULT_POLL_INTERVAL_MS = 60_000;
 const MIN_POLL_INTERVAL_MS = 10_000;
+const POLL_STATE_FILE = "asana-poll-state.json";
 
 export interface AsanaChannelConfig {
   /** Personal Access Token from https://app.asana.com/0/my-apps */
@@ -28,6 +32,8 @@ export interface AsanaChannelConfig {
   triggerPattern?: RegExp;
   /** Polling interval in milliseconds. Default 60s, minimum 10s. */
   pollIntervalMs?: number;
+  /** Directory for persisting poll state across restarts. */
+  stateDir?: string;
   /** Injected for tests. */
   clientFactory?: (token: string) => AsanaClient;
 }
@@ -73,6 +79,7 @@ export class AsanaChannel implements Channel {
   private readonly client: AsanaClient;
   private readonly config: ResolvedConfig;
   private readonly opts: ChannelOpts;
+  private readonly stateDir: string | undefined;
 
   private userGid: string | undefined;
   private connected = false;
@@ -112,6 +119,7 @@ export class AsanaChannel implements Channel {
     };
     this.opts = opts;
     this.userGid = config.userGid;
+    this.stateDir = config.stateDir;
 
     this.client =
       config.clientFactory?.(config.personalAccessToken) ??
@@ -142,14 +150,38 @@ export class AsanaChannel implements Channel {
       logger.info({ userGid: this.userGid }, "Using preconfigured Asana user");
     }
 
-    // Seed lastPollTs so the first poll only sees newly modified tasks, and
-    // record connectedAt so pollTaskStories can skip stories that were posted
-    // before startup (which would otherwise be re-processed as "new" on the
-    // very first time a task is polled after restart).
+    // Restore poll state from disk if available, otherwise seed with `now`
+    // so the first poll only sees newly modified tasks.
+    const saved = this.loadPollState();
     const now = new Date().toISOString();
-    this.connectedAt = now;
-    for (const projectGid of this.config.projectGids) {
-      this.lastPollTs.set(projectGid, now);
+    if (saved) {
+      for (const projectGid of this.config.projectGids) {
+        this.lastPollTs.set(projectGid, saved.lastPollTs[projectGid] ?? now);
+      }
+      // Restore per-task story cursors so already-dispatched stories
+      // are not re-processed after restart.
+      if (saved.lastStoryTs) {
+        for (const [taskGid, ts] of Object.entries(saved.lastStoryTs)) {
+          this.lastStoryTs.set(taskGid, ts);
+        }
+      }
+      // connectedAt = min(restored lastPollTs) so story-level cursor
+      // matches the tightest recovery window for NEW tasks.
+      const timestamps = [...this.lastPollTs.values()];
+      this.connectedAt = timestamps.reduce((a, b) => (a < b ? a : b));
+      logger.info(
+        {
+          connectedAt: this.connectedAt,
+          projects: Object.keys(saved.lastPollTs).length,
+          stories: Object.keys(saved.lastStoryTs ?? {}).length,
+        },
+        "Restored Asana poll state from disk",
+      );
+    } else {
+      this.connectedAt = now;
+      for (const projectGid of this.config.projectGids) {
+        this.lastPollTs.set(projectGid, now);
+      }
     }
 
     this.connected = true;
@@ -229,6 +261,56 @@ export class AsanaChannel implements Channel {
     }
   }
 
+  // --- poll state persistence -------------------------------------------------
+
+  private loadPollState(): {
+    lastPollTs: Record<string, string>;
+    connectedAt: string;
+    lastStoryTs?: Record<string, string>;
+  } | null {
+    if (!this.stateDir) return null;
+    const filePath = path.join(this.stateDir, POLL_STATE_FILE);
+    try {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw) as Record<string, unknown>;
+      if (
+        typeof data.lastPollTs === "object" &&
+        data.lastPollTs !== null &&
+        typeof data.connectedAt === "string"
+      ) {
+        return data as {
+          lastPollTs: Record<string, string>;
+          connectedAt: string;
+          lastStoryTs?: Record<string, string>;
+        };
+      }
+      logger.warn({ filePath }, "Invalid Asana poll state format, ignoring");
+      return null;
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code === "ENOENT") return null;
+      logger.warn({ filePath, err }, "Failed to load Asana poll state");
+      return null;
+    }
+  }
+
+  private savePollState(): void {
+    if (!this.stateDir) return;
+    const filePath = path.join(this.stateDir, POLL_STATE_FILE);
+    const tmpPath = `${filePath}.tmp`;
+    try {
+      const state = {
+        lastPollTs: Object.fromEntries(this.lastPollTs),
+        connectedAt: this.connectedAt,
+        lastStoryTs: Object.fromEntries(this.lastStoryTs),
+      };
+      fs.mkdirSync(this.stateDir, { recursive: true });
+      fs.writeFileSync(tmpPath, JSON.stringify(state, null, 2) + "\n");
+      fs.renameSync(tmpPath, filePath);
+    } catch (err) {
+      logger.warn({ err }, "Failed to save Asana poll state");
+    }
+  }
+
   // --- polling ---------------------------------------------------------------
 
   private startPolling(): void {
@@ -292,6 +374,7 @@ export class AsanaChannel implements Channel {
     }
 
     this.lastPollTs.set(projectGid, nextPollTs);
+    this.savePollState();
   }
 
   private async pollTaskStories(
