@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: Sync deploy/default/ with deploy/templates/. Covers host/container entry files and group prompt defaults (CLAUDE.md etc.). Triggers on "deploy", "sync deploy", "update entry", "sync entry", "update container entry", "sync container entry", "sync group templates".
+description: Sync deploy/default/ with deploy/templates/. Covers host/container entry files, group prompt defaults, and launchd plist. Triggers on "deploy", "sync deploy", "update entry", "sync entry", "update container entry", "sync container entry", "sync group templates", "sync launchd".
 ---
 
 # Deploy
@@ -25,6 +25,14 @@ Sync `deploy/default/` (user-editable) with `deploy/templates/` (pristine, git-t
 
 Group prompt files (`CLAUDE.md`, `AGENTS.md`, and any others) are plain markdown with no placeholder substitution. Templates act as the pristine baseline; `deploy/default/groups/` is the copy the user edits freely.
 
+### Launchd
+
+| Target | Template | Local |
+|--------|----------|-------|
+| Launchd | `deploy/templates/launchd/com.nagi.plist` | `deploy/default/launchd/com.nagi.plist` |
+
+The launchd plist uses `{{PLACEHOLDER}}` substitution for machine-specific paths (`{{NODE_PATH}}`, `{{TSX_PATH}}`, `{{PROJECT_ROOT}}`, `{{NODE_BIN_DIR}}`, `{{HOME}}`). Materialization requires path detection — see `/setup-launchd` for the full logic.
+
 ## Steps
 
 ### 1. Choose target
@@ -36,6 +44,7 @@ AskUserQuestion: Which target(s) to sync?
 - **Claude Code** — claude-code container entry only
 - **Open Code** — open-code container entry only
 - **Groups** — group prompt defaults only
+- **Launchd** — launchd plist（パス検出とプレースホルダー置換が必要）
 
 ### 2. Check current state
 
@@ -84,6 +93,28 @@ done
 ```
 
 For **CHANGED** files, use `AskUserQuestion` per file: "Overwrite with template", "Keep local", or "Show diff". Never overwrite without asking — `deploy/default/groups/` is the user's editable layer.
+
+#### Launchd target
+
+The launchd plist requires path detection before materialization. Run the same detection as `/setup-launchd` Step 1:
+
+```bash
+NODE_PATH=$(nodenv which node 2>/dev/null || which node)
+TSX_PATH=$(pwd)/$(find node_modules/.pnpm -name 'cli.mjs' -path '*/tsx/dist/*' | head -1)
+PROJECT_ROOT=$(pwd)
+NODE_BIN_DIR=$(dirname $NODE_PATH)
+```
+
+Then read `deploy/templates/launchd/com.nagi.plist`, substitute `{{NODE_PATH}}`, `{{TSX_PATH}}`, `{{PROJECT_ROOT}}`, `{{NODE_BIN_DIR}}`, `{{HOME}}` with the detected values, and write to `deploy/default/launchd/com.nagi.plist`.
+
+If the local file already exists, show the user a diff of the XML structure changes and ask before overwriting.
+
+Validate with:
+```bash
+plutil -lint deploy/default/launchd/com.nagi.plist
+```
+
+Skip steps 3–5 for the Launchd target (no merge logic, no tsc).
 
 ### 3. Diff template vs local
 

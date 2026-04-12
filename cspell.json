@@ -70,7 +70,8 @@
     "autoresearch",
     "Andrej",
     "Karpathy",
-    "elif"
+    "elif",
+    "plutil"
   ],
   "ignorePaths": [
     "node_modules",

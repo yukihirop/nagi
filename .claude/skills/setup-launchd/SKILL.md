@@ -46,52 +46,37 @@ echo "HOME=$HOME"
 
 Verify all paths exist. If tsx is not found, run `pnpm install` first.
 
-## Step 2: Generate plist
-
-Update `launchd/com.nagi.plist` with the detected paths:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>com.nagi</string>
-    <key>ProgramArguments</key>
-    <array>
-        <string>NODE_PATH</string>
-        <string>TSX_PATH</string>
-        <string>PROJECT_ROOT/deploy/default/host/entry.ts</string>
-    </array>
-    <key>WorkingDirectory</key>
-    <string>PROJECT_ROOT</string>
-    <key>RunAtLoad</key>
-    <true/>
-    <key>KeepAlive</key>
-    <true/>
-    <key>EnvironmentVariables</key>
-    <dict>
-        <key>PATH</key>
-        <string>NODE_BIN_DIR:/usr/local/bin:/usr/bin:/bin</string>
-        <key>HOME</key>
-        <string>HOME</string>
-    </dict>
-    <key>StandardOutPath</key>
-    <string>PROJECT_ROOT/__data/logs/nagi.log</string>
-    <key>StandardErrorPath</key>
-    <string>PROJECT_ROOT/__data/logs/nagi.error.log</string>
-</dict>
-</plist>
+Derive `NODE_BIN_DIR` from `NODE_PATH`:
+```bash
+echo "NODE_BIN_DIR=$(dirname $NODE_PATH)"
 ```
 
-Replace all placeholders with actual paths.
+## Step 2: Materialize plist from template
+
+Read `deploy/templates/launchd/com.nagi.plist` and replace these placeholders with the values detected in Step 1:
+
+| Placeholder | Value |
+|---|---|
+| `{{NODE_PATH}}` | Detected NODE_PATH |
+| `{{TSX_PATH}}` | Full absolute path to tsx/dist/cli.mjs |
+| `{{PROJECT_ROOT}}` | Detected PROJECT_ROOT |
+| `{{NODE_BIN_DIR}}` | `$(dirname $NODE_PATH)` |
+| `{{HOME}}` | Detected HOME |
+
+Write the result to `deploy/default/launchd/com.nagi.plist`:
+
+```bash
+mkdir -p deploy/default/launchd
+```
+
+Use the Read tool to load the template, substitute all `{{PLACEHOLDER}}` occurrences with the real values, then use the Write tool to save to `deploy/default/launchd/com.nagi.plist`.
 
 **Important:** `ProgramArguments` uses `node tsx/dist/cli.mjs deploy/default/host/entry.ts` — not `node_modules/.bin/tsx` (that's a shell script, not executable by node directly).
 
 ## Step 3: Create logs directory
 
 ```bash
-mkdir -p logs
+mkdir -p __data/logs
 ```
 
 ## Step 4: Install
@@ -105,7 +90,7 @@ launchctl unload ~/Library/LaunchAgents/com.nagi.plist 2>/dev/null
 ### Copy and load
 
 ```bash
-cp launchd/com.nagi.plist ~/Library/LaunchAgents/com.nagi.plist
+cp deploy/default/launchd/com.nagi.plist ~/Library/LaunchAgents/com.nagi.plist
 launchctl load ~/Library/LaunchAgents/com.nagi.plist
 ```
 
@@ -126,13 +111,13 @@ If PID is `-` (not running):
    - Port conflict (credential proxy) → check if another nagi/nanoclaw is running
    - Docker not running → start Docker first
 
-### Confirm Slack connection
+### Confirm channel connection
 
 ```bash
 tail -5 __data/logs/nagi.log
 ```
 
-Look for: `Connected to Slack` and `Orchestrator started`.
+Look for: `Channel connected` and `Orchestrator started`.
 
 ## Management Commands
 
@@ -176,3 +161,7 @@ launchctl kickstart -k gui/$(id -u)/com.nagi
 ```
 
 No need to unload/load — kickstart restarts the running service.
+
+### Re-materializing after template updates
+
+If `deploy/templates/launchd/com.nagi.plist` has been updated (e.g., new keys added), re-run this skill or `/deploy` with the Launchd target to regenerate `deploy/default/launchd/com.nagi.plist`.
