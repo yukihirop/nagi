@@ -61,7 +61,7 @@ echo "NODE_BIN_DIR=$(dirname $NODE_PATH)"
 
 ## Step 2: Materialize plist from template
 
-Read `deploy/templates/launchd/com.nagi.{ASSISTANT_NAME}.plist` and replace these placeholders with the values detected in Step 1:
+Read `deploy/templates/launchd/com.nagi.ASSISTANT_NAME.plist` and replace these placeholders with the values detected in Step 1:
 
 | Placeholder | Value |
 |---|---|
@@ -112,7 +112,7 @@ launchctl list | grep com.nagi
 Expected output: `PID  0  com.nagi.{ASSISTANT_NAME}` (PID is a number, exit code is 0).
 
 If PID is `-` (not running):
-1. Check error log: `cat __data/{ASSISTANT_NAME}/logs/nagi.error.log`
+1. Check error log: `cat __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.error.log`
 2. Common issues:
    - Node path wrong → re-run step 1
    - `deploy/{ASSISTANT_NAME}/host/entry.ts` missing → run `/deploy`
@@ -122,7 +122,7 @@ If PID is `-` (not running):
 ### Confirm channel connection
 
 ```bash
-tail -5 __data/{ASSISTANT_NAME}/logs/nagi.log
+tail -5 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 ```
 
 Look for: `Channel connected` and `Orchestrator started`.
@@ -133,10 +133,10 @@ Tell the user these commands:
 
 ```bash
 # View logs
-tail -f __data/{ASSISTANT_NAME}/logs/nagi.log
+tail -f __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 
 # Restart
-launchctl kickstart -k gui/$(id -u)/com.nagi
+launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 
 # Stop
 launchctl unload ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist
@@ -145,14 +145,14 @@ launchctl unload ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist
 launchctl load ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist
 
 # Check status
-launchctl list | grep com.nagi
+launchctl list | grep com.nagi.{ASSISTANT_NAME}
 ```
 
 ## Troubleshooting
 
 ### Service keeps restarting (KeepAlive loop)
 
-Check `__data/{ASSISTANT_NAME}/logs/nagi.error.log` for the crash reason. Common:
+Check `__data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.error.log` for the crash reason. Common:
 - Port already in use → another instance running. Kill it: `pkill -f "tsx deploy/{ASSISTANT_NAME}/host/entry.ts"`
 - Missing `.env` → create `.env` with required tokens
 - Docker not running → service starts but containers fail
@@ -165,11 +165,11 @@ macOS may block launchd agents. Go to System Preferences → Privacy & Security 
 
 After `pnpm build` or editing `deploy/{ASSISTANT_NAME}/host/entry.ts`:
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.nagi
+launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 ```
 
 No need to unload/load — kickstart restarts the running service.
 
 ### Re-materializing after template updates
 
-If `deploy/templates/launchd/com.nagi.{ASSISTANT_NAME}.plist` has been updated (e.g., new keys added), re-run this skill or `/deploy` with the Launchd target to regenerate `deploy/{ASSISTANT_NAME}/launchd/com.nagi.{ASSISTANT_NAME}.plist`.
+If `deploy/templates/launchd/com.nagi.ASSISTANT_NAME.plist` has been updated (e.g., new keys added), re-run this skill or `/deploy` with the Launchd target to regenerate `deploy/{ASSISTANT_NAME}/launchd/com.nagi.{ASSISTANT_NAME}.plist`.

@@ -20,7 +20,8 @@ node --version   # Must be >= 22
 pnpm --version   # Must be installed
 ```
 
-- If Node.js missing or too old: install via nvm (`nvm install 22`) or brew (`brew install node@22`)
+- If Node.js missing or too old: install via nodenv (`nodenv install 22.x.x && nodenv local 22.x.x`), nvm (`nvm install 22`), or brew (`brew install node@22`)
+- If using nodenv/nvm and switching versions: `rm -rf node_modules && pnpm install` to rebuild native bindings
 - If pnpm missing: `corepack enable && corepack prepare pnpm@latest --activate`, or `npm install -g pnpm`
 
 ## 2. Install Dependencies & Build
@@ -48,166 +49,87 @@ docker info
   - macOS: `brew install --cask docker` then `open -a Docker`
   - Linux: `curl -fsSL https://get.docker.com | sh && sudo usermod -aG docker $USER`
 
-### 3b. Build Container Image
+### 3b. Choose Agent Type
 
-Build the `nagi-agent:latest` Docker image:
+AskUserQuestion: Which agent runtime do you want to use?
+- **Claude Code** — Anthropic's Claude Code CLI runs inside the container. Auth is proxied from the host (credential proxy). Requires `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`.
+- **Open Code** — Open-source agent SDK. Supports OpenRouter, Google Gemini, OpenAI, and Anthropic as providers. Requires provider-specific API key.
 
+Remember the choice — it affects the container image build (step 3c) and authentication (step 5).
+
+### 3c. Build Container Image
+
+Build the Docker image matching the chosen agent type:
+
+**Claude Code:**
 ```bash
 ./container/claude-code/build.sh
 ```
+Verify: `docker images nagi-agent`
 
-This builds the agent container with Chromium, Python/Jupyter, Claude Agent SDK, and MCP servers. Takes a few minutes on first build (cached afterwards).
-
-Verify:
+**Open Code:**
 ```bash
-docker images nagi-agent
+./container/open-code/build.sh
 ```
+Verify: `docker images nagi-agent-opencode`
 
-## 4. Environment File
+Takes a few minutes on first build (cached afterwards).
 
-Create `.env` from the template if it doesn't exist:
+## 4. Deploy
 
+Run `/deploy` to generate local entry points, data directories, `.env`, and group prompt defaults from templates. Select **All** when prompted.
+
+`/deploy` handles:
+- `.env` creation and token configuration (authentication + channels)
+- Entry point generation (host, Claude Code container, Open Code container)
+- Group prompt defaults
+- Data directories (`__data/{ASSISTANT_NAME}/`)
+
+If Open Code was chosen in step 3b, tell `/deploy` so it can set `CONTAINER_IMAGE=nagi-agent-opencode:latest` in `.env`.
+
+## 5. Start & Register Main Group
+
+Kill any existing nagi processes first (credential proxy on port 3002 may linger):
 ```bash
-cp -n .env.example .env
+pkill -f "tsx deploy/{ASSISTANT_NAME}/host/entry.ts" 2>/dev/null
+lsof -ti :3002 | xargs kill 2>/dev/null
 ```
 
-(`-n` = no clobber — won't overwrite an existing `.env`)
-
-## 5. Claude Authentication
-
-AskUserQuestion: Claude subscription (Pro/Max) vs Anthropic API key?
-
-**Subscription:** Tell user to run `! claude setup-token` (the `!` prefix runs it in the current terminal session), copy the token, then add to `.env`:
-```
-CLAUDE_CODE_OAUTH_TOKEN=<token>
-```
-
-**API key:** Tell user to add to `.env`:
-```
-ANTHROPIC_API_KEY=<key>
-```
-
-## 6. Channel Setup
-
-AskUserQuestion (multiSelect): Which messaging channels do you want to enable?
-- Slack (Socket Mode — no public URL needed)
-- Discord (bot token)
-
-### Slack
-
-Tell user to create a Slack app:
-1. Go to https://api.slack.com/apps → Create New App → From Manifest
-2. Use this manifest (adjust name as needed):
-```yaml
-display_information:
-  name: Nagi
-  description: AI Assistant
-features:
-  bot_user:
-    display_name: Nagi
-    always_online: true
-oauth_config:
-  scopes:
-    bot:
-      - channels:history
-      - channels:read
-      - chat:write
-      - groups:history
-      - groups:read
-      - im:history
-      - im:read
-      - users:read
-settings:
-  event_subscriptions:
-    bot_events:
-      - message.channels
-      - message.groups
-      - message.im
-  interactivity:
-    is_enabled: false
-  org_deploy_enabled: false
-  socket_mode_enabled: true
-```
-3. Install to workspace
-4. Generate App-Level Token (Settings → Basic Information → App-Level Tokens → `connections:write` scope)
-5. Copy Bot Token (OAuth & Permissions page) and App Token
-
-Add to `.env`:
-```
-SLACK_BOT_TOKEN=xoxb-...
-SLACK_APP_TOKEN=xapp-...
-```
-
-### Discord
-
-Tell user:
-1. Go to https://discord.com/developers/applications → New Application
-2. Bot → Reset Token → Copy
-3. Enable: MESSAGE CONTENT INTENT, SERVER MEMBERS INTENT
-4. Invite bot to server with this URL (replace CLIENT_ID):
-   `https://discord.com/api/oauth2/authorize?client_id=CLIENT_ID&permissions=274877908992&scope=bot`
-
-Add to `.env`:
-```
-DISCORD_BOT_TOKEN=...
-```
-
-## 7. Deploy Entry Points
-
-Run `/deploy` and select **All** to generate local entry points from templates:
-
-- `deploy/{ASSISTANT_NAME}/host/entry.ts` — host-side orchestrator config (channels, MCP plugins, hooks)
-- `deploy/{ASSISTANT_NAME}/container/claude-code/entry.ts` — container-side agent config (container plugins like agent-hooks)
-- `deploy/{ASSISTANT_NAME}/container/open-code/entry.ts` — open-code container config
-
-All are gitignored — they're your local configuration. The `.template.ts` files in `deploy/templates/` are tracked in git as references.
-
-To start nagi in development mode:
+Then start nagi in development mode:
 ```bash
 pnpm dev
 ```
 
-This runs `tsx deploy/{ASSISTANT_NAME}/host/entry.ts` which reads `.env`, registers configured channels, and starts the orchestrator.
-
-## 8. Register Main Group
-
-The first group to register is "main" — it has elevated privileges (no trigger required, can register other groups).
-
-After the orchestrator starts and channels connect, check the logs for the channel ID / JID of your main chat:
+Once the orchestrator starts and channels connect, check the logs for the channel ID:
 ```bash
-pnpm --filter @nagi/orchestrator dev
+tail -20 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 ```
 
-Look for log lines like:
-- Slack: `Discord bot connected` or metadata logs showing `slack:C...` JIDs
-- Discord: `Discord bot: ...` showing the bot tag
+Look for log lines showing channel JIDs (e.g. `slack:C...` or `discord:...`).
 
-Then register the main group in the database. Create a quick script or use the DB directly:
+Then register the main group. The main group has elevated privileges (no trigger required, can register other groups):
 
 ```bash
-# Example: register a Slack channel as main
 node -e "
-const { createDatabase } = require('@nagi/db');
+const { createDatabase } = require('./libs/db/dist/index.js');
+const fs = require('fs');
 const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('slack:C_YOUR_CHANNEL_ID', {
   name: 'Main',
+  channel: 'slack',
   folder: 'main',
-  trigger: '@Nagi',
+  trigger: '@{ASSISTANT_NAME}',
   added_at: new Date().toISOString(),
   isMain: true,
   requiresTrigger: false,
 });
 db.close();
+fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/main', { recursive: true });
 console.log('Main group registered');
 "
 ```
 
-Create the group directory:
-```bash
-mkdir -p __data/{ASSISTANT_NAME}/groups/main
-```
-
-## 9. Dashboard UI (Optional)
+## 6. Dashboard UI (Optional)
 
 Start the web dashboard to monitor agent activity:
 
@@ -217,7 +139,7 @@ pnpm ui:dev    # SPA (port 5174) + API server (port 3001)
 
 Features: Overview stats, Groups, Channels, Sessions (chat viewer), Tasks, Logs, Settings.
 
-## 10. Verify
+## 7. Verify
 
 Restart the orchestrator and send a message in your main channel. Check logs:
 
@@ -239,6 +161,6 @@ Expected behavior:
 
 **No response to messages:** Check group is registered in DB. Check trigger pattern matches. Main group doesn't need trigger prefix.
 
-**Container fails:** Check `__data/{ASSISTANT_NAME}/groups/main/logs/container-*.log` for details. Ensure Docker image `nagi-agent:latest` is built.
+**Container fails:** Check `__data/{ASSISTANT_NAME}/groups/main/logs/container-*.log` for details. Ensure the Docker image is built (`nagi-agent:latest` for Claude Code, `nagi-agent-opencode:latest` for Open Code).
 
 **"SLACK_BOT_TOKEN not set":** Tokens must be in `.env` at the project root, not in environment variables.

@@ -80,6 +80,68 @@ if [ ! -f deploy/{ASSISTANT_NAME}/.env ]; then
 fi
 ```
 
+### 1.6. Configure .env tokens
+
+`.env` が新規作成された場合、認証トークンとチャンネルトークンの設定をガイドする。既にトークンが設定済みならスキップ。
+
+#### Agent authentication
+
+AskUserQuestion: Which agent runtime? (Claude Code / Open Code)
+
+**Claude Code:**
+
+AskUserQuestion: Claude subscription (Pro/Max) vs Anthropic API key?
+
+- **Subscription (Pro/Max):** Tell user to run `! claude setup-token`, copy the token, then add to `deploy/{ASSISTANT_NAME}/.env`:
+  ```
+  CLAUDE_CODE_OAUTH_TOKEN=<token>
+  ```
+- **API key:** Tell user to add to `deploy/{ASSISTANT_NAME}/.env`:
+  ```
+  ANTHROPIC_API_KEY=<key>
+  ```
+
+**Open Code:**
+
+AskUserQuestion: Which LLM provider? (OpenRouter / Google Gemini / OpenAI / Anthropic)
+
+Set `CONTAINER_IMAGE` and provider-specific keys in `deploy/{ASSISTANT_NAME}/.env`:
+```
+CONTAINER_IMAGE=nagi-agent-opencode:latest
+OPENCODE_MODEL={provider}/{model}
+```
+
+| Provider | Model example | Key variable |
+|---|---|---|
+| OpenRouter | `openrouter/anthropic/claude-sonnet-4` | `OPENROUTER_API_KEY=sk-or-...` |
+| Google Gemini | `google/gemini-2.5-pro` | `GOOGLE_API_KEY=...` |
+| OpenAI | `openai/gpt-4.1` | `OPENAI_API_KEY=sk-...` |
+| Anthropic | `anthropic/claude-sonnet-4` | `ANTHROPIC_API_KEY=...` |
+
+#### Channel tokens
+
+AskUserQuestion (multiSelect): Which messaging channels do you want to enable?
+- Slack (Socket Mode — no public URL needed)
+- Discord (bot token)
+- Asana (polls task comments — no public URL needed)
+
+**Slack:** Tell user to create a Slack app (From Manifest at https://api.slack.com/apps), install to workspace, generate App-Level Token (`connections:write` scope), copy Bot Token. Add to `deploy/{ASSISTANT_NAME}/.env`:
+```
+SLACK_BOT_TOKEN=xoxb-...
+SLACK_APP_TOKEN=xapp-...
+```
+
+**Discord:** Tell user to create app at https://discord.com/developers/applications, enable MESSAGE CONTENT INTENT and SERVER MEMBERS INTENT, copy bot token. Add to `deploy/{ASSISTANT_NAME}/.env`:
+```
+DISCORD_BOT_TOKEN=...
+```
+
+**Asana:** Tell user to create Personal Access Token at https://app.asana.com/0/my-apps, find project GID(s). Add to `deploy/{ASSISTANT_NAME}/.env`:
+```
+ASANA_PAT=...
+ASANA_PROJECT_GIDS=<comma-separated project gids>
+```
+
 ### 2. Check current state
 
 For each selected target, check if the local file exists:

@@ -40,7 +40,7 @@ If no image, build it:
 launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 sleep 3
 launchctl list | grep com.nagi.{ASSISTANT_NAME}
-tail -5 __data/{ASSISTANT_NAME}/logs/nagi.log
+tail -5 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 ```
 
 ### 4. Test

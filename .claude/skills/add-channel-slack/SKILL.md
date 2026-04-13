@@ -120,50 +120,48 @@ Wait for user to provide the channel ID.
 
 ### Register main group
 
-Use tsx to register the group in the database:
+Register the group in the database:
 
 ```bash
-npx tsx -e "
-import { createDatabase } from '@nagi/db';
-import fs from 'fs';
-
+node -e "
+const { createDatabase } = require('./libs/db/dist/index.js');
+const fs = require('fs');
 const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('slack:CHANNEL_ID', {
   name: 'Main',
+  channel: 'slack',
   folder: 'main',
-  trigger: '@Nagi',
+  trigger: '@{ASSISTANT_NAME}',
   added_at: new Date().toISOString(),
   isMain: true,
   requiresTrigger: false,
 });
 db.close();
-
 fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/main', { recursive: true });
 console.log('Main group registered');
 "
 ```
 
-Replace `CHANNEL_ID` with the actual channel ID. Replace `@Nagi` with the configured assistant name if different.
+Replace `CHANNEL_ID` with the actual channel ID.
 
 ### Register additional channels (optional)
 
-For channels that require a trigger (e.g. `@Nagi hello`):
+For channels that require a trigger (e.g. `@ai hello`):
 
 ```bash
-npx tsx -e "
-import { createDatabase } from '@nagi/db';
-import fs from 'fs';
-
+node -e "
+const { createDatabase } = require('./libs/db/dist/index.js');
+const fs = require('fs');
 const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('slack:CHANNEL_ID', {
   name: 'Channel Name',
+  channel: 'slack',
   folder: 'slack_channel-name',
-  trigger: '@Nagi',
+  trigger: '@{ASSISTANT_NAME}',
   added_at: new Date().toISOString(),
   requiresTrigger: true,
 });
 db.close();
-
 fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/slack_channel-name', { recursive: true });
 console.log('Group registered');
 "
@@ -205,7 +203,7 @@ Tell user:
    "
    ```
 3. **Docker running?** — `docker info`
-4. **Container image built?** — `docker images nagi-agent`
+4. **Container image built?** — `docker images nagi-agent` (Claude Code) or `docker images nagi-agent-opencode` (Open Code)
 5. **Check container logs:** `ls __data/{ASSISTANT_NAME}/groups/main/logs/`
 
 ## Troubleshooting

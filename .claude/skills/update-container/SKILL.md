@@ -60,10 +60,10 @@ docker images nagi-agent-opencode --format "{{.Repository}}:{{.Tag}} {{.Size}} {
 ### 5. Restart nagi
 
 ```bash
-launchctl kickstart -k gui/$(id -u)/com.nagi
+launchctl kickstart -k gui/$(id -u)/com.nagi.{ASSISTANT_NAME}
 sleep 2
-launchctl list | grep com.nagi
-tail -5 __data/{ASSISTANT_NAME}/logs/nagi.log
+launchctl list | grep com.nagi.{ASSISTANT_NAME}
+tail -5 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 ```
 
 ### 6. Summary

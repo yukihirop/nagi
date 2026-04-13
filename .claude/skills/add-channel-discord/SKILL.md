@@ -86,21 +86,20 @@ Wait for user to provide the channel ID.
 ### Register group
 
 ```bash
-npx tsx -e "
-import { createDatabase } from '@nagi/db';
-import fs from 'fs';
-
+node -e "
+const { createDatabase } = require('./libs/db/dist/index.js');
+const fs = require('fs');
 const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('dc:CHANNEL_ID', {
   name: 'Discord Main',
+  channel: 'discord',
   folder: 'discord_main',
-  trigger: '@Nagi',
+  trigger: '@{ASSISTANT_NAME}',
   added_at: new Date().toISOString(),
   isMain: false,
   requiresTrigger: true,
 });
 db.close();
-
 fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/discord_main', { recursive: true });
 console.log('Discord group registered');
 "
@@ -138,7 +137,7 @@ Tell user:
 3. **Group registered?** — Check DB
 4. **MESSAGE CONTENT INTENT enabled?** — Required for reading message content
 5. **Docker running?** — `docker info`
-6. **Container image built?** — `docker images nagi-agent`
+6. **Container image built?** — `docker images nagi-agent` (Claude Code) or `docker images nagi-agent-opencode` (Open Code)
 
 ## Troubleshooting
 

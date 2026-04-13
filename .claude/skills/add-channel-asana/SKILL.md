@@ -135,21 +135,20 @@ Shorter intervals reduce latency but consume more of the 150 req/min rate limit.
 Each watched Asana project becomes one nagi group. JID format is `asana:{projectGid}`.
 
 ```bash
-npx tsx -e "
-import { createDatabase } from '@nagi/db';
-import fs from 'fs';
-
+node -e "
+const { createDatabase } = require('./libs/db/dist/index.js');
+const fs = require('fs');
 const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
 db.groups.set('asana:PROJECT_GID', {
   name: 'Asana Project',
+  channel: 'asana',
   folder: 'asana_project',
-  trigger: '@Nagi',
+  trigger: '@{ASSISTANT_NAME}',
   added_at: new Date().toISOString(),
   isMain: false,
   requiresTrigger: true,
 });
 db.close();
-
 fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/asana_project', { recursive: true });
 console.log('Asana group registered');
 "
