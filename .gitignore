@@ -6,7 +6,6 @@ deploy/*/
 !deploy/templates/
 .env
 .claude/settings.local.json
-.entire/settings.json
 __data
 openclaw
 mugi-claw
