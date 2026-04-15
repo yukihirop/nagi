@@ -71,7 +71,13 @@
     "Andrej",
     "Karpathy",
     "elif",
-    "plutil"
+    "plutil",
+    "llmstxt",
+    "llms",
+    "vitepress",
+    "aistudio",
+    "noda",
+    "mybot"
   ],
   "ignorePaths": [
     "node_modules",

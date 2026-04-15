@@ -1,0 +1,17 @@
+{
+  "buildCommand": "npx vitepress build docs",
+  "outputDirectory": "docs/.vitepress/dist",
+  "installCommand": "npm install",
+  "framework": null,
+  "headers": [
+    {
+      "source": "/(.*)\\.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
+    }
+  ]
+}
