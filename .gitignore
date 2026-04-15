@@ -5,6 +5,7 @@ nanoclaw
 deploy/*/
 !deploy/templates/
 .env
+.claude/settings.local.json
 __data
 openclaw
 mugi-claw
