@@ -15,4 +15,4 @@ pre-commit:
       run: pnpm exec cspell --no-progress {staged_files}
 
     - name: no-env-files
-      run: scripts/no-env-files.sh
+      run: tools/scripts/no-env-files.sh
