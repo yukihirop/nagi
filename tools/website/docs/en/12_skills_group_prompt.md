@@ -33,14 +33,15 @@ IDENTITY.md -> INSTRUCTIONS.md -> SOUL.md -> (any custom files)
 deploy/{ASSISTANT_NAME}/groups/
   slack/
     main/
-      CLAUDE.md          # SDK auto-loaded
-      IDENTITY.md        # -> systemPrompt.append
-      SOUL.md            # -> systemPrompt.append
-      INSTRUCTIONS.md    # -> systemPrompt.append
+      CLAUDE.md              # SDK auto-loaded
+      IDENTITY.md            # -> systemPrompt.append
+      SOUL.md                # -> systemPrompt.append
+      INSTRUCTIONS.md        # -> systemPrompt.append
+      skills.config.json     # optional skill allowlist (/configure-skills)
   discord/
     main/
       CLAUDE.md
-      AGENTS.md          # Open Code only
+      AGENTS.md              # Open Code only
 ```
 
 ### Template vs. deploy layers
@@ -114,3 +115,45 @@ Interactively edit an existing group prompt file. Previews every change as a uni
 - Edits `deploy/{ASSISTANT_NAME}/groups/` only, never `deploy/templates/groups/` or `__data/` directly.
 - One file per invocation. Run the skill again to edit another file.
 - Fails loudly on errors instead of silently proceeding.
+
+---
+
+## `/configure-skills` — Skills Allowlist {#configure-skills}
+
+Interactively edit `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/skills.config.json` to control which skills (under `container/skills/`) get mounted into the agent session for that group. Use this to shrink the system prompt on casual channels that do not need the full skill catalog -- every omitted skill translates directly into fewer input tokens per turn.
+
+**Triggers:** `configure skills`, `edit skills`, `skills allowlist`, `skills config`, `limit skills`
+
+### Config file format
+
+- Path: `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/skills.config.json`
+- Shape:
+  ```json
+  { "enabled": ["status", "slack-formatting"] }
+  ```
+- Evaluation (implemented in `host/orchestrator/src/container-runner.ts`):
+  - File missing -> load every skill (backward-compatible default).
+  - `enabled` is an array -> only listed names are copied into the session.
+  - `enabled` is `[]` -> no skills are loaded at all.
+  - Malformed JSON -> the orchestrator warns and falls back to loading everything.
+  - Unknown name in `enabled` -> the orchestrator warns and skips that entry.
+
+### Workflow
+
+1. **Select assistant** -- Detects `deploy/*/` and asks which `ASSISTANT_NAME` to edit.
+2. **Select group** -- Lists `{channel}/{group}` pairs under `deploy/{ASSISTANT_NAME}/groups/` and asks which one.
+3. **Show current state** -- Parses any existing `skills.config.json` and shows the active allowlist; if the file is absent it reports "all skills loaded".
+4. **Pick skills** -- Multi-selects from the skills available in `container/skills/`, marking the currently-enabled ones.
+5. **Preview diff** -- Displays the before/after JSON plus the added/removed skill names.
+6. **Write or delete** -- If the user ends up selecting every skill, offers to delete the config file (reverting to the default) instead of maintaining a full allowlist that drifts when new skills are added upstream.
+7. **Restart prompt** -- If Nagi is running under launchd, offers `/nagi-restart`. For manually launched processes (`pnpm dev`, `npx tsx ...`), asks the user to restart by hand.
+
+### Cost impact
+
+Each SKILL.md averages roughly 4,000-5,000 input tokens. In a measured test, trimming from 9 skills down to 2 reduced input tokens from 51,897 to 14,972 per turn -- about a 71% drop. The savings compound across multi-turn conversations because every container spawn rebuilds the session skills directory.
+
+### Notes
+
+- The skill always edits `deploy/{ASSISTANT_NAME}/groups/`. It never touches `deploy/templates/` or `__data/` directly.
+- `skills.config.json` recognizes only the `enabled` key. Other keys (`disabled`, `skills`, ...) are ignored by the orchestrator, and the skill will not emit them.
+- The session skills directory is wiped and recreated on every container spawn, so stale skills removed from the allowlist do not linger between runs.

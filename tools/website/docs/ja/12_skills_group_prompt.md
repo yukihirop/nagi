@@ -20,7 +20,8 @@ deploy/
 │   │   ├── AGENTS.md
 │   │   ├── IDENTITY.md
 │   │   ├── SOUL.md
-│   │   └── INSTRUCTIONS.md
+│   │   ├── INSTRUCTIONS.md
+│   │   └── skills.config.json   # スキル allowlist（任意、`/configure-skills`）
 │   └── discord/main/
 │       └── ...
 __data/{ASSISTANT_NAME}/groups/  # ランタイムレイヤー（コンテナが実際に参照する）
@@ -117,3 +118,45 @@ SOUL.md → systemPrompt.append (3番目)
 - 編集対象は常に `deploy/{ASSISTANT_NAME}/groups/` です。`deploy/templates/` や `__data/` を直接編集することはありません。
 - 1 回の実行で編集できるファイルは 1 つです。複数ファイルを編集する場合はスキルを再実行します。
 - ランタイム同期時、`__data/` 側に直接編集された内容がある場合は警告が表示されます。
+
+---
+
+## `/configure-skills` — スキル allowlist 編集 {#configure-skills}
+
+`deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/skills.config.json` を対話的に編集し、そのグループでロードされるスキル（`container/skills/` 配下）を絞り込みます。コンテナセッションへ投入される SKILL.md の合計サイズを減らすことで、雑談チャンネルなどスキルをフルセット必要としないグループの input トークンを削減できます。
+
+**トリガー:** `configure skills`, `edit skills`, `skills allowlist`, `skills config`, `limit skills`, `スキル設定`, `スキル絞り込み`, `スキル制限`
+
+### 設定ファイルの仕様
+
+- パス: `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/skills.config.json`
+- フォーマット:
+  ```json
+  { "enabled": ["status", "slack-formatting"] }
+  ```
+- 評価ルール（`host/orchestrator/src/container-runner.ts` の実装）:
+  - ファイル不在 → 全スキルをロード（後方互換のデフォルト動作）
+  - `enabled` が配列 → 配列内の名前と一致するスキルのみコピー
+  - `enabled` が `[]` → スキルをひとつもロードしない
+  - JSON 破損 → warn ログを出して全ロードにフォールバック
+  - `container/skills/` に存在しない名前 → warn ログを出してその名前はスキップ
+
+### 編集フロー
+
+1. **アシスタント選択** — `deploy/*/` を検出して対象の ASSISTANT_NAME を選択します。
+2. **グループ選択** — `deploy/{ASSISTANT_NAME}/groups/` 配下の `{channel}/{group}` 一覧から対象を選択します。
+3. **現在の状態を表示** — `skills.config.json` が存在する場合はその `enabled` 配列を、存在しない場合は「全スキルロード中」と表示します。
+4. **スキル多肢選択** — `container/skills/` から利用可能なスキルを列挙し、有効化するものを multiSelect で選ばせます。現在有効なスキルにはマーカーが付きます。
+5. **差分プレビュー** — Before / After の diff と追加/削除されるスキル名を提示します。
+6. **書き込みまたは削除** — 全スキルを選択した場合は、allowlist を持たない（ファイル削除）状態に戻すかを確認します。削除の方がデフォルト動作に戻るため推奨されます。
+7. **再起動確認** — nagi が launchd で稼働中なら `/nagi-restart` を提案します。`pnpm dev` などで手動起動している場合はユーザに再起動を促します。
+
+### コスト削減の目安
+
+1 つのスキル SKILL.md は平均でおよそ 4,000〜5,000 input トークンに相当します。雑談用途で 9 スキル中 2 スキルだけに絞った実測では、input トークンが 51,897 → 14,972（約 71% 削減）まで減少しました。コンテナ起動ごとに効くため、複数ターンある会話ほど累積効果が大きくなります。
+
+### 注意事項
+
+- 編集対象は常に `deploy/{ASSISTANT_NAME}/groups/` です。`deploy/templates/` や `__data/` を直接編集することはありません。
+- `skills.config.json` には `enabled` キーのみが有効です。`disabled` などを書いてもオーケストレーターは無視するため、スキルが自動的に書き込むこともありません。
+- コンテナ起動ごとに `__data/{ASSISTANT_NAME}/sessions/.../skills/` は再生成されるため、allowlist から外したスキルの残骸は残りません。

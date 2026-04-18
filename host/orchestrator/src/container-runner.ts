@@ -116,13 +116,45 @@ export function buildVolumeMounts(
   fs.mkdirSync(groupSessionsDir, { recursive: true });
   agentConfig.initSessionDir(groupSessionsDir, config, group);
 
-  // Sync skills
+  // Sync skills (optionally filtered by deploy/{name}/groups/{channel}/{folder}/skills.config.json)
   const skillsSrc = path.join(process.cwd(), "container", "skills");
   const skillsDst = path.join(groupSessionsDir, "skills");
+  const skillsConfigFile = path.join(
+    config.paths.deployDir,
+    "groups",
+    group.channel,
+    group.folder,
+    "skills.config.json",
+  );
+  let skillAllowlist: Set<string> | null = null;
+  if (fs.existsSync(skillsConfigFile)) {
+    try {
+      const cfg = JSON.parse(fs.readFileSync(skillsConfigFile, "utf-8")) as { enabled?: unknown };
+      if (Array.isArray(cfg.enabled) && cfg.enabled.every((s) => typeof s === "string")) {
+        skillAllowlist = new Set(cfg.enabled as string[]);
+      } else {
+        logger.warn({ path: skillsConfigFile }, "skills.config.json has no valid 'enabled' string array — loading all skills");
+      }
+    } catch {
+      logger.warn({ path: skillsConfigFile }, "Failed to parse skills.config.json — loading all skills");
+    }
+  }
+  if (fs.existsSync(skillsDst)) fs.rmSync(skillsDst, { recursive: true, force: true });
+  fs.mkdirSync(skillsDst, { recursive: true });
   if (fs.existsSync(skillsSrc)) {
-    for (const skillDir of fs.readdirSync(skillsSrc)) {
+    const availableSkills = fs
+      .readdirSync(skillsSrc)
+      .filter((d) => fs.statSync(path.join(skillsSrc, d)).isDirectory());
+    if (skillAllowlist) {
+      for (const name of skillAllowlist) {
+        if (!availableSkills.includes(name)) {
+          logger.warn({ skill: name, path: skillsConfigFile }, "skills.config.json references unknown skill");
+        }
+      }
+    }
+    for (const skillDir of availableSkills) {
+      if (skillAllowlist && !skillAllowlist.has(skillDir)) continue;
       const srcDir = path.join(skillsSrc, skillDir);
-      if (!fs.statSync(srcDir).isDirectory()) continue;
       const dstDir = path.join(skillsDst, skillDir);
       fs.cpSync(srcDir, dstDir, { recursive: true });
     }
