@@ -5,7 +5,7 @@ description: Register, list, or unregister a channel ID as a group in the assist
 
 # register-channel
 
-既存のチャンネルID(Bot/Appは既に作成済み前提)を、指定アシスタントの `__data/{ASSISTANT_NAME}/store/messages.db` の `registered_groups` に登録/一覧表示/削除するスキル。
+既存のチャンネルID(Bot/Appは既に作成済み前提)を、指定アシスタントの `__data/{ASSISTANT_NAME}/store/nagi.db` の `registered_groups` に登録/一覧表示/削除するスキル。
 
 `add-channel-slack/discord/asana` がBot作成込みの重いフローなのに対し、本スキルは **既存Bot + 既存チャンネル** を前提とした軽量な ID→DB 登録に特化。到達性検証で Bot 未招待/ID誤り を事前検出する。
 

@@ -138,7 +138,7 @@ Each watched Asana project becomes one nagi group. JID format is `asana:{project
 node -e "
 const { createDatabase } = require('./libs/db/dist/index.js');
 const fs = require('fs');
-const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
 db.groups.set('asana:PROJECT_GID', {
   name: 'Asana Project',
   channel: 'asana',
@@ -207,7 +207,7 @@ Tell the user:
 3. **Is the project gid correct?** — Re-run the project discovery curl command
 4. **Is the group registered?** — Check the DB directly:
    ```bash
-   sqlite3 __data/{ASSISTANT_NAME}/store/messages.db "SELECT jid, name, channel, folder, is_main, requires_trigger FROM registered_groups WHERE jid LIKE 'asana:%';"
+   sqlite3 __data/{ASSISTANT_NAME}/store/nagi.db "SELECT jid, name, channel, folder, is_main, requires_trigger FROM registered_groups WHERE jid LIKE 'asana:%';"
    ```
 5. **Does the comment body actually contain the trigger?** — The body (after HTML stripping) must match the regex derived from `ASSISTANT_NAME`. For `ASSISTANT_NAME=ai` that is `/^@ai\b/i`. Whitespace or other text *before* `@ai` will prevent matching — the trigger must be at the start of a line.
 6. **Did you wait long enough?** — Polling is every 60s by default; the first poll only sees task comments whose parent task was modified after the service started.

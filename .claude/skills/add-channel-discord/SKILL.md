@@ -89,7 +89,7 @@ Wait for user to provide the channel ID.
 node -e "
 const { createDatabase } = require('./libs/db/dist/index.js');
 const fs = require('fs');
-const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
 db.groups.set('discord:CHANNEL_ID', {
   name: 'Discord Main',
   channel: 'discord',

@@ -46,7 +46,7 @@ if (!validateFolder(folder)) {
 }
 
 const jid = buildJid(channel, id);
-const dbPath = path.resolve(process.cwd(), `__data/${assistant}/store/messages.db`);
+const dbPath = path.resolve(process.cwd(), `__data/${assistant}/store/nagi.db`);
 if (!fs.existsSync(dbPath)) {
   console.log(JSON.stringify({ ok: false, reason: `DB not found: ${dbPath}` }));
   process.exit(0);

@@ -70,7 +70,7 @@ export class Orchestrator {
     const storeDir = `${this.config.paths.dataDir}/store`;
     fs.mkdirSync(storeDir, { recursive: true });
     this.db = createDatabase({
-      path: `${storeDir}/messages.db`,
+      path: `${storeDir}/nagi.db`,
     });
 
     // Initialize state
