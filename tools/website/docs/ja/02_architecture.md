@@ -210,7 +210,7 @@ Nagi は 1 つのモノレポから複数のアシスタントを独立して運
 | `deploy/templates/groups/` | グループプロンプトテンプレート (CLAUDE.md, AGENTS.md) | 管理対象 |
 | `deploy/{ASSISTANT_NAME}/` | ローカルにマテリアライズされたエントリポイント | 対象外 |
 | `deploy/{ASSISTANT_NAME}/groups/` | ユーザー編集可能なグループプロンプトのデフォルト値 | 対象外 |
-| `__data/{ASSISTANT_NAME}/store/` | SQLite データベース | 対象外 |
+| `__data/{ASSISTANT_NAME}/store/nagi.db` | SQLite データベース (groups / chats / messages / scheduled_tasks / sessions / state) | 対象外 |
 | `__data/{ASSISTANT_NAME}/groups/` | ランタイムグループデータ (コンテナにマウント、ローカル編集を保持) | 対象外 |
 | `__data/{ASSISTANT_NAME}/sessions/` | エージェントセッション (グループ単位) | 対象外 |
 | `__data/{ASSISTANT_NAME}/ipc/` | コンテナ IPC ファイル | 対象外 |

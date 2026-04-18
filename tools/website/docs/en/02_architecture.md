@@ -203,7 +203,7 @@ Templates in `deploy/templates/` are the canonical source; running the deploy sk
 | `deploy/templates/groups/` | Group prompt templates (CLAUDE.md, AGENTS.md) | Tracked |
 | `deploy/{ASSISTANT_NAME}/` | Materialized entry points and group prompts | Ignored |
 | `deploy/{ASSISTANT_NAME}/groups/` | User-editable group prompt defaults | Ignored |
-| `__data/{ASSISTANT_NAME}/store/` | SQLite database | Ignored |
+| `__data/{ASSISTANT_NAME}/store/nagi.db` | SQLite database (groups, chats, messages, scheduled tasks, sessions, state) | Ignored |
 | `__data/{ASSISTANT_NAME}/groups/` | Runtime group data (mounted into containers) | Ignored |
 | `__data/{ASSISTANT_NAME}/sessions/` | Claude sessions per group | Ignored |
 | `__data/{ASSISTANT_NAME}/ipc/` | Container IPC files | Ignored |
