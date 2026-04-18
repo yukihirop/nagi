@@ -20,6 +20,8 @@ Send `@ai ai changelog` in Slack and Claude pulls the week's release notes from 
 
 <p align="center">
   <img src="docs/assets/slack-thread-example.png" alt="Slack thread showing Nagi running the ai-changelog skill" width="540" />
+  <br />
+  <sub>Deployed output → <a href="https://ai-changelog-66qx26i5e-yukihirops-projects.vercel.app">ai-changelog-66qx26i5e-yukihirops-projects.vercel.app</a></sub>
 </p>
 
 ## Prerequisites
