@@ -8,7 +8,7 @@ function makeTask(
   return {
     id: "task-1",
     group_folder: "main",
-    chat_jid: "dc:123",
+    chat_jid: "discord:123",
     prompt: "test",
     schedule_type: "cron",
     schedule_value: "0 9 * * *",

@@ -126,7 +126,7 @@ Register the group in the database:
 node -e "
 const { createDatabase } = require('./libs/db/dist/index.js');
 const fs = require('fs');
-const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
 db.groups.set('slack:CHANNEL_ID', {
   name: 'Main',
   channel: 'slack',
@@ -152,7 +152,7 @@ For channels that require a trigger (e.g. `@ai hello`):
 node -e "
 const { createDatabase } = require('./libs/db/dist/index.js');
 const fs = require('fs');
-const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
 db.groups.set('slack:CHANNEL_ID', {
   name: 'Channel Name',
   channel: 'slack',
@@ -197,7 +197,7 @@ Tell user:
    ```bash
    npx tsx -e "
    import { createDatabase } from '@nagi/db';
-   const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
+   const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
    console.log(JSON.stringify(db.groups.getAll(), null, 2));
    db.close();
    "

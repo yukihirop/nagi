@@ -113,7 +113,7 @@ Then register the main group. The main group has elevated privileges (no trigger
 node -e "
 const { createDatabase } = require('./libs/db/dist/index.js');
 const fs = require('fs');
-const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
 db.groups.set('slack:C_YOUR_CHANNEL_ID', {
   name: 'Main',
   channel: 'slack',

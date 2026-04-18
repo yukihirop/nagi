@@ -18,13 +18,13 @@ describe("DiscordChannel", () => {
     expect(channel.name).toBe("discord");
   });
 
-  it("ownsJid returns true for dc: prefix", () => {
+  it("ownsJid returns true for discord: prefix", () => {
     const channel = new DiscordChannel(baseConfig, mockOpts);
-    expect(channel.ownsJid("dc:123456")).toBe(true);
-    expect(channel.ownsJid("dc:")).toBe(true);
+    expect(channel.ownsJid("discord:123456")).toBe(true);
+    expect(channel.ownsJid("discord:")).toBe(true);
   });
 
-  it("ownsJid returns false for non-dc: prefix", () => {
+  it("ownsJid returns false for non-discord: prefix", () => {
     const channel = new DiscordChannel(baseConfig, mockOpts);
     expect(channel.ownsJid("slack:123456")).toBe(false);
     expect(channel.ownsJid("123456")).toBe(false);
@@ -64,6 +64,6 @@ describe("createDiscordFactory", () => {
     const channel = factory(mockOpts);
     expect(channel).not.toBeNull();
     expect(channel!.name).toBe("discord");
-    expect(channel!.ownsJid("dc:123")).toBe(true);
+    expect(channel!.ownsJid("discord:123")).toBe(true);
   });
 });

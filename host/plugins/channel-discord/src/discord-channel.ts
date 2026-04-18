@@ -54,7 +54,7 @@ export class DiscordChannel implements Channel {
       if (message.author.bot) return;
 
       const channelId = message.channelId;
-      const chatJid = `dc:${channelId}`;
+      const chatJid = `discord:${channelId}`;
       let content = message.content;
       const timestamp = message.createdAt.toISOString();
       const senderName =
@@ -186,7 +186,7 @@ export class DiscordChannel implements Channel {
     }
 
     try {
-      const channelId = jid.replace(/^dc:/, "");
+      const channelId = jid.replace(/^discord:/, "");
       const channel = await this.client.channels.fetch(channelId);
 
       if (!channel || !("send" in channel)) {
@@ -245,7 +245,7 @@ export class DiscordChannel implements Channel {
   }
 
   ownsJid(jid: string): boolean {
-    return jid.startsWith("dc:");
+    return jid.startsWith("discord:");
   }
 
   async disconnect(): Promise<void> {
@@ -259,7 +259,7 @@ export class DiscordChannel implements Channel {
   async setTyping(jid: string, isTyping: boolean): Promise<void> {
     if (!this.client || !isTyping) return;
     try {
-      const channelId = jid.replace(/^dc:/, "");
+      const channelId = jid.replace(/^discord:/, "");
       const channel = await this.client.channels.fetch(channelId);
       if (channel && "sendTyping" in channel) {
         await (channel as TextChannel).sendTyping();

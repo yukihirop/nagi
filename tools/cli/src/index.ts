@@ -155,7 +155,7 @@ async function main(): Promise<void> {
   const args = parseArgs();
   const config = loadConfig();
 
-  const dbPath = path.join(config.paths.dataDir, "store", "messages.db");
+  const dbPath = path.join(config.paths.dataDir, "store", "nagi.db");
   if (!fs.existsSync(dbPath)) {
     console.error("Database not found. Run /setup first.");
     process.exit(1);

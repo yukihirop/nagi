@@ -40,7 +40,7 @@ function parseArgs(args: string[]) {
 }
 
 const { port, dataDir } = parseArgs(process.argv.slice(2));
-const dbPath = path.join(dataDir, "store", "messages.db");
+const dbPath = path.join(dataDir, "store", "nagi.db");
 
 // Ensure DB directory exists
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });

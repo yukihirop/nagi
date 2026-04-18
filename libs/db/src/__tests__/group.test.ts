@@ -17,27 +17,27 @@ describe("GroupRepository", () => {
   };
 
   it("stores and retrieves a group", () => {
-    db.groups.set("dc:123", testGroup);
-    const group = db.groups.get("dc:123");
+    db.groups.set("discord:123", testGroup);
+    const group = db.groups.get("discord:123");
     expect(group).toBeDefined();
     expect(group!.name).toBe("Test Group");
     expect(group!.trigger).toBe("!test");
-    expect(group!.jid).toBe("dc:123");
+    expect(group!.jid).toBe("discord:123");
   });
 
   it("returns undefined for missing group", () => {
-    expect(db.groups.get("dc:999")).toBeUndefined();
+    expect(db.groups.get("discord:999")).toBeUndefined();
   });
 
   it("stores group with containerConfig", () => {
-    db.groups.set("dc:123", {
+    db.groups.set("discord:123", {
       ...testGroup,
       containerConfig: {
         additionalMounts: [{ hostPath: "/tmp", readonly: true }],
         timeout: 600000,
       },
     });
-    const group = db.groups.get("dc:123");
+    const group = db.groups.get("discord:123");
     expect(group!.containerConfig).toEqual({
       additionalMounts: [{ hostPath: "/tmp", readonly: true }],
       timeout: 600000,
@@ -45,23 +45,23 @@ describe("GroupRepository", () => {
   });
 
   it("stores group with isMain flag", () => {
-    db.groups.set("dc:main", { ...testGroup, folder: "main", isMain: true });
-    const group = db.groups.get("dc:main");
+    db.groups.set("discord:main", { ...testGroup, folder: "main", isMain: true });
+    const group = db.groups.get("discord:main");
     expect(group!.isMain).toBe(true);
   });
 
   it("gets all groups as record", () => {
-    db.groups.set("dc:1", testGroup);
-    db.groups.set("dc:2", { ...testGroup, name: "Other", folder: "other" });
+    db.groups.set("discord:1", testGroup);
+    db.groups.set("discord:2", { ...testGroup, name: "Other", folder: "other" });
     const all = db.groups.getAll();
     expect(Object.keys(all)).toHaveLength(2);
-    expect(all["dc:1"].name).toBe("Test Group");
-    expect(all["dc:2"].name).toBe("Other");
+    expect(all["discord:1"].name).toBe("Test Group");
+    expect(all["discord:2"].name).toBe("Other");
   });
 
   it("overwrites existing group", () => {
-    db.groups.set("dc:123", testGroup);
-    db.groups.set("dc:123", { ...testGroup, name: "Updated" });
-    expect(db.groups.get("dc:123")!.name).toBe("Updated");
+    db.groups.set("discord:123", testGroup);
+    db.groups.set("discord:123", { ...testGroup, name: "Updated" });
+    expect(db.groups.get("discord:123")!.name).toBe("Updated");
   });
 });

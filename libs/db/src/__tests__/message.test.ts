@@ -6,15 +6,15 @@ let db: NagiDatabase;
 beforeEach(() => {
   db = createDatabase({ memory: true });
   // Ensure chat exists for FK
-  db.chats.storeChatMetadata("dc:123", "2026-01-01T00:00:00Z", "Test");
-  db.chats.storeChatMetadata("dc:456", "2026-01-01T00:00:00Z", "Other");
+  db.chats.storeChatMetadata("discord:123", "2026-01-01T00:00:00Z", "Test");
+  db.chats.storeChatMetadata("discord:456", "2026-01-01T00:00:00Z", "Other");
 });
 
 describe("MessageRepository", () => {
   it("stores and retrieves messages", () => {
     db.messages.store({
       id: "msg-1",
-      chat_jid: "dc:123",
+      chat_jid: "discord:123",
       sender: "user1",
       sender_name: "Alice",
       content: "hello",
@@ -22,7 +22,7 @@ describe("MessageRepository", () => {
     });
 
     const result = db.messages.getNew(
-      ["dc:123"],
+      ["discord:123"],
       "2026-01-01T00:00:00Z",
       "Bot",
     );
@@ -34,7 +34,7 @@ describe("MessageRepository", () => {
   it("filters bot messages", () => {
     db.messages.store({
       id: "msg-1",
-      chat_jid: "dc:123",
+      chat_jid: "discord:123",
       sender: "user1",
       sender_name: "Alice",
       content: "hello",
@@ -42,7 +42,7 @@ describe("MessageRepository", () => {
     });
     db.messages.store({
       id: "msg-2",
-      chat_jid: "dc:123",
+      chat_jid: "discord:123",
       sender: "bot",
       sender_name: "Bot",
       content: "Bot: response",
@@ -51,7 +51,7 @@ describe("MessageRepository", () => {
     });
 
     const result = db.messages.getNew(
-      ["dc:123"],
+      ["discord:123"],
       "2026-01-01T00:00:00Z",
       "Bot",
     );
@@ -66,7 +66,7 @@ describe("MessageRepository", () => {
   it("getSince returns messages for a single chat", () => {
     db.messages.store({
       id: "msg-1",
-      chat_jid: "dc:123",
+      chat_jid: "discord:123",
       sender: "user1",
       sender_name: "Alice",
       content: "hello",
@@ -74,7 +74,7 @@ describe("MessageRepository", () => {
     });
     db.messages.store({
       id: "msg-2",
-      chat_jid: "dc:456",
+      chat_jid: "discord:456",
       sender: "user2",
       sender_name: "Bob",
       content: "other",
@@ -82,11 +82,11 @@ describe("MessageRepository", () => {
     });
 
     const msgs = db.messages.getSince(
-      "dc:123",
+      "discord:123",
       "2026-01-01T00:00:00Z",
       "Bot",
     );
     expect(msgs).toHaveLength(1);
-    expect(msgs[0].chat_jid).toBe("dc:123");
+    expect(msgs[0].chat_jid).toBe("discord:123");
   });
 });

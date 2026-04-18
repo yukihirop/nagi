@@ -16,11 +16,11 @@ describe("GroupQueue", () => {
       const processFn = vi.fn().mockResolvedValue(true);
       queue.setProcessMessagesFn(processFn);
 
-      queue.enqueueMessageCheck("dc:123");
+      queue.enqueueMessageCheck("discord:123");
 
       // Wait for async execution
       await vi.waitFor(() => {
-        expect(processFn).toHaveBeenCalledWith("dc:123");
+        expect(processFn).toHaveBeenCalledWith("discord:123");
       });
     });
 
@@ -34,9 +34,9 @@ describe("GroupQueue", () => {
       queue.setProcessMessagesFn(processFn);
 
       // First fills the slot
-      queue.enqueueMessageCheck("dc:1");
+      queue.enqueueMessageCheck("discord:1");
       // Second should be queued
-      queue.enqueueMessageCheck("dc:2");
+      queue.enqueueMessageCheck("discord:2");
 
       // Only first should have been called so far
       expect(processFn).toHaveBeenCalledTimes(1);
@@ -54,7 +54,7 @@ describe("GroupQueue", () => {
       queue.setProcessMessagesFn(processFn);
 
       queue.shutdown(0);
-      queue.enqueueMessageCheck("dc:123");
+      queue.enqueueMessageCheck("discord:123");
 
       expect(processFn).not.toHaveBeenCalled();
     });
@@ -65,7 +65,7 @@ describe("GroupQueue", () => {
       const queue = createQueue();
       const taskFn = vi.fn().mockResolvedValue(undefined);
 
-      queue.enqueueTask("dc:123", "task-1", taskFn);
+      queue.enqueueTask("discord:123", "task-1", taskFn);
 
       await vi.waitFor(() => {
         expect(taskFn).toHaveBeenCalled();
@@ -81,9 +81,9 @@ describe("GroupQueue", () => {
       const taskFn1 = vi.fn().mockReturnValue(firstTask);
       const taskFn2 = vi.fn().mockResolvedValue(undefined);
 
-      queue.enqueueTask("dc:123", "task-1", taskFn1);
+      queue.enqueueTask("discord:123", "task-1", taskFn1);
       // Same task ID should be skipped (running)
-      queue.enqueueTask("dc:123", "task-1", taskFn2);
+      queue.enqueueTask("discord:123", "task-1", taskFn2);
 
       expect(taskFn2).not.toHaveBeenCalled();
 
@@ -98,7 +98,7 @@ describe("GroupQueue", () => {
       const taskFn = vi.fn().mockResolvedValue(undefined);
 
       queue.shutdown(0);
-      queue.enqueueTask("dc:123", "task-1", taskFn);
+      queue.enqueueTask("discord:123", "task-1", taskFn);
 
       expect(taskFn).not.toHaveBeenCalled();
     });
@@ -126,12 +126,12 @@ describe("GroupQueue", () => {
       queue.setProcessMessagesFn(processFn);
 
       // Start message processing (fills slot)
-      queue.enqueueMessageCheck("dc:1");
+      queue.enqueueMessageCheck("discord:1");
       // Queue a task and more messages while active
-      queue.enqueueTask("dc:1", "task-1", async () => {
+      queue.enqueueTask("discord:1", "task-1", async () => {
         callOrder.push("task");
       });
-      queue.enqueueMessageCheck("dc:1");
+      queue.enqueueMessageCheck("discord:1");
 
       // Release message processing
       resolveMsg!();
@@ -155,7 +155,7 @@ describe("GroupQueue", () => {
 
       const processFn = vi.fn().mockResolvedValue(true);
       queue.setProcessMessagesFn(processFn);
-      queue.enqueueMessageCheck("dc:123");
+      queue.enqueueMessageCheck("discord:123");
 
       expect(processFn).not.toHaveBeenCalled();
     });

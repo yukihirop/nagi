@@ -23,14 +23,14 @@ describe("AppState", () => {
     state.load(db, "claude-code");
 
     state.lastTimestamp = "2026-01-01T00:00:00Z";
-    state.lastAgentTimestamp = { "dc:123": "2026-01-01T01:00:00Z" };
+    state.lastAgentTimestamp = { "discord:123": "2026-01-01T01:00:00Z" };
     state.saveTimestamps(db);
 
     const state2 = new AppState();
     state2.load(db, "claude-code");
     expect(state2.lastTimestamp).toBe("2026-01-01T00:00:00Z");
     expect(state2.lastAgentTimestamp).toEqual({
-      "dc:123": "2026-01-01T01:00:00Z",
+      "discord:123": "2026-01-01T01:00:00Z",
     });
   });
 
@@ -38,7 +38,7 @@ describe("AppState", () => {
     const state = new AppState();
     state.load(db, "claude-code");
 
-    state.registerGroup(db, "dc:123", {
+    state.registerGroup(db, "discord:123", {
       name: "Test",
       channel: "discord",
       folder: "test",
@@ -48,8 +48,8 @@ describe("AppState", () => {
 
     const state2 = new AppState();
     state2.load(db, "claude-code");
-    expect(state2.registeredGroups["dc:123"]).toBeDefined();
-    expect(state2.registeredGroups["dc:123"].name).toBe("Test");
+    expect(state2.registeredGroups["discord:123"]).toBeDefined();
+    expect(state2.registeredGroups["discord:123"].name).toBe("Test");
   });
 
   it("updates and reloads sessions for specific agent type", () => {

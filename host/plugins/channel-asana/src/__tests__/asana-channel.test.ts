@@ -126,7 +126,7 @@ describe("AsanaChannel — interface basics", () => {
     );
     expect(channel.ownsJid("asana:123")).toBe(true);
     expect(channel.ownsJid("slack:C1")).toBe(false);
-    expect(channel.ownsJid("dc:1")).toBe(false);
+    expect(channel.ownsJid("discord:1")).toBe(false);
   });
 
   it("isConnected false before connect, true after", async () => {

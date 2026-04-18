@@ -56,7 +56,7 @@ export class DiscordEmbedChannel extends DiscordChannel {
   ): Promise<TextChannel | ThreadChannel | null> {
     if (!this.client) return null;
 
-    const channelId = jid.replace(/^dc:/, "");
+    const channelId = jid.replace(/^discord:/, "");
     const channel = await this.client.channels.fetch(channelId);
 
     if (!channel || !("send" in channel)) {

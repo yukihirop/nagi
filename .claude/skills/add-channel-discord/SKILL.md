@@ -79,7 +79,7 @@ Tell user:
 
 > 1. In Discord, right-click the channel → **Copy Channel ID**
 >    (If "Copy Channel ID" is not visible, enable Developer Mode in Settings → App Settings → Advanced)
-> 2. The JID format is: `dc:CHANNEL_ID` (e.g., `dc:1234567890`)
+> 2. The JID format is: `discord:CHANNEL_ID` (e.g., `discord:1234567890`)
 
 Wait for user to provide the channel ID.
 
@@ -89,8 +89,8 @@ Wait for user to provide the channel ID.
 node -e "
 const { createDatabase } = require('./libs/db/dist/index.js');
 const fs = require('fs');
-const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/messages.db' });
-db.groups.set('dc:CHANNEL_ID', {
+const db = createDatabase({ path: '__data/{ASSISTANT_NAME}/store/nagi.db' });
+db.groups.set('discord:CHANNEL_ID', {
   name: 'Discord Main',
   channel: 'discord',
   folder: 'discord_main',

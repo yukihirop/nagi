@@ -5,7 +5,7 @@ function createMockDeps(): IpcDeps {
   return {
     sendMessage: vi.fn().mockResolvedValue(undefined),
     registeredGroups: vi.fn().mockReturnValue({
-      "dc:123": {
+      "discord:123": {
         name: "Test",
         channel: "discord",
         folder: "main",
@@ -13,7 +13,7 @@ function createMockDeps(): IpcDeps {
         added_at: "2026-01-01T00:00:00Z",
         isMain: true,
       },
-      "dc:456": {
+      "discord:456": {
         name: "Other",
         channel: "discord",
         folder: "other",
@@ -35,7 +35,7 @@ function createMockTaskRepo(): IpcTaskRepo {
     getById: vi.fn().mockReturnValue({
       id: "task-1",
       group_folder: "main",
-      chat_jid: "dc:123",
+      chat_jid: "discord:123",
       prompt: "test",
       schedule_type: "cron",
       schedule_value: "0 9 * * *",
@@ -68,7 +68,7 @@ describe("processTaskIpc", () => {
           prompt: "check status",
           schedule_type: "cron",
           schedule_value: "0 9 * * *",
-          targetJid: "dc:123",
+          targetJid: "discord:123",
         },
         "discord",
         "main",
@@ -95,7 +95,7 @@ describe("processTaskIpc", () => {
           prompt: "hack",
           schedule_type: "cron",
           schedule_value: "0 9 * * *",
-          targetJid: "dc:123", // main's JID
+          targetJid: "discord:123", // main's JID
         },
         "discord",
         "other",
@@ -115,7 +115,7 @@ describe("processTaskIpc", () => {
           prompt: "test",
           schedule_type: "cron",
           schedule_value: "invalid cron",
-          targetJid: "dc:123",
+          targetJid: "discord:123",
         },
         "discord",
         "main",
@@ -183,7 +183,7 @@ describe("processTaskIpc", () => {
       await processTaskIpc(
         {
           type: "register_group",
-          jid: "dc:789",
+          jid: "discord:789",
           name: "New Group",
           folder: "newgroup",
           trigger: "!new",
@@ -197,7 +197,7 @@ describe("processTaskIpc", () => {
       );
 
       expect(deps.registerGroup).toHaveBeenCalledWith(
-        "dc:789",
+        "discord:789",
         expect.objectContaining({
           name: "New Group",
           folder: "newgroup",
@@ -210,7 +210,7 @@ describe("processTaskIpc", () => {
       await processTaskIpc(
         {
           type: "register_group",
-          jid: "dc:789",
+          jid: "discord:789",
           name: "Hack",
           folder: "hack",
           trigger: "!hack",
@@ -230,7 +230,7 @@ describe("processTaskIpc", () => {
       await processTaskIpc(
         {
           type: "register_group",
-          jid: "dc:789",
+          jid: "discord:789",
           name: "Bad",
           folder: "../etc",
           trigger: "!bad",
