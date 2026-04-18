@@ -1,6 +1,6 @@
 # Skills Reference
 
-Nagi ships with **29 built-in skills** that cover every stage of the assistant lifecycle — from first-time setup to day-to-day service management, channel wiring, and plugin scaffolding.
+Nagi ships with **30 built-in skills** that cover every stage of the assistant lifecycle — from first-time setup to day-to-day service management, channel wiring, and plugin scaffolding.
 
 ## What are skills?
 
@@ -25,11 +25,11 @@ Skills accept natural-language triggers too — typing "restart nagi" or "add sl
 | 5 | [Channel Plugins](/en/09_skills_channel) | 6 | Slack, Discord, and Asana connections plus rich-display modes |
 | 6 | [MCP Plugins](/en/10_skills_mcp) | 2 | Ollama (local LLM) and Vercel (deployment) integrations |
 | 7 | [Agent Hooks](/en/11_skills_hooks) | 2 | Tool-execution and session-start notifications to chat channels |
-| 8 | [Group Prompts](/en/12_skills_group_prompt) | 2 | Create and edit prompt files (IDENTITY.md, INSTRUCTIONS.md, etc.) |
+| 8 | [Group Prompts](/en/12_skills_group_prompt) | 3 | Create and edit prompt files (IDENTITY.md, INSTRUCTIONS.md, etc.); configure the per-group skill allowlist |
 | 9 | [Plugin Scaffolding](/en/13_skills_scaffold) | 3 | Generators for new channel, MCP, and hooks plugins |
 | 10 | [Misc](/en/14_skills_misc) | 1 | Context probe for verifying auto-mount |
 
-## Quick-reference: all 29 skills
+## Quick-reference: all 30 skills
 
 | Skill | Category | Description |
 |-------|----------|-------------|
@@ -58,6 +58,7 @@ Skills accept natural-language triggers too — typing "restart nagi" or "add sl
 | `/add-agent-hooks-open-code` | Hooks | Notification hooks for Open Code containers |
 | `/create-group-prompt` | Prompt | Create new group prompt files |
 | `/update-group-prompt` | Prompt | Edit existing group prompt files |
+| `/configure-skills` | Prompt | Edit per-group skill allowlist (`skills.config.json`) |
 | `/create-plugin-channel` | Scaffold | Generate a channel plugin package |
 | `/create-container-plugin-mcp` | Scaffold | Generate an MCP plugin package |
 | `/create-container-plugin-agent-hooks` | Scaffold | Generate an agent-hooks plugin package |
