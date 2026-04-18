@@ -4,3 +4,7 @@ docs/.vitepress/dist/
 dist/
 .vercel/
 .vercel
+
+# Vercel-generated local env (contains OIDC tokens — never commit)
+.env.local
+.env*.local

@@ -16,7 +16,7 @@ Built as a clean-room reimplementation of [NanoClaw](https://github.com/qwibitai
 
 ## Example
 
-Slack で `@ai ai changelog` と投げると、コンテナ内で Claude が各プロバイダーの changelog を取得し、週次まとめサイトを Vercel にデプロイして URL を返します。実行した tool・コスト・所要トークン数も同じスレッドに可視化されます。
+Send `@ai ai changelog` in Slack and Claude pulls the week's release notes from each AI provider inside the container, deploys a summary site to Vercel, and replies with the URL — all in the same thread. Tool calls, cost, and token usage are surfaced inline for visibility.
 
 <p align="center">
   <img src="docs/assets/slack-thread-example.png" alt="Slack thread showing Nagi running the ai-changelog skill" width="540" />
