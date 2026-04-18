@@ -147,7 +147,7 @@ These must be enabled in the Developer Portal under Bot > Privileged Gateway Int
 #### Setup tips
 
 - Developer Mode must be enabled in Discord (Settings > App Settings > Advanced) to copy channel IDs.
-- The JID format for Discord groups is `dc:CHANNEL_ID` (e.g. `dc:1234567890`).
+- The JID format for Discord groups is `discord:CHANNEL_ID` (e.g. `discord:1234567890`).
 - The skill provides an OAuth2 URL template for inviting the bot to your server.
 - If you see a "Used disallowed intents" error, enable the required intents in the Developer Portal and restart.
 

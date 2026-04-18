@@ -7,7 +7,7 @@ function makeTask(id: string): ScheduledTask {
   return {
     id,
     group_folder: "main",
-    chat_jid: "dc:123",
+    chat_jid: "discord:123",
     prompt: "test",
     schedule_type: "cron",
     schedule_value: "0 9 * * *",
@@ -49,7 +49,7 @@ describe("TaskScheduler", () => {
 
     await vi.waitFor(() => {
       expect(queue.enqueueTask).toHaveBeenCalledWith(
-        "dc:123",
+        "discord:123",
         "task-1",
         expect.any(Function),
       );

@@ -1,16 +1,16 @@
 // Shared helpers for JID prefixes, ID validation, and JID composition.
 // Imported by register.mjs / reachability.mjs / unregister.mjs.
 //
-// Historical note: slack/asana use their channel name as the JID prefix
-// (`slack:`, `asana:`), but discord uses a shortened `dc:` prefix.
+// Single source of truth for channel JID prefixes. All channels use their
+// channel name as the prefix (`slack:`, `discord:`, `asana:`).
 // Source of truth:
 //   host/plugins/channel-slack/src/slack-channel.ts:62  → `slack:${id}`
-//   host/plugins/channel-discord/src/discord-channel.ts:57 → `dc:${id}`
+//   host/plugins/channel-discord/src/discord-channel.ts:57 → `discord:${id}`
 //   host/plugins/channel-asana/src/asana-channel.ts:449 → `asana:${id}`
 
 export const PREFIX_MAP = Object.freeze({
   slack: "slack:",
-  discord: "dc:",
+  discord: "discord:",
   asana: "asana:",
 });
 

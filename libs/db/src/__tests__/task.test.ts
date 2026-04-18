@@ -6,7 +6,7 @@ let db: NagiDatabase;
 const baseTask = {
   id: "task-1",
   group_folder: "main",
-  chat_jid: "dc:123",
+  chat_jid: "discord:123",
   prompt: "check status",
   schedule_type: "cron" as const,
   schedule_value: "0 9 * * *",

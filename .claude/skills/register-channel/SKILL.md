@@ -23,7 +23,7 @@ description: Register, list, or unregister a channel ID as a group in the assist
 
 すべて **JSON を stdout に出力** する。Bash 側で `jq` や `python3 -c 'import json'` でパースして user に表示する。
 
-`src/jid.mjs` には JIDプレフィックスマップの single source of truth があるので、将来 `dc:` → `discord:` に統一する際はここから grep すれば芋づる式に追える。
+`src/jid.mjs` には JIDプレフィックスマップ(`slack:` / `discord:` / `asana:`)の single source of truth がある。プレフィックスを追加・変更する際はここを起点に grep すれば関連箇所を芋づる式に追える。
 
 ## Step 0: ASSISTANT_NAME の検出
 

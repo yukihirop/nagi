@@ -31,14 +31,14 @@ describe("loadSenderAllowlist", () => {
     const filePath = writeJson("test-allowlist-valid.json", {
       default: { allow: "*", mode: "trigger" },
       chats: {
-        "dc:123": { allow: ["user1", "user2"], mode: "drop" },
+        "discord:123": { allow: ["user1", "user2"], mode: "drop" },
       },
       logDenied: false,
     });
     const cfg = loadSenderAllowlist(filePath);
     expect(cfg.default.allow).toBe("*");
-    expect(cfg.chats["dc:123"].allow).toEqual(["user1", "user2"]);
-    expect(cfg.chats["dc:123"].mode).toBe("drop");
+    expect(cfg.chats["discord:123"].allow).toEqual(["user1", "user2"]);
+    expect(cfg.chats["discord:123"].mode).toBe("drop");
     expect(cfg.logDenied).toBe(false);
     fs.unlinkSync(filePath);
   });
@@ -64,13 +64,13 @@ describe("loadSenderAllowlist", () => {
     const filePath = writeJson("test-allowlist-badchat.json", {
       default: { allow: "*", mode: "trigger" },
       chats: {
-        "dc:good": { allow: ["user1"], mode: "trigger" },
-        "dc:bad": { allow: 123, mode: "invalid" },
+        "discord:good": { allow: ["user1"], mode: "trigger" },
+        "discord:bad": { allow: 123, mode: "invalid" },
       },
     });
     const cfg = loadSenderAllowlist(filePath);
-    expect(cfg.chats["dc:good"]).toBeDefined();
-    expect(cfg.chats["dc:bad"]).toBeUndefined();
+    expect(cfg.chats["discord:good"]).toBeDefined();
+    expect(cfg.chats["discord:bad"]).toBeUndefined();
     fs.unlinkSync(filePath);
   });
 });
@@ -79,22 +79,22 @@ describe("isSenderAllowed", () => {
   const cfg: SenderAllowlistConfig = {
     default: { allow: "*", mode: "trigger" },
     chats: {
-      "dc:restricted": { allow: ["alice", "bob"], mode: "trigger" },
+      "discord:restricted": { allow: ["alice", "bob"], mode: "trigger" },
     },
     logDenied: false,
   };
 
   it("allows all senders with wildcard", () => {
-    expect(isSenderAllowed("dc:open", "anyone", cfg)).toBe(true);
+    expect(isSenderAllowed("discord:open", "anyone", cfg)).toBe(true);
   });
 
   it("allows listed senders", () => {
-    expect(isSenderAllowed("dc:restricted", "alice", cfg)).toBe(true);
-    expect(isSenderAllowed("dc:restricted", "bob", cfg)).toBe(true);
+    expect(isSenderAllowed("discord:restricted", "alice", cfg)).toBe(true);
+    expect(isSenderAllowed("discord:restricted", "bob", cfg)).toBe(true);
   });
 
   it("denies unlisted senders", () => {
-    expect(isSenderAllowed("dc:restricted", "charlie", cfg)).toBe(false);
+    expect(isSenderAllowed("discord:restricted", "charlie", cfg)).toBe(false);
   });
 });
 
@@ -102,17 +102,17 @@ describe("shouldDropMessage", () => {
   const cfg: SenderAllowlistConfig = {
     default: { allow: "*", mode: "trigger" },
     chats: {
-      "dc:drop": { allow: "*", mode: "drop" },
+      "discord:drop": { allow: "*", mode: "drop" },
     },
     logDenied: false,
   };
 
   it("returns false for trigger mode", () => {
-    expect(shouldDropMessage("dc:open", cfg)).toBe(false);
+    expect(shouldDropMessage("discord:open", cfg)).toBe(false);
   });
 
   it("returns true for drop mode", () => {
-    expect(shouldDropMessage("dc:drop", cfg)).toBe(true);
+    expect(shouldDropMessage("discord:drop", cfg)).toBe(true);
   });
 });
 
@@ -124,10 +124,10 @@ describe("isTriggerAllowed", () => {
   };
 
   it("returns true for allowed sender", () => {
-    expect(isTriggerAllowed("dc:123", "admin", cfg)).toBe(true);
+    expect(isTriggerAllowed("discord:123", "admin", cfg)).toBe(true);
   });
 
   it("returns false for denied sender", () => {
-    expect(isTriggerAllowed("dc:123", "stranger", cfg)).toBe(false);
+    expect(isTriggerAllowed("discord:123", "stranger", cfg)).toBe(false);
   });
 });

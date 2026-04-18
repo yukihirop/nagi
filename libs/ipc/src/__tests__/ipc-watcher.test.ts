@@ -10,7 +10,7 @@ function createMockDeps(): IpcDeps {
   return {
     sendMessage: vi.fn().mockResolvedValue(undefined),
     registeredGroups: vi.fn().mockReturnValue({
-      "dc:123": {
+      "discord:123": {
         name: "Main",
         channel: "discord",
         folder: "main",
@@ -90,13 +90,13 @@ describe("IpcWatcher", () => {
     fs.mkdirSync(msgDir, { recursive: true });
     fs.writeFileSync(
       path.join(msgDir, "test.json"),
-      JSON.stringify({ type: "message", chatJid: "dc:123", text: "hello" }),
+      JSON.stringify({ type: "message", chatJid: "discord:123", text: "hello" }),
     );
 
     watcher.start();
 
     await vi.waitFor(() => {
-      expect(deps.sendMessage).toHaveBeenCalledWith("dc:123", "hello");
+      expect(deps.sendMessage).toHaveBeenCalledWith("discord:123", "hello");
     });
   });
 });

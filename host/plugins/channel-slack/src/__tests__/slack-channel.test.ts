@@ -43,7 +43,7 @@ describe("SlackChannel", () => {
 
   it("ownsJid returns false for non-slack: prefix", () => {
     const channel = new SlackChannel(baseConfig, mockOpts);
-    expect(channel.ownsJid("dc:123")).toBe(false);
+    expect(channel.ownsJid("discord:123")).toBe(false);
     expect(channel.ownsJid("123")).toBe(false);
   });
 
