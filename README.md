@@ -14,6 +14,16 @@ Slack, Discord, Asana のいずれかにメッセージを送ると、Docker コ
 
 Built as a clean-room reimplementation of [NanoClaw](https://github.com/qwibitai/nanoclaw) with a Turborepo monorepo architecture, plugin system, and DI-based design.
 
+## Example
+
+Send `@ai ai changelog` in Slack and Claude pulls the week's release notes from each AI provider inside the container, deploys a summary site to Vercel, and replies with the URL — all in the same thread. Tool calls, cost, and token usage are surfaced inline for visibility.
+
+<p align="center">
+  <img src="docs/assets/slack-thread-example.png" alt="Slack thread showing Nagi running the ai-changelog skill" width="540" />
+</p>
+
+Deployed output: https://ai-changelog-66qx26i5e-yukihirops-projects.vercel.app
+
 ## Prerequisites
 
 - [Docker](https://www.docker.com/) (required — agents run in containers)
