@@ -177,7 +177,7 @@ Expected behavior:
 
 After Step 7 succeeds, do not stop silently. Assess the current state and surface follow-up actions via `AskUserQuestion` (use the language picked in Step 0). Inspect the workspace before asking so you can recommend only what still applies:
 
-- Read `.env` and check which of `SLACK_BOT_TOKEN`, `DISCORD_BOT_TOKEN`, `ASANA_PAT` are set.
+- Read `deploy/{ASSISTANT_NAME}/.env` and check which of `SLACK_BOT_TOKEN`, `DISCORD_BOT_TOKEN`, `ASANA_PAT` are set.
 - Check whether a launchd plist exists for this assistant (e.g. `~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist` on macOS).
 
 Then offer the relevant items below as options. Suggest only what is not already done; do not pad the question with already-completed items.
