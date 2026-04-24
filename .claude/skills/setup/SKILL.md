@@ -98,25 +98,17 @@ Hand off to the `/deploy` skill (invoke it via the Skill tool, do not just print
 
 When `/deploy` returns, `.env` should have at least one channel token plus an agent auth token. If neither is present, ask the user before continuing — `pnpm dev` in the next step will not produce a usable bot otherwise.
 
-## 5. Start & Register Main Group
+## 5. Install as a Background Service & Register Main Group
 
-Kill any existing nagi processes first (credential proxy on port 3002 may linger):
-```bash
-pkill -f "tsx deploy/{ASSISTANT_NAME}/host/entry.ts" 2>/dev/null
-lsof -ti :3002 | xargs kill 2>/dev/null
-```
+Hand off to `/setup-launchd` (invoke via the Skill tool, do not just print "run /setup-launchd"). It installs the launchd plist with detected paths and loads the service so the orchestrator starts in the background. macOS only — see Troubleshooting if the host is Linux.
 
-Then start nagi in development mode:
-```bash
-pnpm dev
-```
+Once the service is loaded, the channel adapters connect and log their channel JIDs. Read them so the user can pick which one to register as the main group:
 
-Once the orchestrator starts, the channel adapters connect and log their channel JIDs. Read them out so the user can pick the one to register:
 ```bash
 tail -50 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log | grep -E 'slack:|discord:|asana:'
 ```
 
-Look for log lines like `slack:C0AP0BRN50X` or `discord:1487646521259196426`.
+Look for log lines like `slack:C0AP0BRN50X` or `discord:1487646521259196426`. If nothing shows up yet, wait a few seconds for the adapters to connect and re-tail.
 
 Now register the main group via the `/register-channel` skill (invoke via the Skill tool, do not run a hand-rolled `node -e` script). Pre-fill the answers so the user just confirms:
 
@@ -129,9 +121,9 @@ Now register the main group via the `/register-channel` skill (invoke via the Sk
 - isMain: `true`
 - requiresTrigger: `false`
 
-`/register-channel` runs a reachability check (Slack/Discord/Asana API), creates the DB row, creates `__data/{ASSISTANT_NAME}/groups/main/`, and tells you the right restart command. The main group has elevated privileges: no trigger required, and it can register additional groups at runtime.
+`/register-channel` runs a reachability check (Slack/Discord/Asana API), creates the DB row, and creates `__data/{ASSISTANT_NAME}/groups/main/`. The main group has elevated privileges: no trigger required, and it can register additional groups at runtime.
 
-After `/register-channel` returns, restart the orchestrator using the command it printed (typically `pkill -f "deploy/{ASSISTANT_NAME}/host/entry.ts"` then `pnpm dev` again) so the new group is loaded.
+After `/register-channel` returns, run `/nagi-restart` so launchd reloads the service and picks up the new group.
 
 <!-- Legacy fallback: if `/register-channel` is unavailable for some reason,
 the equivalent script is:
@@ -169,10 +161,10 @@ Features: Overview stats, Groups, Channels, Sessions (chat viewer), Tasks, Logs,
 
 ## 7. Verify
 
-Restart the orchestrator and send a message in your main channel. Check logs:
+Send a message in your main channel and watch the logs via `/nagi-logs` (or tail directly):
 
 ```bash
-pnpm dev
+tail -f __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 ```
 
 Expected behavior:
@@ -195,11 +187,9 @@ Then offer the relevant items below as options. Suggest only what is not already
    - `/add-channel-discord` — Discord Gateway bot
    - `/add-channel-asana` — Asana PAT + project polling
 
-2. **Run as a background service (recommended on macOS)** — `pnpm dev` is foreground and dies with the terminal. Recommend `/setup-launchd` if no plist is present and the host is macOS. Skip on Linux (launchd is macOS-only).
+2. **Rich channel display (optional)** — only if the user expressed interest in nicer notifications. Mention `/add-channel-slack-block-kit` / `/add-channel-slack-block-kit-embed` for Slack, `/add-channel-discord-embed` for Discord.
 
-3. **Rich channel display (optional)** — only if the user expressed interest in nicer notifications. Mention `/add-channel-slack-block-kit` / `/add-channel-slack-block-kit-embed` for Slack, `/add-channel-discord-embed` for Discord.
-
-4. **Agent hooks (optional)** — `/add-agent-hooks-claude-code` or `/add-agent-hooks-open-code` for PostToolUse / SessionStart notifications during long agent sessions.
+3. **Agent hooks (optional)** — `/add-agent-hooks-claude-code` or `/add-agent-hooks-open-code` for PostToolUse / SessionStart notifications during long agent sessions.
 
 Present the still-applicable items as `AskUserQuestion` options (single-select; include an explicit "Done — exit setup" option). When the user picks one, hand off by suggesting they invoke that slash command — do not run the other skill yourself inside `/setup`. If they pick "Done", confirm completion and exit.
 
@@ -213,4 +203,6 @@ Present the still-applicable items as `AskUserQuestion` options (single-select; 
 
 **Container fails:** Check `__data/{ASSISTANT_NAME}/groups/main/logs/container-*.log` for details. Ensure the Docker image is built (`nagi-agent:latest` for Claude Code, `nagi-agent-opencode:latest` for Open Code).
 
-**"SLACK_BOT_TOKEN not set":** Tokens must be in `.env` at the project root, not in environment variables.
+**"SLACK_BOT_TOKEN not set":** Tokens must be in `deploy/{ASSISTANT_NAME}/.env`, not in environment variables. The project-root `.env` is not loaded.
+
+**Linux:** Currently unsupported. The maintained startup path uses macOS launchd (`/setup-launchd`). `pnpm dev` exists in the codebase and may work for self-driven Linux setups, but there is no official Linux flow.

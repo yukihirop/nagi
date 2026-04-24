@@ -46,14 +46,13 @@ _TODO_
 
 ## Get Started
 
-`/setup` does most of the heavy lifting (Node/pnpm, Docker, container image build, `/deploy`, first `pnpm dev`, and main-group registration), but it is not fully hands-off. Plan on this 3-step flow:
+`/setup` does most of the heavy lifting (Node/pnpm, Docker, container image build, `/deploy`, launchd service install, and main-group registration), but it is not fully hands-off. Plan on this 2-step flow (macOS only — Linux is currently unsupported):
 
-1. **`/setup`** — runs the bulk of installation. You will need to provide:
-   - One channel bot token in `.env` (Slack / Discord / Asana — pick at least one)
+1. **`/setup`** — runs the bulk of installation, including starting nagi as a macOS launchd service via `/setup-launchd`. You will need to provide:
+   - One channel bot token in `deploy/{ASSISTANT_NAME}/.env` (Slack / Discord / Asana — pick at least one)
    - An agent auth token: `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` for Claude Code, or a provider API key (OpenRouter / Gemini / OpenAI) for Open Code
-   - The channel ID for the main group, which you read off the logs after the first `pnpm dev` and paste into the registration snippet
+   - The channel ID for the main group, which you read off the launchd logs and paste into the registration snippet
 2. **`/add-channel-slack` / `/add-channel-discord` / `/add-channel-asana`** — only if you have not yet created the channel's Bot/App. These skills walk you through bot creation, token setup, and group registration. Skip if you already pasted the token during `/setup`.
-3. **`/setup-launchd`** — installs nagi as a macOS launchd service so it runs persistently in the background instead of foreground `pnpm dev`. Optional but recommended once you have it working.
 
 After that, day-to-day commands are `/nagi-restart` (after editing code or templates), `/update-group-prompt` (to tune a group's CLAUDE.md / IDENTITY.md / SOUL.md), `/deploy` (after editing anything under `deploy/templates/`), and `/update-container` (after touching the Dockerfile or container plugins).
 
