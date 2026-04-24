@@ -51,7 +51,7 @@ _TODO_
 1. **`/setup`** — runs the bulk of installation, including starting nagi as a macOS launchd service via `/setup-launchd`. You will need to provide:
    - One channel bot token in `deploy/{ASSISTANT_NAME}/.env` (Slack / Discord / Asana — pick at least one)
    - An agent auth token: `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` for Claude Code, or a provider API key (OpenRouter / Gemini / OpenAI) for Open Code
-   - The channel ID for the main group, which you read off the launchd logs and paste into the registration snippet
+   - The channel ID for the main group, which you read off the launchd logs and paste into the `/register-channel` prompt
 2. **`/add-channel-slack` / `/add-channel-discord` / `/add-channel-asana`** — only if you have not yet created the channel's Bot/App. These skills walk you through bot creation, token setup, and group registration. Skip if you already pasted the token during `/setup`.
 
 After that, day-to-day commands are `/nagi-restart` (after editing code or templates), `/update-group-prompt` (to tune a group's CLAUDE.md / IDENTITY.md / SOUL.md), `/deploy` (after editing anything under `deploy/templates/`), and `/update-container` (after touching the Dockerfile or container plugins).

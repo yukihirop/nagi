@@ -112,7 +112,7 @@ Look for log lines like `slack:C0AP0BRN50X` or `discord:1487646521259196426`. If
 
 Now register the main group via the `/register-channel` skill (invoke via the Skill tool, do not run a hand-rolled `node -e` script). Pre-fill the answers so the user just confirms:
 
-- Action: **登録する** (register)
+- Action: **register** (the option labelled `登録する` / `Register` depending on the language picked in `/register-channel`)
 - Channel kind: whichever JID prefix you found in the logs
 - Channel ID: the suffix of the JID (e.g. `C0AP0BRN50X` for `slack:C0AP0BRN50X`)
 - Group name: `Main`
