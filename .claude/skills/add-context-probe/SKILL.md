@@ -5,6 +5,15 @@ description: Install or remove a context probe under deploy/{ASSISTANT_NAME}/con
 
 # Add Context Probe
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 `deploy/{ASSISTANT_NAME}/container/context/` 配下の自動マウント機構（`/workspace/extra/{name}` への read-only マウント + Claude Code の `additionalDirectories` 取り込み + `CLAUDE_CODE_ADDITIONAL_DIRECTORIES_CLAUDE_MD` 経由の `CLAUDE.md` 自動追記）が動いているかを確認するためのプローブを設置するスキル。
 
 2 種類のプローブに対応:

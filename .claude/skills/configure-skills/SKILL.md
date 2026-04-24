@@ -5,6 +5,15 @@ description: Configure the per-group skills allowlist at deploy/{ASSISTANT_NAME}
 
 # Configure Skills
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Interactively edit `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/skills.config.json` — the per-group allowlist that controls which skills under `container/skills/` get copied into the agent session at `{groupSessionsDir}/skills`. Use this to reduce the input-token bill for groups that do not need every skill (e.g. casual chat channels).
 
 **Behavior recap** (enforced by `host/orchestrator/src/container-runner.ts`):

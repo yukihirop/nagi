@@ -5,6 +5,15 @@ description: Switch Slack channel to Block Kit Embed rich display with colored l
 
 # Switch to Slack Block Kit Embed Display
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Switch Slack rendering to the Block Kit **Embed** variant, which wraps Block Kit blocks in Slack `attachments` with a `color` field. This renders a colored vertical bar on the left of each message — matching the look of the Discord Embed display mode.
 
 **Before (plain Block Kit):** Formatted blocks without a colored side bar.

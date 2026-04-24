@@ -5,6 +5,15 @@ description: Run initial Nagi setup. Use when user wants to install dependencies
 
 # Nagi Setup
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Run setup steps automatically. Only pause when user action is required (pasting tokens, configuration choices).
 
 **Principle:** When something is broken or missing, fix it. Don't tell the user to go fix it themselves unless it genuinely requires their manual action (e.g. pasting a secret token). If a dependency is missing, install it.

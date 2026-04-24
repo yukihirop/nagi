@@ -5,9 +5,18 @@ description: Show nagi service logs. Triggers on "logs", "show logs", "nagi logs
 
 # Nagi Logs
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Show the latest nagi service logs.
 
-## Step 0: Determine ASSISTANT_NAME
+## Prerequisite: Determine ASSISTANT_NAME
 
 ```bash
 ls -d deploy/*/ 2>/dev/null | grep -v templates | sed 's|deploy/||;s|/||'

@@ -5,6 +5,15 @@ description: Sync group defaults (CLAUDE.md etc.) from deploy/{ASSISTANT_NAME}/g
 
 # Update Group Defaults
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Sync git-tracked group defaults from `deploy/{ASSISTANT_NAME}/groups/` to `__data/{ASSISTANT_NAME}/groups/`. Normally this happens automatically on `pnpm dev` startup, but this skill forces an immediate sync — including overwriting existing files when the user explicitly requests it.
 
 Note: `deploy/{ASSISTANT_NAME}/groups/` is the user-editable materialized copy of `deploy/templates/groups/` (the pristine upstream). Use the `deploy` skill to refresh `deploy/{ASSISTANT_NAME}/groups/` from templates first if needed.

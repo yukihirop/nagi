@@ -5,6 +5,15 @@ description: Register, list, or unregister a channel ID as a group in the assist
 
 # register-channel
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 既存のチャンネルID(Bot/Appは既に作成済み前提)を、指定アシスタントの `__data/{ASSISTANT_NAME}/store/nagi.db` の `registered_groups` に登録/一覧表示/削除するスキル。
 
 `add-channel-slack/discord/asana` がBot作成込みの重いフローなのに対し、本スキルは **既存Bot + 既存チャンネル** を前提とした軽量な ID→DB 登録に特化。到達性検証で Bot 未招待/ID誤り を事前検出する。
@@ -25,7 +34,7 @@ description: Register, list, or unregister a channel ID as a group in the assist
 
 `src/jid.mjs` には JIDプレフィックスマップ(`slack:` / `discord:` / `asana:`)の single source of truth がある。プレフィックスを追加・変更する際はここを起点に grep すれば関連箇所を芋づる式に追える。
 
-## Step 0: ASSISTANT_NAME の検出
+## 前提: ASSISTANT_NAME の検出
 
 ```bash
 ls -d deploy/*/ 2>/dev/null | grep -v templates | sed 's|deploy/||;s|/||'

@@ -5,6 +5,15 @@ description: Scaffold a new MCP plugin for nagi agent containers. Generates pack
 
 # Create MCP Plugin
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Scaffold a new MCP plugin that runs inside agent containers, following the established pattern (mcp-ollama, mcp-vercel).
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.

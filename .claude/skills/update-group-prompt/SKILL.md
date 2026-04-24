@@ -5,6 +5,15 @@ description: Interactively update an existing group prompt file (CLAUDE.md, AGEN
 
 # Update Group Prompt
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Interactively modify an existing prompt file in a group's `deploy/{ASSISTANT_NAME}/groups/{channel}/{group}/` directory. Use this after `create-group-prompt` when you want to refine tone, add rules, rename things, or rewrite a section — without replacing the whole file.
 
 If the target file does not exist yet, tell the user to run `create-group-prompt` instead.
