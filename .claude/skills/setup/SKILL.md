@@ -86,15 +86,17 @@ Takes a few minutes on first build (cached afterwards).
 
 ## 4. Deploy
 
-Run `/deploy` to generate local entry points, data directories, `.env`, and group prompt defaults from templates. Select **All** when prompted.
+Hand off to the `/deploy` skill (invoke it via the Skill tool, do not just print "run /deploy"). Tell `/deploy` to select **All** targets, and pass through the agent type chosen in step 3b so it can set `CONTAINER_IMAGE` correctly.
 
-`/deploy` handles:
-- `.env` creation and token configuration (authentication + channels)
-- Entry point generation (host, Claude Code container, Open Code container)
+`/deploy` will guide the user through:
+
+- `.env` creation, with prompts for **agent authentication** (`CLAUDE_CODE_OAUTH_TOKEN` via `claude setup-token`, or `ANTHROPIC_API_KEY`, or Open Code provider keys)
+- `.env` channel tokens (Slack / Discord / Asana — multi-select, with Bot/App creation instructions)
+- Entry points (host, Claude Code container, Open Code container)
 - Group prompt defaults
 - Data directories (`__data/{ASSISTANT_NAME}/`)
 
-If Open Code was chosen in step 3b, tell `/deploy` so it can set `CONTAINER_IMAGE=nagi-agent-opencode:latest` in `.env`.
+When `/deploy` returns, `.env` should have at least one channel token plus an agent auth token. If neither is present, ask the user before continuing — `pnpm dev` in the next step will not produce a usable bot otherwise.
 
 ## 5. Start & Register Main Group
 
@@ -109,14 +111,30 @@ Then start nagi in development mode:
 pnpm dev
 ```
 
-Once the orchestrator starts and channels connect, check the logs for the channel ID:
+Once the orchestrator starts, the channel adapters connect and log their channel JIDs. Read them out so the user can pick the one to register:
 ```bash
-tail -20 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
+tail -50 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log | grep -E 'slack:|discord:|asana:'
 ```
 
-Look for log lines showing channel JIDs (e.g. `slack:C...` or `discord:...`).
+Look for log lines like `slack:C0AP0BRN50X` or `discord:1487646521259196426`.
 
-Then register the main group. The main group has elevated privileges (no trigger required, can register other groups):
+Now register the main group via the `/register-channel` skill (invoke via the Skill tool, do not run a hand-rolled `node -e` script). Pre-fill the answers so the user just confirms:
+
+- Action: **登録する** (register)
+- Channel kind: whichever JID prefix you found in the logs
+- Channel ID: the suffix of the JID (e.g. `C0AP0BRN50X` for `slack:C0AP0BRN50X`)
+- Group name: `Main`
+- folder: `main`
+- trigger: `@{ASSISTANT_NAME}`
+- isMain: `true`
+- requiresTrigger: `false`
+
+`/register-channel` runs a reachability check (Slack/Discord/Asana API), creates the DB row, creates `__data/{ASSISTANT_NAME}/groups/main/`, and tells you the right restart command. The main group has elevated privileges: no trigger required, and it can register additional groups at runtime.
+
+After `/register-channel` returns, restart the orchestrator using the command it printed (typically `pkill -f "deploy/{ASSISTANT_NAME}/host/entry.ts"` then `pnpm dev` again) so the new group is loaded.
+
+<!-- Legacy fallback: if `/register-channel` is unavailable for some reason,
+the equivalent script is:
 
 ```bash
 node -e "
@@ -137,6 +155,7 @@ fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/main', { recursive: true });
 console.log('Main group registered');
 "
 ```
+-->
 
 ## 6. Dashboard UI (Optional)
 
