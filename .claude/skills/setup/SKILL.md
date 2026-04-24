@@ -162,6 +162,28 @@ Expected behavior:
 3. Container spawned (log: "Spawning container agent")
 4. Response sent back to channel
 
+## 8. Next Steps
+
+After Step 7 succeeds, do not stop silently. Assess the current state and surface follow-up actions via `AskUserQuestion` (use the language picked in Step 0). Inspect the workspace before asking so you can recommend only what still applies:
+
+- Read `.env` and check which of `SLACK_BOT_TOKEN`, `DISCORD_BOT_TOKEN`, `ASANA_PAT` are set.
+- Check whether a launchd plist exists for this assistant (e.g. `~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist` on macOS).
+
+Then offer the relevant items below as options. Suggest only what is not already done; do not pad the question with already-completed items.
+
+1. **Add more channels** — if only one channel token is configured and the user has not said they only want one. Recommend:
+   - `/add-channel-slack` — Slack Socket Mode bot
+   - `/add-channel-discord` — Discord Gateway bot
+   - `/add-channel-asana` — Asana PAT + project polling
+
+2. **Run as a background service (recommended on macOS)** — `pnpm dev` is foreground and dies with the terminal. Recommend `/setup-launchd` if no plist is present and the host is macOS. Skip on Linux (launchd is macOS-only).
+
+3. **Rich channel display (optional)** — only if the user expressed interest in nicer notifications. Mention `/add-channel-slack-block-kit` / `/add-channel-slack-block-kit-embed` for Slack, `/add-channel-discord-embed` for Discord.
+
+4. **Agent hooks (optional)** — `/add-agent-hooks-claude-code` or `/add-agent-hooks-open-code` for PostToolUse / SessionStart notifications during long agent sessions.
+
+Present the still-applicable items as `AskUserQuestion` options (single-select; include an explicit "Done — exit setup" option). When the user picks one, hand off by suggesting they invoke that slash command — do not run the other skill yourself inside `/setup`. If they pick "Done", confirm completion and exit.
+
 ## Troubleshooting
 
 **"No channels connected":** Check `.env` has correct tokens. Restart orchestrator.
