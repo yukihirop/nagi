@@ -86,3 +86,8 @@ See [docs/architecture.md](docs/architecture.md)
 ## Troubleshooting
 
 Just ask Claude Code. It understands the codebase and skills, and can fix most issues for you.
+
+## Uninstall
+
+<!-- Goodbye, nagi... -->
+Run `/teardown` in Claude Code to stop the service and remove the assistant.
