@@ -80,7 +80,8 @@
     "noda",
     "mybot",
     "nohup",
-    "pgrep"
+    "pgrep",
+    "bootout"
   ],
   "ignorePaths": [
     "node_modules",

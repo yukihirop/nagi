@@ -36,6 +36,7 @@ Top MCP Servers:
 - [/update-container](.claude/skills/update-container/SKILL.md) — Rebuild the nagi-agent Docker image. Use after changing the Dockerfile, agent-runner source, or container MCP plugins.
 - [/setup-launchd](.claude/skills/setup-launchd/SKILL.md) — Install nagi as a macOS launchd service so it runs persistently in the background.
 - [/setup](.claude/skills/setup/SKILL.md) — First-time setup: installs dependencies, configures channels, registers groups, and starts services.
+- [/teardown](.claude/skills/teardown/SKILL.md) — Inverse of `/setup`. Stops the launchd service, removes the plist, and optionally deletes `deploy/{ASSISTANT_NAME}/` and `__data/{ASSISTANT_NAME}/`. Use to retire a test assistant or reset before a fresh `/setup`.
 - [/register-channel](.claude/skills/register-channel/SKILL.md) — Register an existing Slack/Discord/Asana channel ID as a group in the assistant's SQLite DB (lighter-weight than full channel setup).
 - [/add-channel-slack](.claude/skills/add-channel-slack/SKILL.md), [/add-channel-discord](.claude/skills/add-channel-discord/SKILL.md), [/add-channel-asana](.claude/skills/add-channel-asana/SKILL.md) — Full channel onboarding flows (bot creation, token setup, group registration, verification).
 - [/change-claude-code](.claude/skills/change-claude-code/SKILL.md) / [/change-open-code](.claude/skills/change-open-code/SKILL.md) — Switch the agent runtime between Claude Code and Open Code.
