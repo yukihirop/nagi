@@ -16,6 +16,8 @@ Use the selected language for all subsequent user-facing messages and for every 
 
 Switch from plain text Discord notifications to Embed rich display. Tool notifications and thinking indicators will be shown as colored Discord Embeds instead of plain text.
 
+**Note:** Embed is the **default** that ships with `deploy/templates/host/entry.template.ts`. Use this skill only if a previous customization downgraded the import (e.g. to `@nagi/channel-discord`) and you want to restore the default rich display.
+
 ## Prerequisites
 
 Discord must already be configured. If not, set up the Discord bot first.
@@ -27,14 +29,14 @@ Discord must already be configured. If not, set up the Discord bot first.
 Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and check which Discord import is used:
 
 ```typescript
-// Plain text (current default)
+// Plain text
 const { createDiscordFactory } = await import("@nagi/channel-discord");
 
-// Embed (rich display)
+// Embed (rich display — default)
 const { createDiscordFactory } = await import("@nagi/channel-discord-embed");
 ```
 
-If already using `@nagi/channel-discord-embed`, tell the user it's already enabled.
+If already using `@nagi/channel-discord-embed`, tell the user it's already enabled (this is the shipped default).
 
 ### 2. Switch import
 
@@ -49,8 +51,6 @@ const { createDiscordFactory } = await import("@nagi/channel-discord-embed");
 ```
 
 No other changes needed — the factory function, config, and registration are identical.
-
-**Note:** Do NOT change `deploy/templates/host/entry.template.ts`. The template should keep the default `@nagi/channel-discord`. Embed is a local customization in `deploy/{ASSISTANT_NAME}/host/entry.ts` only.
 
 ### 3. Verify
 

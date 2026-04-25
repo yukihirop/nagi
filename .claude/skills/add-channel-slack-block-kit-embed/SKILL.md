@@ -16,6 +16,8 @@ Use the selected language for all subsequent user-facing messages and for every 
 
 Switch Slack rendering to the Block Kit **Embed** variant, which wraps Block Kit blocks in Slack `attachments` with a `color` field. This renders a colored vertical bar on the left of each message — matching the look of the Discord Embed display mode.
 
+**Note:** Block Kit Embed is the **default** that ships with `deploy/templates/host/entry.template.ts`. Use this skill only if a previous customization downgraded the import (e.g. to `@nagi/channel-slack` or `@nagi/channel-slack-block-kit`) and you want to restore the default rich display.
+
 **Before (plain Block Kit):** Formatted blocks without a colored side bar.
 **After (Embed):** Same Block Kit content, but each message has a colored left border — blurple for agent replies, per-tool colors for tool notifications, gray for thinking / 💰 cost footer.
 
@@ -36,11 +38,11 @@ const { createSlackFactory } = await import("@nagi/channel-slack");
 // Block Kit (no colored bar)
 const { createSlackFactory } = await import("@nagi/channel-slack-block-kit");
 
-// Block Kit Embed (colored left bar — this skill)
+// Block Kit Embed (colored left bar — default; this skill)
 const { createSlackFactory } = await import("@nagi/channel-slack-block-kit-embed");
 ```
 
-If already using `@nagi/channel-slack-block-kit-embed`, tell the user it's already enabled.
+If already using `@nagi/channel-slack-block-kit-embed`, tell the user it's already enabled (this is the shipped default).
 
 ### 2. Switch import
 
@@ -55,8 +57,6 @@ const { createSlackFactory } = await import("@nagi/channel-slack-block-kit-embed
 ```
 
 No other changes needed — the factory function, config, and registration are identical.
-
-**Note:** Do NOT change `deploy/templates/host/entry.template.ts`. The template should keep the default `@nagi/channel-slack`. Embed is a local customization in `deploy/{ASSISTANT_NAME}/host/entry.ts` only.
 
 ### 3. Verify
 

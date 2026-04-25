@@ -187,9 +187,9 @@ Then offer the relevant items below as options. Suggest only what is not already
    - `/add-channel-discord` — Discord Gateway bot
    - `/add-channel-asana` — Asana PAT + project polling
 
-2. **Rich channel display (optional)** — only if the user expressed interest in nicer notifications. Mention `/add-channel-slack-block-kit` / `/add-channel-slack-block-kit-embed` for Slack, `/add-channel-discord-embed` for Discord.
+2. **Agent hooks (optional)** — `/add-agent-hooks-claude-code` or `/add-agent-hooks-open-code` for PostToolUse / SessionStart notifications during long agent sessions.
 
-3. **Agent hooks (optional)** — `/add-agent-hooks-claude-code` or `/add-agent-hooks-open-code` for PostToolUse / SessionStart notifications during long agent sessions.
+Note: Slack defaults to Block Kit Embed (colored left bar) and Discord defaults to Embed rich display, both straight from the template. Only mention `/add-channel-slack-block-kit` (drop the colored bar) or downgrading to plain text if the user explicitly asks for a less rich look.
 
 Present the still-applicable items as `AskUserQuestion` options (single-select; include an explicit "Done — exit setup" option). When the user picks one, hand off by suggesting they invoke that slash command — do not run the other skill yourself inside `/setup`. If they pick "Done", confirm completion and exit.
 

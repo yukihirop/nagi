@@ -14,10 +14,11 @@ setupGlobalErrorHandlers(logger);
 const config = loadConfig({ envPath });
 const registry = new ChannelRegistry();
 
-// Register Slack if configured
+// Register Slack if configured (defaults to Block Kit Embed rich display;
+// switch to "@nagi/channel-slack-block-kit" or "@nagi/channel-slack" to downgrade)
 const slackEnv = readEnvFile(["SLACK_BOT_TOKEN", "SLACK_APP_TOKEN"], envPath);
 if (slackEnv.SLACK_BOT_TOKEN && slackEnv.SLACK_APP_TOKEN) {
-  const { createSlackFactory } = await import("@nagi/channel-slack");
+  const { createSlackFactory } = await import("@nagi/channel-slack-block-kit-embed");
   registry.register(
     "slack",
     createSlackFactory({
@@ -30,10 +31,11 @@ if (slackEnv.SLACK_BOT_TOKEN && slackEnv.SLACK_APP_TOKEN) {
   logger.info("Slack channel registered");
 }
 
-// Register Discord if configured
+// Register Discord if configured (defaults to Embed rich display;
+// switch to "@nagi/channel-discord" to downgrade to plain text)
 const discordEnv = readEnvFile(["DISCORD_BOT_TOKEN"], envPath);
 if (discordEnv.DISCORD_BOT_TOKEN) {
-  const { createDiscordFactory } = await import("@nagi/channel-discord");
+  const { createDiscordFactory } = await import("@nagi/channel-discord-embed");
   registry.register(
     "discord",
     createDiscordFactory({
