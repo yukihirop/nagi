@@ -61,6 +61,8 @@ If the user picks Cancel, stop immediately and do not run any further commands.
 
 ## 4. Stop and unload launchd
 
+If the orchestrator was started outside launchd (e.g. via `pnpm dev` in a separate shell), terminate that process first — `launchctl unload` only stops the launchd-managed instance, and a stray orchestrator will keep spawning containers that mount the `__data/` dir we are about to delete.
+
 If `LAUNCHD_LOADED` (or to be safe, just always run — the call no-ops if the service is already stopped):
 
 ```bash
@@ -88,6 +90,8 @@ Container names use the pattern `nagi-{channel}-{folder}-{epoch_ms}` and do **no
 - containers from other assistants in the same repo (different `__data/<other>/` path)
 - containers from a same-named assistant in a different repo checkout (different `$(pwd)`)
 
+The trailing `/` on `$ASSISTANT_DATA_PATH` is load-bearing: it relies on the orchestrator always bind-mounting child paths under `__data/{ASSISTANT_NAME}/` (e.g. `/groups/...`, `/sessions/...`, `/ipc/...`) rather than the bare directory itself, so adjacent names like `__data/{ASSISTANT_NAME}_archive/` cannot collide. If a future change ever mounts `__data/{ASSISTANT_NAME}` without a trailing slash, this filter will silently miss it — drop the trailing `/` then.
+
 ```bash
 ASSISTANT_DATA_PATH="$(pwd)/__data/{ASSISTANT_NAME}/"
 TARGETS=$(for c in $(docker ps -q 2>/dev/null); do
@@ -107,19 +111,19 @@ If the user wants to preserve a long-running container (e.g. an agent in the mid
 
 ## 5. Remove plist from LaunchAgents
 
-If `PLIST_EXISTS`:
-
 ```bash
 rm -f ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist
 ```
 
-The materialized copy under `deploy/{ASSISTANT_NAME}/launchd/` is handled in Step 6 along with the rest of `deploy/`.
+`rm -f` is a no-op if the file is already gone, so the `PLIST_EXISTS` check from Step 2 is informational only. The materialized copy under `deploy/{ASSISTANT_NAME}/launchd/` is handled in Step 6 along with the rest of `deploy/`.
 
 ## 6. Choose what else to delete
 
+Before showing the next question, remind the user: deleting `deploy/{ASSISTANT_NAME}/` wipes the agent's tokens (Slack/Discord/Asana/Anthropic). If they want to preserve them for re-setup later, suggest copying `deploy/{ASSISTANT_NAME}/.env` somewhere outside the repo *now*, before they answer.
+
 AskUserQuestion (multi-select): **What else should be removed?**
 
-- **deploy/{ASSISTANT_NAME}/** — config, `.env` tokens (Slack/Discord/Asana/Anthropic), host & container entry files, group prompt defaults, materialized launchd plist. Removing this wipes the agent's tokens; you'll have to re-paste them on the next setup.
+- **deploy/{ASSISTANT_NAME}/** — config, `.env` tokens, host & container entry files, group prompt defaults, materialized launchd plist. You'll have to re-paste tokens on the next setup.
 - **__data/{ASSISTANT_NAME}/** — SQLite DB (registered groups, scheduled tasks, sessions), logs, IPC sockets. Removing this wipes group registrations and scheduled tasks for this assistant.
 
 If the user picks neither, skip this step — only the launchd unload + plist removal stays. This is a valid choice for temporarily disabling an assistant without losing config.
@@ -133,8 +137,6 @@ rm -rf deploy/{ASSISTANT_NAME}
 # __data/{ASSISTANT_NAME}/ — DB, logs, sessions
 rm -rf __data/{ASSISTANT_NAME}
 ```
-
-If the user wants to preserve the tokens for later, suggest copying `deploy/{ASSISTANT_NAME}/.env` somewhere outside the repo first.
 
 ## 7. Verify
 
@@ -172,6 +174,8 @@ This skill is macOS-only (it targets launchd). On Linux, the equivalent flow is 
 
 ## Re-creating the assistant later
 
-- Kept `deploy/` and `__data/`: `launchctl load ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist` (if you also kept the system plist), or re-run `/setup-launchd` to reinstall the plist.
-- Kept `deploy/` only: re-run `/setup-launchd` to reinstall the plist; data dir will be recreated on first start.
+Step 5 always removes `~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist`, so every recovery path goes through reinstalling that plist.
+
+- Kept `deploy/` and `__data/`: re-run `/setup-launchd` — the materialized plist still lives at `deploy/{ASSISTANT_NAME}/launchd/com.nagi.{ASSISTANT_NAME}.plist` and just needs to be re-copied into `~/Library/LaunchAgents/` and loaded.
+- Kept `deploy/` only: re-run `/setup-launchd`; the data dir will be recreated on first start.
 - Kept nothing: re-run `/setup` from scratch.
