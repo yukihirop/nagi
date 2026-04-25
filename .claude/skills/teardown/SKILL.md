@@ -37,9 +37,18 @@ test -d deploy/{ASSISTANT_NAME} && echo "DEPLOY_EXISTS" || echo "DEPLOY_MISSING"
 test -d __data/{ASSISTANT_NAME} && echo "DATA_EXISTS" || echo "DATA_MISSING"
 test -f ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist && echo "PLIST_EXISTS" || echo "PLIST_MISSING"
 launchctl list | grep -q com.nagi.{ASSISTANT_NAME} && echo "LAUNCHD_LOADED" || echo "LAUNCHD_NOT_LOADED"
+
+# Containers that mount this assistant's __data dir (filter by absolute path so
+# we don't pick up containers from another repo's same-named assistant).
+ASSISTANT_DATA_PATH="$(pwd)/__data/{ASSISTANT_NAME}/"
+for c in $(docker ps -q 2>/dev/null); do
+  docker inspect --format '{{.Id}} {{range .Mounts}}{{.Source}} {{end}}' "$c" \
+    | grep -F "$ASSISTANT_DATA_PATH" \
+    | awk '{print $1}'
+done
 ```
 
-Show the user a one-line summary of what will/can be removed.
+Show the user a one-line summary of what will/can be removed (including the container count).
 
 ## 3. Confirm intent
 
@@ -70,7 +79,31 @@ If it is still listed, force eviction:
 launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist 2>/dev/null
 ```
 
-`launchctl unload` sends SIGTERM to the orchestrator; the orchestrator's handlers shut down channels and any in-flight container agents. If a Docker container is stuck (rare), the user can clean it up manually with `docker ps` + `docker stop`.
+`launchctl unload` sends SIGTERM to the orchestrator. The orchestrator's shutdown handler closes channel adapters but **detaches in-flight Docker containers rather than killing them** (by design — so they survive an orchestrator restart). For teardown those containers must be stopped explicitly in Step 4.5; otherwise they keep consuming the agent's API quota and writing to mount paths that we are about to delete.
+
+## 4.5. Stop in-flight Docker containers for this assistant
+
+Container names use the pattern `nagi-{channel}-{folder}-{epoch_ms}` and do **not** include `ASSISTANT_NAME`. The only safe identifier is the absolute mount path. Filter containers whose mounts reference `$(pwd)/__data/{ASSISTANT_NAME}/` — this avoids stopping:
+
+- containers from other assistants in the same repo (different `__data/<other>/` path)
+- containers from a same-named assistant in a different repo checkout (different `$(pwd)`)
+
+```bash
+ASSISTANT_DATA_PATH="$(pwd)/__data/{ASSISTANT_NAME}/"
+TARGETS=$(for c in $(docker ps -q 2>/dev/null); do
+  docker inspect --format '{{.Id}} {{range .Mounts}}{{.Source}} {{end}}' "$c" \
+    | grep -F "$ASSISTANT_DATA_PATH" \
+    | awk '{print $1}'
+done)
+
+if [ -n "$TARGETS" ]; then
+  echo "$TARGETS" | xargs docker stop
+fi
+```
+
+`docker stop` sends SIGTERM (10s grace) then SIGKILL. The container's `docker run --rm` wrapper process on the host exits automatically once the container is removed, so no extra `kill` is needed.
+
+If the user wants to preserve a long-running container (e.g. an agent in the middle of a delicate task), let them pick **Cancel** in Step 3 instead — there is no per-container opt-out here, because partial cleanup creates worse failure modes (zombie container writing to a deleted mount path).
 
 ## 5. Remove plist from LaunchAgents
 
@@ -110,6 +143,15 @@ launchctl list | grep com.nagi.{ASSISTANT_NAME} && echo "STILL RUNNING" || echo 
 test -f ~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist && echo "PLIST STILL THERE" || echo "PLIST GONE"
 test -d deploy/{ASSISTANT_NAME} && echo "DEPLOY STILL THERE" || echo "DEPLOY GONE"
 test -d __data/{ASSISTANT_NAME} && echo "DATA STILL THERE" || echo "DATA GONE"
+
+# Same path-based filter as Step 4.5 — confirms no zombie containers remain.
+ASSISTANT_DATA_PATH="$(pwd)/__data/{ASSISTANT_NAME}/"
+LEFTOVER=$(for c in $(docker ps -q 2>/dev/null); do
+  docker inspect --format '{{.Id}} {{range .Mounts}}{{.Source}} {{end}}' "$c" \
+    | grep -F "$ASSISTANT_DATA_PATH" \
+    | awk '{print $1}'
+done)
+[ -z "$LEFTOVER" ] && echo "CONTAINERS GONE" || echo "CONTAINERS STILL THERE: $LEFTOVER"
 ```
 
 Summarize what was removed and what was preserved.
