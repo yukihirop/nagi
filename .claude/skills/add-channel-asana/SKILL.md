@@ -5,6 +5,15 @@ description: Add Asana as a channel. Polls task comments for trigger-pattern mat
 
 # Add Asana Channel
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 This skill configures Asana for nagi — Personal Access Token setup, project discovery, group registration, and verification.
 
 Asana uses **polling** (not webhooks) because workspace-level webhooks do not deliver story/comment events, and the workspace events API is Enterprise+ only. This keeps the launchd-only deployment self-contained.

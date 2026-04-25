@@ -5,6 +5,15 @@ description: Run initial Nagi setup. Use when user wants to install dependencies
 
 # Nagi Setup
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Run setup steps automatically. Only pause when user action is required (pasting tokens, configuration choices).
 
 **Principle:** When something is broken or missing, fix it. Don't tell the user to go fix it themselves unless it genuinely requires their manual action (e.g. pasting a secret token). If a dependency is missing, install it.
@@ -77,37 +86,47 @@ Takes a few minutes on first build (cached afterwards).
 
 ## 4. Deploy
 
-Run `/deploy` to generate local entry points, data directories, `.env`, and group prompt defaults from templates. Select **All** when prompted.
+Hand off to the `/deploy` skill (invoke it via the Skill tool, do not just print "run /deploy"). Tell `/deploy` to select **All** targets, and pass through the agent type chosen in step 3b so it can set `CONTAINER_IMAGE` correctly.
 
-`/deploy` handles:
-- `.env` creation and token configuration (authentication + channels)
-- Entry point generation (host, Claude Code container, Open Code container)
+`/deploy` will guide the user through:
+
+- `.env` creation, with prompts for **agent authentication** (`CLAUDE_CODE_OAUTH_TOKEN` via `claude setup-token`, or `ANTHROPIC_API_KEY`, or Open Code provider keys)
+- `.env` channel tokens (Slack / Discord / Asana — multi-select, with Bot/App creation instructions)
+- Entry points (host, Claude Code container, Open Code container)
 - Group prompt defaults
 - Data directories (`__data/{ASSISTANT_NAME}/`)
 
-If Open Code was chosen in step 3b, tell `/deploy` so it can set `CONTAINER_IMAGE=nagi-agent-opencode:latest` in `.env`.
+When `/deploy` returns, `.env` should have at least one channel token plus an agent auth token. If neither is present, ask the user before continuing — `pnpm dev` in the next step will not produce a usable bot otherwise.
 
-## 5. Start & Register Main Group
+## 5. Install as a Background Service & Register Main Group
 
-Kill any existing nagi processes first (credential proxy on port 3002 may linger):
+Hand off to `/setup-launchd` (invoke via the Skill tool, do not just print "run /setup-launchd"). It installs the launchd plist with detected paths and loads the service so the orchestrator starts in the background. macOS only — see Troubleshooting if the host is Linux.
+
+Once the service is loaded, the channel adapters connect and log their channel JIDs. Read them so the user can pick which one to register as the main group:
+
 ```bash
-pkill -f "tsx deploy/{ASSISTANT_NAME}/host/entry.ts" 2>/dev/null
-lsof -ti :3002 | xargs kill 2>/dev/null
+tail -50 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log | grep -E 'slack:|discord:|asana:'
 ```
 
-Then start nagi in development mode:
-```bash
-pnpm dev
-```
+Look for log lines like `slack:C0AP0BRN50X` or `discord:1487646521259196426`. If nothing shows up yet, wait a few seconds for the adapters to connect and re-tail.
 
-Once the orchestrator starts and channels connect, check the logs for the channel ID:
-```bash
-tail -20 __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
-```
+Now register the main group via the `/register-channel` skill (invoke via the Skill tool, do not run a hand-rolled `node -e` script). Pre-fill the answers so the user just confirms:
 
-Look for log lines showing channel JIDs (e.g. `slack:C...` or `discord:...`).
+- Action: **register** (the option labelled `登録する` / `Register` depending on the language picked in `/register-channel`)
+- Channel kind: whichever JID prefix you found in the logs
+- Channel ID: the suffix of the JID (e.g. `C0AP0BRN50X` for `slack:C0AP0BRN50X`)
+- Group name: `Main`
+- folder: `main`
+- trigger: `@{ASSISTANT_NAME}`
+- isMain: `true`
+- requiresTrigger: `false`
 
-Then register the main group. The main group has elevated privileges (no trigger required, can register other groups):
+`/register-channel` runs a reachability check (Slack/Discord/Asana API), creates the DB row, and creates `__data/{ASSISTANT_NAME}/groups/main/`. The main group has elevated privileges: no trigger required, and it can register additional groups at runtime.
+
+After `/register-channel` returns, run `/nagi-restart` so launchd reloads the service and picks up the new group.
+
+<!-- Legacy fallback: if `/register-channel` is unavailable for some reason,
+the equivalent script is:
 
 ```bash
 node -e "
@@ -128,6 +147,7 @@ fs.mkdirSync('__data/{ASSISTANT_NAME}/groups/main', { recursive: true });
 console.log('Main group registered');
 "
 ```
+-->
 
 ## 6. Dashboard UI (Optional)
 
@@ -141,10 +161,10 @@ Features: Overview stats, Groups, Channels, Sessions (chat viewer), Tasks, Logs,
 
 ## 7. Verify
 
-Restart the orchestrator and send a message in your main channel. Check logs:
+Send a message in your main channel and watch the logs via `/nagi-logs` (or tail directly):
 
 ```bash
-pnpm dev
+tail -f __data/{ASSISTANT_NAME}/logs/nagi-{ASSISTANT_NAME}.log
 ```
 
 Expected behavior:
@@ -152,6 +172,26 @@ Expected behavior:
 2. Message received (log: "Discord message stored" or similar)
 3. Container spawned (log: "Spawning container agent")
 4. Response sent back to channel
+
+## 8. Next Steps
+
+After Step 7 succeeds, do not stop silently. Assess the current state and surface follow-up actions via `AskUserQuestion` (use the language picked in Step 0). Inspect the workspace before asking so you can recommend only what still applies:
+
+- Read `deploy/{ASSISTANT_NAME}/.env` and check which of `SLACK_BOT_TOKEN`, `DISCORD_BOT_TOKEN`, `ASANA_PAT` are set.
+- Check whether a launchd plist exists for this assistant (e.g. `~/Library/LaunchAgents/com.nagi.{ASSISTANT_NAME}.plist` on macOS).
+
+Then offer the relevant items below as options. Suggest only what is not already done; do not pad the question with already-completed items.
+
+1. **Add more channels** — if only one channel token is configured and the user has not said they only want one. Recommend:
+   - `/add-channel-slack` — Slack Socket Mode bot
+   - `/add-channel-discord` — Discord Gateway bot
+   - `/add-channel-asana` — Asana PAT + project polling
+
+2. **Agent hooks (optional)** — `/add-agent-hooks-claude-code` or `/add-agent-hooks-open-code` for PostToolUse / SessionStart notifications during long agent sessions.
+
+Note: Slack defaults to Block Kit Embed (colored left bar) and Discord defaults to Embed rich display, both straight from the template. Only mention `/add-channel-slack-block-kit` (drop the colored bar) or downgrading to plain text if the user explicitly asks for a less rich look.
+
+Present the still-applicable items as `AskUserQuestion` options (single-select; include an explicit "Done — exit setup" option). When the user picks one, hand off by suggesting they invoke that slash command — do not run the other skill yourself inside `/setup`. If they pick "Done", confirm completion and exit.
 
 ## Troubleshooting
 
@@ -163,4 +203,6 @@ Expected behavior:
 
 **Container fails:** Check `__data/{ASSISTANT_NAME}/groups/main/logs/container-*.log` for details. Ensure the Docker image is built (`nagi-agent:latest` for Claude Code, `nagi-agent-opencode:latest` for Open Code).
 
-**"SLACK_BOT_TOKEN not set":** Tokens must be in `.env` at the project root, not in environment variables.
+**"SLACK_BOT_TOKEN not set":** Tokens must be in `deploy/{ASSISTANT_NAME}/.env`, not in environment variables. The project-root `.env` is not loaded.
+
+**Linux:** Currently unsupported. The maintained startup path uses macOS launchd (`/setup-launchd`). `pnpm dev` exists in the codebase and may work for self-driven Linux setups, but there is no official Linux flow.

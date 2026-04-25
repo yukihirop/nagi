@@ -5,6 +5,15 @@ description: Add agent-hooks plugin for Open Code containers. Sends tool executi
 
 # Add Agent Hooks (Open Code)
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Enable PostToolUse and SessionStart hooks for Open Code containers that send real-time notifications to the chat channel.
 
 ## What it does

@@ -5,6 +5,15 @@ description: Set up Open Code agent as an alternative to Claude Code. Supports O
 
 # Setup Open Code Agent
 
+## Step 0: Language selection
+
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
 Configure nagi to use Open Code instead of Claude Code. Open Code supports multiple AI providers (OpenRouter, Gemini, OpenAI).
 
 **UX Note:** Use `AskUserQuestion` for all user-facing questions.

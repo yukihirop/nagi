@@ -5,10 +5,22 @@ description: Switch Slack channel to Block Kit rich display for tool notificatio
 
 # Switch to Slack Block Kit Display
 
-Switch from plain text Slack notifications to Block Kit rich display. Tool notifications and thinking indicators will be shown as formatted Slack blocks instead of plain text.
+## Step 0: Language selection
 
-**Before:** `🔧 \`Bash: ls -la\``
-**After:** Rich card with tool name header, code block, and divider
+Before proceeding with any other steps in this skill, ask the user which language to continue in using `AskUserQuestion`. Keep this initial prompt in English because the preferred language is not yet known.
+
+- Question: `Which language should I continue in?`
+- Options: `English`, `日本語 (Japanese)`
+
+Use the selected language for all subsequent user-facing messages and for every further `AskUserQuestion` prompt in this skill. Do not translate code, file paths, shell commands, or file contents.
+
+Switch the Slack channel to plain Block Kit rich display. Tool notifications and thinking indicators are shown as formatted Slack blocks, but without the colored left-border `attachments` wrapper that the Embed variant adds.
+
+**Note:** The shipped default is `@nagi/channel-slack-block-kit-embed` (Block Kit + colored left border). This skill is mostly used to switch *down* from Embed to plain Block Kit if you don't want the colored bar, or to switch *up* from `@nagi/channel-slack` (plain text). To restore the default Embed display, use `/add-channel-slack-block-kit-embed`.
+
+**Plain text:** `🔧 \`Bash: ls -la\``
+**Block Kit:** Rich card with tool name header, code block, and divider (no colored bar)
+**Block Kit Embed (default):** Same Block Kit content with a colored left border per message
 
 ## Prerequisites
 
@@ -21,11 +33,14 @@ Slack must already be configured. If not, run `/add-channel-slack` first.
 Read `deploy/{ASSISTANT_NAME}/host/entry.ts` and check which Slack import is used:
 
 ```typescript
-// Plain text (current default)
+// Plain text
 const { createSlackFactory } = await import("@nagi/channel-slack");
 
-// Block Kit (rich display)
+// Block Kit (rich display, no colored bar — this skill)
 const { createSlackFactory } = await import("@nagi/channel-slack-block-kit");
+
+// Block Kit Embed (default — colored left bar)
+const { createSlackFactory } = await import("@nagi/channel-slack-block-kit-embed");
 ```
 
 If already using `@nagi/channel-slack-block-kit`, tell the user it's already enabled.
@@ -43,8 +58,6 @@ const { createSlackFactory } = await import("@nagi/channel-slack-block-kit");
 ```
 
 No other changes needed — the factory function, config, and registration are identical.
-
-**Note:** Do NOT change `deploy/templates/host/entry.template.ts`. The template should keep the default `@nagi/channel-slack`. Block Kit is a local customization in `deploy/{ASSISTANT_NAME}/host/entry.ts` only.
 
 ### 3. Verify
 
